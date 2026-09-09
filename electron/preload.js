@@ -8,4 +8,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onMediaNext: (callback) => ipcRenderer.on('media:next', callback),
   onMediaPrev: (callback) => ipcRenderer.on('media:prev', callback),
   isElectron: true,
+
+  // Native Zero-CORS YouTube APIs
+  search: (query, type) => ipcRenderer.invoke('yt:search', { query, type }),
+  getSuggestions: (query) => ipcRenderer.invoke('yt:suggestions', query),
+  getTrending: () => ipcRenderer.invoke('yt:trending'),
 });

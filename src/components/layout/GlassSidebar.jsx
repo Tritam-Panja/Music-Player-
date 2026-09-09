@@ -5,20 +5,23 @@ import {
   Heart, 
   PlusCircle, 
   Library, 
-  Radio, 
   Music2, 
   Trash2, 
   Sparkles,
-  ExternalLink 
+  ExternalLink,
+  UserCheck 
 } from 'lucide-react';
+import YoutubeIcon from '../ui/YoutubeIcon';
 
 export default function GlassSidebar({
   currentView,
   selectedPlaylistId,
   playlists,
   favoritesCount,
+  user,
   onNavigate,
   onOpenImportModal,
+  onOpenLoginModal,
   onDeletePlaylist
 }) {
   return (
@@ -63,7 +66,7 @@ export default function GlassSidebar({
           }`}
         >
           <Search size={18} className={currentView === 'search' ? 'text-cyan-400' : ''} />
-          <span>Search & YouTube</span>
+          <span>Search & Explore</span>
         </button>
 
         <button
@@ -95,24 +98,35 @@ export default function GlassSidebar({
         <button
           onClick={onOpenImportModal}
           className="text-cyan-400 hover:text-cyan-300 p-1 hover:bg-cyan-500/10 rounded-lg transition-colors"
-          title="Import YouTube Playlist"
+          title="Import YouTube Playlist Link"
         >
           <PlusCircle size={18} />
         </button>
       </div>
 
-      {/* Import YT Playlist CTA Glass Card */}
+      {/* Connect YT Account CTA Card */}
       <div className="px-4 mb-3">
-        <button
-          onClick={onOpenImportModal}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl bg-gradient-to-r from-red-600/20 via-purple-600/20 to-cyan-600/20 hover:from-red-600/30 hover:to-cyan-600/30 border border-white/10 hover:border-cyan-400/40 text-xs font-semibold text-white transition-all group"
-        >
-          <div className="w-6 h-6 rounded-lg bg-red-600/80 flex items-center justify-center text-white">
-            <Radio size={14} />
-          </div>
-          <span className="truncate">Connect YT Playlist</span>
-          <Sparkles size={13} className="ml-auto text-cyan-400 group-hover:rotate-12 transition-transform" />
-        </button>
+        {user ? (
+          <button
+            onClick={onOpenLoginModal}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-xs font-semibold text-emerald-300 transition-all"
+          >
+            <img src={user.picture} alt={user.name} className="w-5 h-5 rounded-full object-cover" />
+            <span className="truncate flex-1 text-left">{user.name}</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
+        ) : (
+          <button
+            onClick={onOpenLoginModal}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl bg-gradient-to-r from-red-600/20 via-purple-600/20 to-cyan-600/20 hover:from-red-600/30 hover:to-cyan-600/30 border border-white/10 hover:border-cyan-400/40 text-xs font-semibold text-white transition-all group"
+          >
+            <div className="w-6 h-6 rounded-lg bg-red-600/80 flex items-center justify-center text-white">
+              <YoutubeIcon size={14} />
+            </div>
+            <span className="truncate">Log In YouTube Account</span>
+            <Sparkles size={13} className="ml-auto text-cyan-400 group-hover:rotate-12 transition-transform" />
+          </button>
+        )}
       </div>
 
       {/* Playlists List */}
@@ -139,7 +153,6 @@ export default function GlassSidebar({
                 <p className="text-[11px] text-slate-500 truncate">{pl.tracks?.length || 0} tracks</p>
               </div>
 
-              {/* Delete Custom Playlist button */}
               {pl.id !== 'chill-lofi-beats' && (
                 <button
                   onClick={(e) => {
@@ -163,7 +176,7 @@ export default function GlassSidebar({
       <div className="p-4 border-t border-white/10 text-[11px] text-slate-500 flex items-center justify-between">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          Liquid v1.0
+          Liquid v1.1
         </span>
         <a 
           href="https://github.com" 

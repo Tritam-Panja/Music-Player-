@@ -9,9 +9,11 @@ import HomeView from './components/views/HomeView';
 import SearchView from './components/views/SearchView';
 import PlaylistView from './components/views/PlaylistView';
 import YTImportModal from './components/modals/YTImportModal';
+import YTLoginModal from './components/modals/YTLoginModal';
 
 import { audioEngine } from './services/audioEngine';
 import { storageService } from './services/storageService';
+import { ytAuthService } from './services/ytAuthService';
 
 export default function App() {
   // Navigation & Views
@@ -21,6 +23,7 @@ export default function App() {
 
   // Modals & Panels
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
 
@@ -28,6 +31,7 @@ export default function App() {
   const [playlists, setPlaylists] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [history, setHistory] = useState([]);
+  const [ytUser, setYtUser] = useState(null);
 
   // Queue State
   const [queue, setQueue] = useState([]);
@@ -49,10 +53,12 @@ export default function App() {
     const loadedFavorites = storageService.getFavorites();
     const loadedHistory = storageService.getHistory();
     const savedSettings = storageService.getSettings();
+    const loadedUser = ytAuthService.getUser();
 
     setPlaylists(loadedPlaylists);
     setFavorites(loadedFavorites);
     setHistory(loadedHistory);
+    setYtUser(loadedUser);
 
     if (savedSettings) {
       setVolume(savedSettings.volume ?? 0.8);
@@ -61,7 +67,7 @@ export default function App() {
       setRepeatMode(savedSettings.repeatMode ?? 'off');
     }
 
-    // Default queue from the initial playlist
+    // Default queue from initial playlist
     if (loadedPlaylists.length > 0 && loadedPlaylists[0].tracks?.length > 0) {
       setQueue(loadedPlaylists[0].tracks);
       setCurrentTrack(loadedPlaylists[0].tracks[0]);
@@ -99,7 +105,7 @@ export default function App() {
       if (repeatMode === 'all') {
         nextIdx = 0;
       } else {
-        return; // reached end of queue
+        return;
       }
     }
 
@@ -156,7 +162,6 @@ export default function App() {
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger if user is typing in an input
       if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
       if (e.code === 'Space') {
@@ -188,7 +193,6 @@ export default function App() {
       const idx = contextPlaylist.tracks.findIndex((t) => t.id === track.id);
       setCurrentIndex(idx >= 0 ? idx : 0);
     } else {
-      // Add or bring to front of queue
       const existingIdx = queue.findIndex((t) => t.id === track.id);
       if (existingIdx >= 0) {
         setCurrentIndex(existingIdx);
@@ -218,17 +222,15 @@ export default function App() {
     setHistory(storageService.addToHistory(tracks[0]));
   };
 
-  // Add track to queue
+  // Queue actions
   const handleAddToQueue = (track) => {
     setQueue((prev) => [...prev, track]);
   };
 
-  // Remove track from queue
   const handleRemoveFromQueue = (index) => {
     setQueue((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Clear upcoming queue
   const handleClearQueue = () => {
     if (currentTrack) {
       setQueue([currentTrack]);
@@ -238,18 +240,17 @@ export default function App() {
     }
   };
 
-  // Toggle favorite
+  // Favorites
   const handleToggleFavorite = (track) => {
     const updated = storageService.toggleFavorite(track);
     setFavorites(updated);
   };
 
-  // Check if track is favorite
   const isFavorite = (trackId) => {
     return favorites.some((t) => t.id === trackId);
   };
 
-  // Toggle shuffle & repeat
+  // Shuffle & Repeat
   const handleToggleShuffle = () => {
     const next = !isShuffle;
     setIsShuffle(next);
@@ -263,18 +264,24 @@ export default function App() {
     storageService.saveSettings({ volume, isMuted, repeatMode: next, isShuffle });
   };
 
-  // Handle navigation
+  // Navigation
   const handleNavigate = (view, playlistId = null) => {
     setCurrentView(view);
     if (playlistId) setSelectedPlaylistId(playlistId);
   };
 
-  // Handle imported playlist saved
+  // Handle imported playlist
   const handleImportSuccess = (newPlaylist) => {
     const updated = storageService.savePlaylist(newPlaylist);
     setPlaylists(updated);
     setSelectedPlaylistId(newPlaylist.id);
     setCurrentView('playlist');
+  };
+
+  // Handle library sync from YouTube Account
+  const handleSyncComplete = (syncedPlaylists) => {
+    const current = storageService.getPlaylists();
+    setPlaylists(current);
   };
 
   // Handle delete playlist
@@ -287,7 +294,7 @@ export default function App() {
     }
   };
 
-  // Resolve current active playlist object
+  // Resolve current active playlist
   const activePlaylist = currentView === 'favorites'
     ? {
         id: 'favorites',
@@ -312,8 +319,10 @@ export default function App() {
           selectedPlaylistId={selectedPlaylistId}
           playlists={playlists}
           favoritesCount={favorites.length}
+          user={ytUser}
           onNavigate={handleNavigate}
           onOpenImportModal={() => setIsImportModalOpen(true)}
+          onOpenLoginModal={() => setIsLoginModalOpen(true)}
           onDeletePlaylist={handleDeletePlaylist}
         />
 
@@ -323,9 +332,10 @@ export default function App() {
           <GlassHeader
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onOpenImportModal={() => setIsImportModalOpen(true)}
+            onOpenLoginModal={() => setIsLoginModalOpen(true)}
             currentView={currentView}
             onNavigate={handleNavigate}
+            user={ytUser}
           />
 
           {/* Active View Router */}
@@ -336,7 +346,7 @@ export default function App() {
               onPlayTrack={handlePlayTrack}
               onPlayPlaylist={handlePlayPlaylist}
               onSelectPlaylist={(id) => handleNavigate('playlist', id)}
-              onOpenImportModal={() => setIsImportModalOpen(true)}
+              onOpenImportModal={() => setIsLoginModalOpen(true)}
             />
           )}
 
@@ -420,11 +430,20 @@ export default function App() {
         onClose={() => setIsLyricsOpen(false)}
       />
 
-      {/* YouTube Playlist URL / Account Importer Modal */}
+      {/* YouTube Playlist URL Importer Modal */}
       <YTImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportSuccess={handleImportSuccess}
+      />
+
+      {/* YouTube Account Login & Sync Modal */}
+      <YTLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        user={ytUser}
+        onUserChange={setYtUser}
+        onSyncComplete={handleSyncComplete}
       />
     </div>
   );

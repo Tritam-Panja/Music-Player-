@@ -1,13 +1,14 @@
 import React from 'react';
-import { Search, Minus, Square, X, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { Search, Minus, Square, X, Sparkles, User, UserCheck } from 'lucide-react';
 import YoutubeIcon from '../ui/YoutubeIcon';
 
 export default function GlassHeader({
   searchQuery,
   onSearchChange,
-  onOpenImportModal,
+  onOpenLoginModal,
   currentView,
-  onNavigate
+  onNavigate,
+  user
 }) {
   const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -48,16 +49,34 @@ export default function GlassHeader({
         </div>
       </div>
 
-      {/* Right Controls */}
+      {/* Right Controls & YouTube Account Status */}
       <div className="flex items-center gap-3 app-no-drag">
-        {/* Connect YT Playlist quick button */}
-        <button
-          onClick={onOpenImportModal}
-          className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-semibold transition-all hover:scale-[1.02]"
-        >
-          <YoutubeIcon size={15} className="text-red-400" />
-          <span>Sync YouTube</span>
-        </button>
+        {user ? (
+          <button
+            onClick={onOpenLoginModal}
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+            title="Connected YouTube Account"
+          >
+            <img
+              src={user.picture}
+              alt={user.name}
+              className="w-6 h-6 rounded-full object-cover border border-white/20"
+            />
+            <span className="text-xs font-semibold text-white max-w-[120px] truncate">
+              {user.name}
+            </span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
+        ) : (
+          <button
+            onClick={onOpenLoginModal}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-300 text-xs font-semibold transition-all hover:scale-[1.02]"
+            title="Connect your YouTube Account"
+          >
+            <YoutubeIcon size={16} className="text-red-400" />
+            <span>Sign In with YouTube</span>
+          </button>
+        )}
 
         {/* Electron Window Controls */}
         {isElectron && (
