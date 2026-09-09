@@ -12,73 +12,84 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  background-color: #07080d;
+  background-color: #07080c;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Glassmorphism primitives */
+/* Minimalist Frosted Glass Primitives */
 .glass-panel {
-  background: rgba(18, 20, 29, 0.65);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  background: rgba(13, 14, 21, 0.72);
+  backdrop-filter: blur(32px) saturate(170%);
+  -webkit-backdrop-filter: blur(32px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.6);
+}
+
+.glass-dock {
+  background: rgba(15, 16, 24, 0.82);
+  backdrop-filter: blur(40px) saturate(190%);
+  -webkit-backdrop-filter: blur(40px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), 0 0 1px 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(255, 255, 255, 0.025);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.16);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.5), 0 0 24px -6px rgba(168, 85, 247, 0.25);
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5);
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  transition: all 0.18s ease;
 }
 
 .glass-pill:hover, .glass-pill.active {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
-/* Liquid Ambient Background */
+/* Subtle, Breathing Ambient Lighting */
 .ambient-glow-sphere {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.38;
+  filter: blur(120px);
+  opacity: 0.22;
   pointer-events: none;
   mix-blend-mode: screen;
-  transition: all 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 2.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Custom Sleek Scrollbar */
+/* Minimalist Hairline Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Smooth Range Slider for Audio Seek & Volume */
+/* Ultra-Clean Hairline Range Sliders */
 input[type=range] {
   -webkit-appearance: none;
   background: transparent;
@@ -91,24 +102,26 @@ input[type=range]:focus {
 
 input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.15);
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
-  transition: background 0.2s ease;
+  transition: height 0.15s ease, background 0.15s ease;
 }
 
-input[type=range]:hover::-webkit-slider-runnable-track {
-  background: rgba(255, 255, 255, 0.25);
+.group:hover input[type=range]::-webkit-slider-runnable-track,
+input[type=range]:active::-webkit-slider-runnable-track {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  height: 12px;
-  width: 12px;
+  height: 11px;
+  width: 11px;
   border-radius: 50%;
   background: #ffffff;
   margin-top: -4px;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   opacity: 0;
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
@@ -116,7 +129,7 @@ input[type=range]::-webkit-slider-thumb {
 .group:hover input[type=range]::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb {
   opacity: 1;
-  transform: scale(1.2);
+  transform: scale(1.15);
 }
 
 /* Window Dragging for Electron */
