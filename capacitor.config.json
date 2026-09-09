@@ -1,0 +1,9 @@
+{
+  "appId": "com.liquidmusic.app",
+  "appName": "Liquid Music",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
