@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, globalShortcut, session } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { YouTube } from 'youtube-sr';
@@ -7,6 +7,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow = null;
+let loginWindow = null;
+
+const WEB_REMIX_HEADERS = {
+  'Content-Type': 'application/json',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  'X-YouTube-Client-Name': '67',
+  'X-YouTube-Client-Version': '1.20250101.01.00'
+};
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -45,17 +53,90 @@ function createWindow() {
   ipcMain.on('window:close', () => mainWindow?.close());
 
   // Global Media Shortcuts
-  globalShortcut.register('MediaPlayPause', () => {
-    mainWindow?.webContents.send('media:play-pause');
-  });
-  globalShortcut.register('MediaNextTrack', () => {
-    mainWindow?.webContents.send('media:next');
-  });
-  globalShortcut.register('MediaPreviousTrack', () => {
-    mainWindow?.webContents.send('media:prev');
+  globalShortcut.register('MediaPlayPause', () => mainWindow?.webContents.send('media:play-pause'));
+  globalShortcut.register('MediaNextTrack', () => mainWindow?.webContents.send('media:next'));
+  globalShortcut.register('MediaPreviousTrack', () => mainWindow?.webContents.send('media:prev'));
+
+  // 1. BitChord-style In-App Google Sign-In for YouTube Music
+  ipcMain.handle('yt:open-login-window', () => {
+    return new Promise((resolve) => {
+      if (loginWindow) {
+        loginWindow.focus();
+        return;
+      }
+
+      loginWindow = new BrowserWindow({
+        width: 520,
+        height: 680,
+        parent: mainWindow,
+        modal: true,
+        title: 'Sign In to YouTube Music',
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true
+        }
+      });
+
+      const loginUrl = 'https://accounts.google.com/ServiceLogin?ltmpl=music&service=youtube&passive=true&continue=https%3A%2F%2Fmusic.youtube.com%2F';
+      loginWindow.loadURL(loginUrl);
+
+      // Listen for redirect to music.youtube.com
+      loginWindow.webContents.on('did-navigate', async (_, url) => {
+        if (url.includes('music.youtube.com')) {
+          try {
+            const cookies = await session.defaultSession.cookies.get({ domain: '.youtube.com' });
+            const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+            
+            // Fetch user info from YouTube Music
+            const accountRes = await fetch('https://music.youtube.com/youtubei/v1/account/account_menu', {
+              method: 'POST',
+              headers: { ...WEB_REMIX_HEADERS, 'Cookie': cookieString },
+              body: JSON.stringify({
+                context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20250101.01.00', hl: 'en', gl: 'US' } }
+              })
+            });
+
+            let userName = 'YouTube Music User';
+            let userAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+
+            if (accountRes.ok) {
+              const accountData = await accountRes.json();
+              const header = accountData?.actions?.[0]?.openPopupAction?.popup?.multiPageMenuRenderer?.header?.activeAccountHeaderRenderer;
+              if (header?.accountName?.runs?.[0]?.text) {
+                userName = header.accountName.runs[0].text;
+              }
+              if (header?.accountPhoto?.thumbnails?.[0]?.url) {
+                userAvatar = header.accountPhoto.thumbnails[0].url;
+              }
+            }
+
+            loginWindow.close();
+            loginWindow = null;
+
+            resolve({
+              success: true,
+              user: {
+                name: userName,
+                picture: userAvatar,
+                cookie: cookieString,
+                connectedAt: new Date().toISOString()
+              }
+            });
+          } catch (err) {
+            loginWindow?.close();
+            loginWindow = null;
+            resolve({ success: false, error: err.message });
+          }
+        }
+      });
+
+      loginWindow.on('closed', () => {
+        loginWindow = null;
+      });
+    });
   });
 
-  // Native Zero-CORS YouTube Search IPC Handlers
+  // 2. Native Innertube Search & Suggestions IPC Handlers (BitChord style)
   ipcMain.handle('yt:search', async (_, { query, type = 'video' }) => {
     try {
       const results = await YouTube.search(query, {
@@ -84,16 +165,19 @@ function createWindow() {
   ipcMain.handle('yt:suggestions', async (_, query) => {
     if (!query) return [];
     try {
-      const response = await fetch(
-        `https://suggestqueries-clients6.youtube.com/complete/search?client=youtube&hl=en&gl=us&ds=yt&q=${encodeURIComponent(query)}`
-      );
-      const text = await response.text();
-      const jsonMatch = text.match(/^[^(]*\((.*)\);?$/);
-      if (jsonMatch && jsonMatch[1]) {
-        const data = JSON.parse(jsonMatch[1]);
-        if (Array.isArray(data[1])) {
-          return data[1].map(item => item[0]).filter(Boolean);
-        }
+      const res = await fetch('https://music.youtube.com/youtubei/v1/music/get_search_suggestions', {
+        method: 'POST',
+        headers: WEB_REMIX_HEADERS,
+        body: JSON.stringify({
+          context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20250101.01.00', hl: 'en', gl: 'US' } },
+          input: query
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const contents = data.contents?.[0]?.searchSuggestionsSectionRenderer?.contents || [];
+        return contents.map(c => c.searchSuggestionRenderer?.suggestion?.runs?.map(r => r.text).join('')).filter(Boolean);
       }
       return [];
     } catch {

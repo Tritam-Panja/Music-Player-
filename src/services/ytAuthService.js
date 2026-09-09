@@ -26,12 +26,26 @@ export const ytAuthService = {
   },
 
   /**
+   * BitChord-style In-App Google Sign-In via Electron
+   */
+  async loginWithElectron() {
+    if (typeof window !== 'undefined' && window.electronAPI?.openLoginWindow) {
+      const result = await window.electronAPI.openLoginWindow();
+      if (result.success && result.user) {
+        this.setUser(result.user);
+        return result.user;
+      }
+      throw new Error(result.error || 'Login was cancelled or failed.');
+    }
+    throw new Error('In-app Google window is available in desktop app mode.');
+  },
+
+  /**
    * Connect with Google OAuth Access Token
    */
   async loginWithAccessToken(accessToken) {
     if (!accessToken) throw new Error('Access token is required');
 
-    // 1. Fetch User Profile
     const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -101,7 +115,7 @@ export const ytAuthService = {
               author: user.name,
               thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url,
               trackCount: item.contentDetails?.itemCount || 0,
-              tracks: [] // Will load tracks on demand
+              tracks: []
             });
           }
         }
@@ -110,17 +124,17 @@ export const ytAuthService = {
       }
     }
 
-    // 2. Add Liked Music default synced collection
+    // 2. Add Liked Music default collection
     const likedMusicPlaylist = {
-      id: `yt-liked-${user.id}`,
-      title: `${user.name}'s Liked Songs`,
-      description: 'Your synced YouTube liked music & favorites',
+      id: `yt-liked-${user.id || 'me'}`,
+      title: `${user.name}'s Liked Music`,
+      description: 'Your synced YouTube Music liked songs & favorites',
       author: user.name,
       thumbnail: user.picture,
       tracks: [
         {
           id: 'jfKfPfyJRdk',
-          title: 'Lofi Hip Hop Radio',
+          title: 'Lofi Hip Hop Radio - Beats to Study/Relax',
           artist: 'Lofi Girl',
           duration: 210,
           thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'
@@ -131,6 +145,13 @@ export const ytAuthService = {
           artist: 'Lofi Cosmic',
           duration: 240,
           thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500'
+        },
+        {
+          id: '5yx6BWlEVcY',
+          title: 'Chillhop Summer Vibes',
+          artist: 'Chillhop Music',
+          duration: 185,
+          thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500'
         }
       ]
     };

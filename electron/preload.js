@@ -13,4 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   search: (query, type) => ipcRenderer.invoke('yt:search', { query, type }),
   getSuggestions: (query) => ipcRenderer.invoke('yt:suggestions', query),
   getTrending: () => ipcRenderer.invoke('yt:trending'),
+
+  // BitChord-style in-app Google Login window
+  openLoginWindow: () => ipcRenderer.invoke('yt:open-login-window'),
 });
