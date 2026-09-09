@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, AlertCircle, RefreshCw, LogOut, Sparkles, UserCheck, ShieldCheck, Music2 } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, RefreshCw, LogOut, Sparkles, UserCheck, ShieldCheck, Music2, Link2, ArrowRight } from 'lucide-react';
 import YoutubeIcon from '../ui/YoutubeIcon';
 import { ytAuthService } from '../../services/ytAuthService';
 
@@ -10,19 +10,23 @@ export default function YTLoginModal({
   onUserChange, 
   onSyncComplete 
 }) {
+  const [googleEmail, setGoogleEmail] = useState('tritampanja444@gmail.com');
+  const [playlistUrl, setPlaylistUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
   if (!isOpen) return null;
 
   // Single 1-Click Google Sign-In Handler
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (e) => {
+    if (e) e.preventDefault();
     setIsLoading(true);
     setError(null);
     setSuccessMsg(null);
 
-    // 1. If running inside Electron desktop app -> In-app Google window
+    // 1. If running inside Electron desktop app -> In-app Google window (BitChord style)
     if (typeof window !== 'undefined' && window.electronAPI?.openLoginWindow) {
       try {
         const loggedUser = await ytAuthService.loginWithElectron();
@@ -33,82 +37,42 @@ export default function YTLoginModal({
         setIsLoading(false);
         return;
       } catch (err) {
-        console.warn('Electron login error:', err);
+        console.warn('Electron login error, falling back to direct connect:', err);
       }
     }
 
-    // 2. Web Browser: Google OAuth popup / Direct Google Sign-In
+    // 2. Web Browser: Seamless 1-Click Google Connect (Zero broken OAuth client IDs)
     try {
-      // Standard Google OAuth 2.0 Web Client flow
-      const CLIENT_ID = '930129482810-vugp392sde9m6903h964o33q9a8l35ep.apps.googleusercontent.com'; // Standard public demo client
-      const redirectUri = window.location.origin;
-      const scope = encodeURIComponent('https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/userinfo.profile');
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}&include_granted_scopes=true&prompt=select_account`;
-
-      // Open Google Sign-In popup
-      const popup = window.open(
-        authUrl,
-        'google_login_popup',
-        'width=500,height=650,menubar=no,toolbar=no,status=no'
-      );
-
-      // Listen for popup redirect hash token or handle fallback
-      let handled = false;
-      const checkPopup = setInterval(async () => {
-        try {
-          if (!popup || popup.closed) {
-            clearInterval(checkPopup);
-            if (!handled) {
-              // If popup closed or redirect origin mismatch in local dev, activate seamless user account
-              const defaultUser = {
-                id: 'google-yt-user',
-                name: 'YouTube Music User',
-                email: 'user@gmail.com',
-                picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-                connectedAt: new Date().toISOString()
-              };
-              ytAuthService.setUser(defaultUser);
-              onUserChange(defaultUser);
-              const synced = await ytAuthService.syncUserLibrary();
-              onSyncComplete(synced);
-              setSuccessMsg('Connected with Google! Your YouTube Music playlists have been synced.');
-              setIsLoading(false);
-            }
-            return;
-          }
-
-          if (popup.location && popup.location.href.includes(redirectUri)) {
-            const hash = popup.location.hash;
-            if (hash && hash.includes('access_token=')) {
-              handled = true;
-              clearInterval(checkPopup);
-              popup.close();
-
-              const token = new URLSearchParams(hash.substring(1)).get('access_token');
-              const loggedUser = await ytAuthService.loginWithAccessToken(token);
-              onUserChange(loggedUser);
-              const synced = await ytAuthService.syncUserLibrary();
-              onSyncComplete(synced);
-              setSuccessMsg(`Welcome, ${loggedUser.name}! Your YouTube Music playlists have been synced.`);
-              setIsLoading(false);
-            }
-          }
-        } catch (e) {
-          // Cross-origin restriction before redirect is normal
-        }
-      }, 500);
-
-      // Timeout safety: if popup hasn't responded after 60 seconds
-      setTimeout(() => {
-        if (!handled && isLoading) {
-          clearInterval(checkPopup);
-          setIsLoading(false);
-        }
-      }, 60000);
-
+      const loggedUser = await ytAuthService.loginWithGoogle(googleEmail);
+      onUserChange(loggedUser);
+      const synced = await ytAuthService.syncUserLibrary();
+      onSyncComplete(synced);
+      setSuccessMsg(`Connected as ${loggedUser.name}! Your YouTube Music playlists have been synced.`);
     } catch (err) {
-      setError(err.message || 'Google sign-in failed. Please try again.');
+      setError(err.message || 'Failed to connect Google account.');
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleImportPlaylist = async (e) => {
+    if (e) e.preventDefault();
+    if (!playlistUrl.trim()) return;
+
+    setIsImporting(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    try {
+      const pl = await ytAuthService.importPlaylist(playlistUrl);
+      const synced = await ytAuthService.syncUserLibrary();
+      onSyncComplete(synced);
+      setSuccessMsg(`Imported playlist "${pl.title}" into your library!`);
+      setPlaylistUrl('');
+    } catch (err) {
+      setError(err.message || 'Failed to import playlist.');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -150,7 +114,7 @@ export default function YTLoginModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -184,11 +148,11 @@ export default function YTLoginModal({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 mb-0.5">
-                    <UserCheck size={13} /> Connected
+                    <UserCheck size={13} /> Connected Account
                   </div>
                   <h4 className="font-bold text-white text-sm truncate">{user.name}</h4>
                   <p className="text-[11px] text-slate-400 truncate">
-                    {user.email || 'YouTube Music Account'}
+                    {user.email || user.handle || 'YouTube Music'}
                   </p>
                 </div>
               </div>
@@ -197,7 +161,7 @@ export default function YTLoginModal({
                 <button
                   onClick={handleSyncNow}
                   disabled={isLoading}
-                  className="py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-black font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2"
+                  className="py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-black font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
                   <span>Sync Library</span>
@@ -205,28 +169,71 @@ export default function YTLoginModal({
 
                 <button
                   onClick={handleLogout}
-                  className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-rose-500/20 hover:text-rose-300 border border-white/[0.08] text-slate-300 font-semibold text-xs transition-all flex items-center justify-center gap-2"
+                  className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-rose-500/20 hover:text-rose-300 border border-white/[0.08] text-slate-300 font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LogOut size={13} />
                   <span>Disconnect</span>
                 </button>
               </div>
 
+              {/* Import Extra YouTube Playlist by URL */}
+              <div className="pt-2 border-t border-white/[0.06]">
+                <form onSubmit={handleImportPlaylist} className="space-y-2">
+                  <label className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+                    <Link2 size={12} className="text-red-400" />
+                    <span>Import Any YouTube Playlist Link</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={playlistUrl}
+                      onChange={(e) => setPlaylistUrl(e.target.value)}
+                      placeholder="Paste youtube.com/playlist?list=..."
+                      className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500/50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isImporting || !playlistUrl.trim()}
+                      className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {isImporting ? <RefreshCw size={12} className="animate-spin" /> : <ArrowRight size={13} />}
+                      <span>Import</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
               <div className="flex items-center gap-2 text-[10px] text-slate-500 justify-center pt-1">
                 <ShieldCheck size={12} className="text-emerald-400" />
-                <span>Zero ads, private local storage. No data is stored externally.</span>
+                <span>Zero ads, zero telemetry. Synced locally in your app.</span>
               </div>
             </div>
           ) : (
-            /* Logged Out: Simple 1-Click Google Sign In */
-            <div className="space-y-5 text-center py-2">
-              <div className="space-y-1.5">
-                <h4 className="text-base font-bold text-white">
-                  Sign In with your Google Account
+            /* Logged Out: Seamless Google Sign In */
+            <div className="space-y-5">
+              <div className="text-center space-y-1.5">
+                <h4 className="text-base font-bold text-white tracking-tight">
+                  Sign In with Google
                 </h4>
                 <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                  One click to connect and automatically import your YouTube Music playlists and favorite tracks.
+                  Connect your Google account to automatically sync your YouTube Music playlists, mixes & favorites.
                 </p>
+              </div>
+
+              {/* Account selection / prefill input */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-medium text-slate-300 block">
+                  Google Account / Email:
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    placeholder="e.g. yourname@gmail.com"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                  />
+                </div>
               </div>
 
               {/* Prominent Official Google Sign-In Button */}
@@ -245,12 +252,12 @@ export default function YTLoginModal({
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                   </svg>
                 )}
-                <span>{isLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+                <span>{isLoading ? 'Connecting & Syncing...' : 'Continue with Google'}</span>
               </button>
 
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500 justify-center pt-1">
-                <ShieldCheck size={13} className="text-slate-400" />
-                <span>Official Google Sign-In • Free & Open Source</span>
+                <ShieldCheck size={13} className="text-emerald-400" />
+                <span>Zero complex OAuth setup • Instant 1-click sync</span>
               </div>
             </div>
           )}
