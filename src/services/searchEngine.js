@@ -135,6 +135,10 @@ export const searchEngine = {
   /**
    * Get Top 50 Trending Global Hits & Charts
    */
+  async getTrending() {
+    return this.getTrendingCharts();
+  },
+
   async getTrendingCharts() {
     // 1. Electron IPC
     if (typeof window !== 'undefined' && window.electronAPI?.getTrending) {

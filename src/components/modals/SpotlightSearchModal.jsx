@@ -21,9 +21,12 @@ export default function SpotlightSearchModal({
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
       // Load trending tracks if empty
-      searchEngine.getTrending().then((tracks) => {
-        if (tracks && tracks.length > 0) setTrending(tracks);
-      });
+      const fetchTrending = searchEngine.getTrending ? searchEngine.getTrending() : searchEngine.getTrendingCharts();
+      Promise.resolve(fetchTrending)
+        .then((tracks) => {
+          if (tracks && tracks.length > 0) setTrending(tracks);
+        })
+        .catch((err) => console.warn('Trending fetch warning:', err));
     } else {
       setQuery('');
       setResults([]);
