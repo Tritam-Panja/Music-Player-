@@ -92,31 +92,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Global Keyboard Shortcuts (Ctrl+K for search, Space for play/pause, Arrow keys)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Don't trigger if typing in an input
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsSearchOpen((prev) => !prev);
-      } else if (e.code === 'Space') {
-        e.preventDefault();
-        audioEngine.togglePlay();
-      } else if (e.code === 'ArrowRight' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        playNext();
-      } else if (e.code === 'ArrowLeft' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        playPrev();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [playNext, playPrev]);
-
   // Play next track handler
   const playNext = useCallback(() => {
     if (queue.length === 0) return;
@@ -161,6 +136,31 @@ export default function App() {
       setHistory(storageService.addToHistory(prevTrack));
     }
   }, [queue, currentIndex, repeatMode, currentTime]);
+
+  // Global Keyboard Shortcuts (Ctrl+K for search, Space for play/pause, Arrow keys)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if typing in an input
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        audioEngine.togglePlay();
+      } else if (e.code === 'ArrowRight' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        playNext();
+      } else if (e.code === 'ArrowLeft' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        playPrev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [playNext, playPrev]);
 
   // Track playback ended
   useEffect(() => {
