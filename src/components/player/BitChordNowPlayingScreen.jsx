@@ -151,9 +151,9 @@ export default function BitChordNowPlayingScreen({
   };
 
   return (
-    <div className="relative w-full min-h-[calc(100vh-140px)] flex flex-col justify-between p-6 lg:p-10 max-w-7xl mx-auto">
+    <div className="relative w-full min-h-[calc(100vh-140px)] flex flex-col justify-between p-3 sm:p-6 lg:p-10 pb-28 sm:pb-32 max-w-7xl mx-auto">
       {/* Top Bar inside Player Studio */}
-      <div className="flex items-center justify-between z-10">
+      <div className="flex items-center justify-between z-10 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -168,11 +168,24 @@ export default function BitChordNowPlayingScreen({
           </span>
         </div>
 
-        {/* View Switcher Capsule (Lyrics / Queue / Visualizer / Stats) */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-2xl shadow-xl">
+        {/* View Switcher Capsule (Track/Vinyl on mobile | Lyrics / Queue / Visualizer / Stats) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-2xl shadow-xl">
+          {/* Mobile-only Track / Disc view button */}
+          <button
+            onClick={() => setActiveTab('vinyl')}
+            className={`lg:hidden px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+              activeTab === 'vinyl'
+                ? 'bg-white text-black shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+            }`}
+          >
+            <Music size={13} />
+            <span>Track</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('lyrics')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'lyrics'
                 ? 'bg-white text-black shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
@@ -184,26 +197,27 @@ export default function BitChordNowPlayingScreen({
 
           <button
             onClick={() => setActiveTab('queue')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'queue'
                 ? 'bg-white text-black shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
             <ListMusic size={13} />
-            <span>Up Next ({queue.length})</span>
+            <span className="hidden sm:inline">Up Next ({queue.length})</span>
+            <span className="sm:hidden">Queue</span>
           </button>
 
           <button
             onClick={() => setActiveTab('visualizer')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'visualizer'
                 ? 'bg-white text-black shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
             <Activity size={13} />
-            <span>Visualizer</span>
+            <span className="hidden sm:inline">Visualizer</span>
           </button>
 
           <button
@@ -224,26 +238,28 @@ export default function BitChordNowPlayingScreen({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 my-auto items-center py-6">
         
         {/* LEFT: 3D Album Vinyl & Track Metadata (5 cols on wide screens) */}
-        <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
+        <div className={`lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-5 sm:space-y-6 ${
+          activeTab === 'vinyl' ? 'flex' : 'hidden lg:flex'
+        }`}>
           {/* Interactive 3D Card with Vinyl Disc */}
           <div 
-            className="relative group cursor-pointer perspective-[1000px] select-none"
+            className="relative group cursor-pointer perspective-[1000px] select-none my-2 sm:my-0"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={{ perspective: 1000 }}
           >
             <div 
-              className="relative transition-transform duration-200 ease-out"
+              className="relative transition-transform duration-200 ease-out flex items-center justify-center"
               style={{
                 transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
               }}
             >
               {/* Spinning Vinyl Record Disc (slides out when playing) */}
               <div 
-                className={`absolute top-2 right-0 w-64 h-64 sm:w-72 sm:h-72 rounded-full shadow-2xl transition-all duration-700 ease-out -z-10 ${
+                className={`absolute top-1 sm:top-2 right-0 w-44 h-44 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-full shadow-2xl transition-all duration-700 ease-out -z-10 ${
                   isPlaying 
-                    ? 'translate-x-20 sm:translate-x-28 rotate-180 opacity-95' 
-                    : 'translate-x-4 opacity-50'
+                    ? 'translate-x-12 sm:translate-x-20 lg:translate-x-28 rotate-180 opacity-95' 
+                    : 'translate-x-2 sm:translate-x-4 opacity-40'
                 }`}
                 style={{
                   background: 'radial-gradient(circle, #18181b 0%, #09090b 45%, #27272a 46%, #09090b 55%, #18181b 70%, #09090b 100%)',
@@ -251,9 +267,9 @@ export default function BitChordNowPlayingScreen({
                 }}
               >
                 {/* Vinyl Grooves Texture */}
-                <div className="absolute inset-4 rounded-full border border-white/5 opacity-40 pointer-events-none" />
-                <div className="absolute inset-10 rounded-full border border-white/5 opacity-40 pointer-events-none" />
-                <div className="absolute inset-16 rounded-full border border-white/5 opacity-40 pointer-events-none" />
+                <div className="absolute inset-3 sm:inset-4 rounded-full border border-white/5 opacity-40 pointer-events-none" />
+                <div className="absolute inset-7 sm:inset-10 rounded-full border border-white/5 opacity-40 pointer-events-none" />
+                <div className="absolute inset-12 sm:inset-16 rounded-full border border-white/5 opacity-40 pointer-events-none" />
                 
                 {/* Vinyl Center Label with Spinning Track Cover */}
                 <div 
@@ -266,12 +282,12 @@ export default function BitChordNowPlayingScreen({
                     alt="Center label"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 m-auto w-3.5 h-3.5 rounded-full bg-black border border-white/30" />
+                  <div className="absolute inset-0 m-auto w-2.5 sm:w-3.5 h-2.5 sm:h-3.5 rounded-full bg-black border border-white/30" />
                 </div>
               </div>
 
               {/* Main Album Artwork Jacket */}
-              <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-3xl overflow-hidden glass-card border border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] group-hover:shadow-[0_30px_70px_-10px_rgba(56,189,248,0.25)] transition-shadow duration-500">
+              <div className="relative w-44 h-44 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl sm:rounded-3xl overflow-hidden glass-card border border-white/15 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.9)] group-hover:shadow-[0_30px_70px_-10px_rgba(56,189,248,0.25)] transition-shadow duration-500">
                 <img
                   src={track?.thumbnail || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'}
                   alt={track?.title || 'Now Playing'}
@@ -282,7 +298,7 @@ export default function BitChordNowPlayingScreen({
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.08] to-transparent pointer-events-none" />
                 
                 {/* Vinyl Jacket Seam Border */}
-                <div className="absolute inset-0 border border-white/10 rounded-3xl pointer-events-none" />
+                <div className="absolute inset-0 border border-white/10 rounded-2xl sm:rounded-3xl pointer-events-none" />
               </div>
             </div>
           </div>
@@ -372,7 +388,9 @@ export default function BitChordNowPlayingScreen({
         </div>
 
         {/* RIGHT: Dynamic Multi-View Panel (7 cols on wide screens) */}
-        <div className="lg:col-span-7 h-[420px] sm:h-[480px] rounded-3xl glass-panel border border-white/10 p-6 flex flex-col justify-between overflow-hidden shadow-2xl relative">
+        <div className={`lg:col-span-7 h-[420px] sm:h-[480px] rounded-3xl glass-panel border border-white/10 p-5 sm:p-6 flex-col justify-between overflow-hidden shadow-2xl relative ${
+          activeTab === 'vinyl' ? 'hidden lg:flex' : 'flex'
+        }`}>
           
           {/* 1. Lyrics Mode (Karaoke Synchronized) */}
           {activeTab === 'lyrics' && (

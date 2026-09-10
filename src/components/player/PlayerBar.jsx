@@ -63,96 +63,96 @@ export default function PlayerBar({
       <div className="glass-dock rounded-2xl px-4 py-2.5 md:px-5 md:py-3 flex flex-col gap-1.5 transition-all">
         <div className="flex items-center justify-between gap-4">
           {/* Left: Track Information */}
-          <div className="flex items-center gap-3 min-w-0 w-1/4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial sm:w-1/4">
             <div className="relative group/cover flex-shrink-0">
               <img 
                 src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'} 
                 alt={track.title} 
-                className="w-11 h-11 md:w-12 md:h-12 rounded-xl object-cover shadow-sm border border-white/10"
+                className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl object-cover shadow-sm border border-white/10"
               />
             </div>
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs md:text-sm font-bold text-white truncate hover:underline cursor-pointer">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h4 className="text-xs sm:text-sm font-bold text-white truncate hover:underline cursor-pointer">
                   {track.title}
                 </h4>
                 <span className="hidden lg:inline text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-400 font-semibold border border-white/5">
                   Lossless
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 truncate mt-0.5 font-medium">
+              <p className="text-[10px] sm:text-[11px] text-slate-400 truncate mt-0.5 font-medium">
                 {track.artist}
               </p>
             </div>
 
             <button 
               onClick={onToggleFavorite}
-              className={`p-1.5 rounded-full transition-colors flex-shrink-0 ${
+              className={`p-1 sm:p-1.5 rounded-full transition-colors flex-shrink-0 ${
                 isFavorite 
                   ? 'text-rose-500' 
                   : 'text-slate-400 hover:text-white'
               }`}
               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+              <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} />
             </button>
           </div>
 
           {/* Center: Controls & Timeline */}
-          <div className="flex flex-col items-center flex-1 max-w-xl">
-            <div className="flex items-center gap-3 md:gap-4 mb-1">
+          <div className="flex flex-col items-center flex-initial sm:flex-1 max-w-xl">
+            <div className="flex items-center gap-1.5 sm:gap-4 mb-1">
               <button
                 onClick={onToggleShuffle}
-                className={`p-1.5 rounded-lg transition-colors ${
+                className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
                   isShuffle ? 'text-white' : 'text-slate-500 hover:text-slate-300'
                 }`}
                 title="Shuffle"
               >
-                <Shuffle size={15} />
+                <Shuffle size={14} className="sm:w-[15px] sm:h-[15px]" />
               </button>
 
               <button
                 onClick={onPrev}
-                className="p-1.5 text-slate-400 hover:text-white transition-colors"
+                className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
                 title="Previous"
               >
-                <SkipBack size={18} />
+                <SkipBack size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
 
               <button
                 onClick={onTogglePlay}
-                className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white hover:bg-slate-100 text-black flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-slate-100 text-black flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all"
                 title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
               >
                 {isPlaying ? (
-                  <Pause size={17} className="fill-black" />
+                  <Pause size={15} className="fill-black sm:w-[17px] sm:h-[17px]" />
                 ) : (
-                  <Play size={17} className="fill-black ml-0.5" />
+                  <Play size={15} className="fill-black ml-0.5 sm:w-[17px] sm:h-[17px]" />
                 )}
               </button>
 
               <button
                 onClick={onNext}
-                className="p-1.5 text-slate-400 hover:text-white transition-colors"
+                className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
                 title="Next"
               >
-                <SkipForward size={18} />
+                <SkipForward size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
 
               <button
                 onClick={onToggleRepeat}
-                className={`p-1.5 rounded-lg transition-colors ${
+                className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
                   repeatMode !== 'off' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
                 }`}
                 title={`Repeat: ${repeatMode}`}
               >
-                {repeatMode === 'one' ? <Repeat1 size={15} /> : <Repeat size={15} />}
+                {repeatMode === 'one' ? <Repeat1 size={14} /> : <Repeat size={14} />}
               </button>
             </div>
 
             {/* Hairline Timeline Scrubber */}
-            <div className="w-full flex items-center gap-2 text-[10px] text-slate-500 font-mono select-none">
+            <div className="w-full hidden sm:flex items-center gap-2 text-[10px] text-slate-500 font-mono select-none">
               <span className="w-8 text-right font-medium">{formatDuration(displayTime)}</span>
               <div className="relative flex-1 group flex items-center h-3.5">
                 <div className="absolute inset-x-0 h-[3px] group-hover:h-[4px] bg-white/10 rounded-full overflow-hidden transition-all">
@@ -178,31 +178,31 @@ export default function PlayerBar({
           </div>
 
           {/* Right: Actions, Lyrics, Volume */}
-          <div className="flex items-center justify-end gap-2 md:gap-3 w-1/4">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-3 w-auto sm:w-1/4">
             {/* Synced Lyrics */}
             <button
               onClick={onToggleLyrics}
-              className={`p-2 rounded-xl transition-all ${
+              className={`p-1.5 sm:p-2 rounded-xl transition-all ${
                 isLyricsOpen 
                   ? 'bg-white/10 text-white' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
               title="Lyrics"
             >
-              <Mic2 size={16} />
+              <Mic2 size={15} className="sm:w-4 sm:h-4" />
             </button>
 
             {/* Queue Trigger */}
             <button
               onClick={onToggleQueue}
-              className={`p-2 rounded-xl transition-all ${
+              className={`p-1.5 sm:p-2 rounded-xl transition-all ${
                 isQueueOpen 
                   ? 'bg-white/10 text-white' 
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
               title="Queue"
             >
-              <ListMusic size={16} />
+              <ListMusic size={15} className="sm:w-4 sm:h-4" />
             </button>
 
             {/* Compact Volume */}

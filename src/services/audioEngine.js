@@ -44,18 +44,24 @@ class AudioEngine {
       container = document.createElement('div');
       container.id = 'yt-audio-container';
       container.style.position = 'fixed';
-      container.style.bottom = '-9999px';
-      container.style.right = '-9999px';
-      container.style.width = '1px';
-      container.style.height = '1px';
-      container.style.opacity = '0';
+      container.style.bottom = '0px';
+      container.style.right = '0px';
+      container.style.width = '16px';
+      container.style.height = '16px';
+      container.style.opacity = '0.01';
       container.style.pointerEvents = 'none';
+      container.style.zIndex = '-999';
       document.body.appendChild(container);
     }
 
+    // Determine reliable origin for web, electron, and capacitor
+    const currentOrigin = typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:')
+      ? window.location.origin
+      : 'https://www.youtube.com';
+
     this.ytPlayer = new window.YT.Player('yt-audio-container', {
-      height: '1',
-      width: '1',
+      height: '16',
+      width: '16',
       playerVars: {
         autoplay: 1,
         controls: 0,
@@ -64,12 +70,19 @@ class AudioEngine {
         rel: 0,
         modestbranding: 1,
         iv_load_policy: 3,
-        playsinline: 1
+        playsinline: 1,
+        enablejsapi: 1,
+        origin: currentOrigin
       },
       events: {
-        onReady: (event) => {
+        onReady: () => {
           this.isReady = true;
-          this.ytPlayer.setVolume(this.volume * 100);
+          try {
+            this.ytPlayer.setVolume(this.volume * 100);
+          } catch {}
+          if (this.currentTrack && this.isPlaying) {
+            this.loadAndPlay(this.currentTrack.id);
+          }
           this.emit();
         },
         onStateChange: (event) => {
@@ -91,11 +104,69 @@ class AudioEngine {
           this.emit();
         },
         onError: (e) => {
-          console.warn('Audio playback warning:', e.data);
-          // If a video has embedding restrictions, skip to next or notify
-          this.emitEvent('error', e.data);
+          console.warn('YouTube IFrame warning code:', e.data);
+          // If embedding is blocked (101 or 150) or failed, attempt direct stream fallback or auto-advance
+          if (e.data === 150 || e.data === 101 || e.data === 5) {
+            this.tryDirectAudioFallback();
+          } else {
+            this.emitEvent('error', e.data);
+          }
         }
       }
+    });
+  }
+
+  loadAndPlay(id) {
+    if (!id || !this.ytPlayer) return;
+    try {
+      if (typeof this.ytPlayer.loadVideoById === 'function') {
+        this.ytPlayer.loadVideoById({ videoId: id, suggestedQuality: 'small' });
+        this.ytPlayer.playVideo();
+      } else if (typeof this.ytPlayer.cueVideoById === 'function') {
+        this.ytPlayer.cueVideoById(id);
+        this.ytPlayer.playVideo();
+      }
+    } catch (e) {
+      console.warn('Error loading video in YT Player:', e);
+    }
+  }
+
+  tryDirectAudioFallback() {
+    // Invidious / Piped audio proxy fallback for embedding-restricted videos
+    if (!this.currentTrack?.id) return;
+    const invidiousInstances = [
+      `https://inv.tux.pizza/latest_version?id=${this.currentTrack.id}&itag=140`,
+      `https://y.com.sb/latest_version?id=${this.currentTrack.id}&itag=140`,
+      `https://invidious.nerdvpn.de/latest_version?id=${this.currentTrack.id}&itag=140`
+    ];
+
+    if (!this.fallbackAudio) {
+      this.fallbackAudio = new Audio();
+      this.fallbackAudio.addEventListener('playing', () => {
+        this.isPlaying = true;
+        this.startProgressTimer();
+        this.updateMediaSessionState('playing');
+        this.emit();
+      });
+      this.fallbackAudio.addEventListener('pause', () => {
+        this.isPlaying = false;
+        this.stopProgressTimer();
+        this.updateMediaSessionState('paused');
+        this.emit();
+      });
+      this.fallbackAudio.addEventListener('ended', () => {
+        this.isPlaying = false;
+        this.stopProgressTimer();
+        this.emitEvent('ended');
+      });
+    }
+
+    this.fallbackAudio.src = invidiousInstances[0];
+    this.fallbackAudio.volume = this.volume;
+    this.fallbackAudio.play().catch(err => {
+      console.warn('Fallback stream failed:', err);
+      // Auto-advance to next track in queue if track is unplayable
+      this.emitEvent('ended');
     });
   }
 
@@ -106,16 +177,24 @@ class AudioEngine {
     this.duration = track.duration || 0;
     this.isPlaying = true;
 
-    if (this.ytPlayer && this.ytPlayer.loadVideoById) {
-      this.ytPlayer.loadVideoById(track.id);
-      this.ytPlayer.playVideo();
+    if (this.fallbackAudio) {
+      this.fallbackAudio.pause();
+      this.fallbackAudio.src = '';
+    }
+
+    if (this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function') {
+      this.loadAndPlay(track.id);
     } else {
       // Retry once player is ready
+      let attempts = 0;
       const checkReady = setInterval(() => {
-        if (this.ytPlayer && this.ytPlayer.loadVideoById) {
+        attempts++;
+        if (this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function') {
           clearInterval(checkReady);
-          this.ytPlayer.loadVideoById(track.id);
-          this.ytPlayer.playVideo();
+          this.loadAndPlay(track.id);
+        } else if (attempts > 15) {
+          clearInterval(checkReady);
+          this.tryDirectAudioFallback();
         }
       }, 200);
     }
@@ -125,15 +204,20 @@ class AudioEngine {
   }
 
   pause() {
-    if (this.ytPlayer && this.ytPlayer.pauseVideo) {
+    if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
       this.ytPlayer.pauseVideo();
+    }
+    if (this.fallbackAudio && !this.fallbackAudio.paused) {
+      this.fallbackAudio.pause();
     }
     this.isPlaying = false;
     this.emit();
   }
 
   resume() {
-    if (this.ytPlayer && this.ytPlayer.playVideo) {
+    if (this.fallbackAudio && this.fallbackAudio.src && this.fallbackAudio.paused) {
+      this.fallbackAudio.play().catch(() => {});
+    } else if (this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') {
       this.ytPlayer.playVideo();
     }
     this.isPlaying = true;
@@ -149,7 +233,11 @@ class AudioEngine {
   }
 
   seek(seconds) {
-    if (this.ytPlayer && this.ytPlayer.seekTo) {
+    if (this.fallbackAudio && this.fallbackAudio.src) {
+      this.fallbackAudio.currentTime = seconds;
+      this.currentTime = seconds;
+      this.emit();
+    } else if (this.ytPlayer && typeof this.ytPlayer.seekTo === 'function') {
       this.ytPlayer.seekTo(seconds, true);
       this.currentTime = seconds;
       this.emit();
@@ -158,8 +246,11 @@ class AudioEngine {
 
   setVolume(vol) {
     this.volume = Math.max(0, Math.min(1, vol));
-    if (this.ytPlayer && this.ytPlayer.setVolume) {
+    if (this.ytPlayer && typeof this.ytPlayer.setVolume === 'function') {
       this.ytPlayer.setVolume(this.volume * 100);
+    }
+    if (this.fallbackAudio) {
+      this.fallbackAudio.volume = this.volume;
     }
     this.emit();
   }
@@ -179,8 +270,13 @@ class AudioEngine {
   startProgressTimer() {
     this.stopProgressTimer();
     this.progressInterval = setInterval(() => {
-      if (this.ytPlayer && this.ytPlayer.getCurrentTime) {
-        this.currentTime = this.ytPlayer.getCurrentTime();
+      if (this.fallbackAudio && this.fallbackAudio.src && !this.fallbackAudio.paused) {
+        this.currentTime = this.fallbackAudio.currentTime || 0;
+        const dur = this.fallbackAudio.duration;
+        if (dur && !isNaN(dur) && dur > 0) this.duration = dur;
+        this.emit();
+      } else if (this.ytPlayer && typeof this.ytPlayer.getCurrentTime === 'function') {
+        this.currentTime = this.ytPlayer.getCurrentTime() || 0;
         const dur = this.ytPlayer.getDuration();
         if (dur && dur > 0) this.duration = dur;
         this.emit();

@@ -30,8 +30,31 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      webSecurity: false
+      webSecurity: false,
+      allowRunningInsecureContent: true,
+      autoplayPolicy: 'no-user-gesture'
     }
+  });
+
+  // Intercept headers so YouTube allows embedded playback from Electron's file:// or custom scheme
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    const { url, requestHeaders } = details;
+    if (url.includes('youtube.com') || url.includes('googlevideo.com') || url.includes('ytimg.com')) {
+      requestHeaders['Origin'] = 'https://www.youtube.com';
+      requestHeaders['Referer'] = 'https://www.youtube.com/';
+      requestHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+    }
+    callback({ requestHeaders });
+  });
+
+  // Strip restrictive framing headers from YouTube embeds
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const responseHeaders = { ...details.responseHeaders };
+    delete responseHeaders['x-frame-options'];
+    delete responseHeaders['X-Frame-Options'];
+    delete responseHeaders['content-security-policy'];
+    delete responseHeaders['Content-Security-Policy'];
+    callback({ responseHeaders });
   });
 
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
