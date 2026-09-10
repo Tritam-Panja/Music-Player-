@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import AmbientGlow from './components/ui/AmbientGlow';
-import GlassSidebar from './components/layout/GlassSidebar';
-import GlassHeader from './components/layout/GlassHeader';
-import PlayerBar from './components/player/PlayerBar';
-import GlassQueue from './components/player/GlassQueue';
-import LyricsView from './components/player/LyricsView';
-import HomeView from './components/views/HomeView';
-import SearchView from './components/views/SearchView';
+import BitChordMeshBackdrop from './components/player/BitChordMeshBackdrop';
+import BitChordNavbar from './components/layout/BitChordNavbar';
+import BitChordNowPlayingScreen from './components/player/BitChordNowPlayingScreen';
+import BitChordLibraryView from './components/views/BitChordLibraryView';
 import PlaylistView from './components/views/PlaylistView';
+import PlayerBar from './components/player/PlayerBar';
+import SpotlightSearchModal from './components/modals/SpotlightSearchModal';
 import YTImportModal from './components/modals/YTImportModal';
 import YTLoginModal from './components/modals/YTLoginModal';
 
@@ -16,16 +14,14 @@ import { storageService } from './services/storageService';
 import { ytAuthService } from './services/ytAuthService';
 
 export default function App() {
-  // Navigation & Views
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'search' | 'playlist' | 'favorites'
+  // Navigation: 'player' (default!) | 'library' | 'playlist'
+  const [currentView, setCurrentView] = useState('player');
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
 
-  // Modals & Panels
+  // Modals
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isLyricsOpen, setIsLyricsOpen] = useState(false);
-  const [isQueueOpen, setIsQueueOpen] = useState(false);
 
   // Library & Data State
   const [playlists, setPlaylists] = useState([]);
@@ -45,9 +41,9 @@ export default function App() {
   const [volume, setVolume] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
-  const [repeatMode, setRepeatMode] = useState('off'); // 'off' | 'all' | 'one'
+  const [repeatMode, setRepeatMode] = useState('off');
 
-  // Initialize data from local storage
+  // Initialize data
   useEffect(() => {
     const loadedPlaylists = storageService.getPlaylists();
     const loadedFavorites = storageService.getFavorites();
@@ -67,7 +63,7 @@ export default function App() {
       setRepeatMode(savedSettings.repeatMode ?? 'off');
     }
 
-    // Default queue from initial playlist
+    // Default queue from initial playlist or top track
     if (loadedPlaylists.length > 0 && loadedPlaylists[0].tracks?.length > 0) {
       setQueue(loadedPlaylists[0].tracks);
       setCurrentTrack(loadedPlaylists[0].tracks[0]);
@@ -87,6 +83,31 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // Global Keyboard Shortcuts (Ctrl+K for search, Space for play/pause, Arrow keys)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if typing in an input
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        audioEngine.togglePlay();
+      } else if (e.code === 'ArrowRight' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        playNext();
+      } else if (e.code === 'ArrowLeft' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        playPrev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [playNext, playPrev]);
 
   // Play next track handler
   const playNext = useCallback(() => {
@@ -133,114 +154,50 @@ export default function App() {
     }
   }, [queue, currentIndex, repeatMode, currentTime]);
 
-  // Handle track end event from audioEngine
+  // Track playback ended
   useEffect(() => {
     const handleEnded = () => playNext();
-    const handleNext = () => playNext();
-    const handlePrev = () => playPrev();
+    audioEngine.on('ended', handleEnded);
+    return () => audioEngine.off('ended', handleEnded);
+  }, [playNext]);
 
-    window.addEventListener('audio:ended', handleEnded);
-    window.addEventListener('audio:next', handleNext);
-    window.addEventListener('audio:prev', handlePrev);
-
-    return () => {
-      window.removeEventListener('audio:ended', handleEnded);
-      window.removeEventListener('audio:next', handleNext);
-      window.removeEventListener('audio:prev', handlePrev);
-    };
-  }, [playNext, playPrev]);
-
-  // Electron Global Media Shortcuts integration
-  useEffect(() => {
-    if (window.electronAPI) {
-      window.electronAPI.onMediaPlayPause(() => audioEngine.togglePlay());
-      window.electronAPI.onMediaNext(() => playNext());
-      window.electronAPI.onMediaPrev(() => playPrev());
+  // Play specific track
+  const handlePlayTrack = (track) => {
+    // Add to queue if not present
+    let index = queue.findIndex((t) => t.id === track.id);
+    if (index === -1) {
+      const newQueue = [...queue, track];
+      setQueue(newQueue);
+      index = newQueue.length - 1;
     }
-  }, [playNext, playPrev]);
-
-  // Keyboard Shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        audioEngine.togglePlay();
-      } else if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        audioEngine.seek(currentTime + 5);
-      } else if (e.code === 'ArrowLeft') {
-        e.preventDefault();
-        audioEngine.seek(Math.max(0, currentTime - 5));
-      } else if (e.code === 'KeyM') {
-        audioEngine.toggleMute();
-      } else if (e.code === 'KeyL') {
-        setIsLyricsOpen((prev) => !prev);
-      } else if (e.code === 'KeyQ') {
-        setIsQueueOpen((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTime]);
-
-  // Play a specific track
-  const handlePlayTrack = (track, contextPlaylist = null) => {
-    if (contextPlaylist && contextPlaylist.tracks) {
-      setQueue(contextPlaylist.tracks);
-      const idx = contextPlaylist.tracks.findIndex((t) => t.id === track.id);
-      setCurrentIndex(idx >= 0 ? idx : 0);
-    } else {
-      const existingIdx = queue.findIndex((t) => t.id === track.id);
-      if (existingIdx >= 0) {
-        setCurrentIndex(existingIdx);
-      } else {
-        const newQueue = [track, ...queue];
-        setQueue(newQueue);
-        setCurrentIndex(0);
-      }
-    }
-
+    setCurrentIndex(index);
     audioEngine.playTrack(track);
     setHistory(storageService.addToHistory(track));
   };
 
   // Play full playlist
-  const handlePlayPlaylist = (playlist, shuffle = false) => {
+  const handlePlayPlaylist = (playlist, startIndex = 0) => {
     if (!playlist.tracks || playlist.tracks.length === 0) return;
-
-    let tracks = [...playlist.tracks];
-    if (shuffle) {
-      tracks.sort(() => Math.random() - 0.5);
-    }
-
-    setQueue(tracks);
-    setCurrentIndex(0);
-    audioEngine.playTrack(tracks[0]);
-    setHistory(storageService.addToHistory(tracks[0]));
+    setQueue(playlist.tracks);
+    setCurrentIndex(startIndex);
+    audioEngine.playTrack(playlist.tracks[startIndex]);
+    setHistory(storageService.addToHistory(playlist.tracks[startIndex]));
   };
 
-  // Queue actions
+  // Add track to queue
   const handleAddToQueue = (track) => {
     setQueue((prev) => [...prev, track]);
   };
 
+  // Remove track from queue
   const handleRemoveFromQueue = (index) => {
     setQueue((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleClearQueue = () => {
-    if (currentTrack) {
-      setQueue([currentTrack]);
-      setCurrentIndex(0);
-    } else {
-      setQueue([]);
+    if (index < currentIndex) {
+      setCurrentIndex((prev) => prev - 1);
     }
   };
 
-  // Favorites
+  // Toggle favorite
   const handleToggleFavorite = (track) => {
     const updated = storageService.toggleFavorite(track);
     setFavorites(updated);
@@ -264,12 +221,6 @@ export default function App() {
     storageService.saveSettings({ volume, isMuted, repeatMode: next, isShuffle });
   };
 
-  // Navigation
-  const handleNavigate = (view, playlistId = null) => {
-    setCurrentView(view);
-    if (playlistId) setSelectedPlaylistId(playlistId);
-  };
-
   // Handle imported playlist
   const handleImportSuccess = (newPlaylist) => {
     const updated = storageService.savePlaylist(newPlaylist);
@@ -289,80 +240,74 @@ export default function App() {
     const updated = storageService.deletePlaylist(playlistId);
     setPlaylists(updated);
     if (selectedPlaylistId === playlistId) {
-      setCurrentView('home');
+      setCurrentView('player');
       setSelectedPlaylistId(null);
     }
   };
 
   // Resolve current active playlist
-  const activePlaylist = currentView === 'favorites'
-    ? {
-        id: 'favorites',
-        title: 'Liked Songs',
-        description: 'Your favorite tracks from YouTube and playlists',
-        author: 'You',
-        thumbnail: favorites[0]?.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500',
-        tracks: favorites
-      }
-    : playlists.find((p) => p.id === selectedPlaylistId);
+  const activePlaylist = playlists.find((p) => p.id === selectedPlaylistId);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden flex flex-col bg-[#07080d] text-slate-100 font-['Plus_Jakarta_Sans',sans-serif]">
-      {/* Dynamic Liquid Ambient Reactive Light Glow */}
-      <AmbientGlow currentTrack={currentTrack} />
+    <div className="relative w-screen h-screen overflow-hidden flex flex-col bg-[#07090e] text-slate-100 font-['Plus_Jakarta_Sans',sans-serif]">
+      {/* 1. BitChord Living Mesh Gradient Backdrop */}
+      <BitChordMeshBackdrop track={currentTrack} isPlaying={isPlaying} />
 
-      {/* App Layout: Sidebar + Main Content Container */}
-      <div className="flex-1 flex overflow-hidden z-10">
-        {/* Frosted Glass Sidebar */}
-        <GlassSidebar
-          currentView={currentView}
-          selectedPlaylistId={selectedPlaylistId}
-          playlists={playlists}
-          favoritesCount={favorites.length}
-          user={ytUser}
-          onNavigate={handleNavigate}
-          onOpenImportModal={() => setIsImportModalOpen(true)}
-          onOpenLoginModal={() => setIsLoginModalOpen(true)}
-          onDeletePlaylist={handleDeletePlaylist}
-        />
+      {/* 2. Top Floating Glass Navbar */}
+      <BitChordNavbar
+        currentView={currentView}
+        onViewChange={(view) => setCurrentView(view)}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        ytUser={ytUser}
+      />
 
-        {/* Main View Area */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-          {/* Glass Header */}
-          <GlassHeader
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onOpenLoginModal={() => setIsLoginModalOpen(true)}
-            currentView={currentView}
-            onNavigate={handleNavigate}
-            user={ytUser}
+      {/* 3. Main Stage: Player Studio vs Library */}
+      <main className="flex-1 overflow-y-auto pb-24 relative z-10 scrollbar-none">
+        {currentView === 'player' && (
+          <BitChordNowPlayingScreen
+            track={currentTrack}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            queue={queue}
+            currentIndex={currentIndex}
+            isFavorite={currentTrack ? isFavorite(currentTrack.id) : false}
+            onToggleFavorite={() => currentTrack && handleToggleFavorite(currentTrack)}
+            onPlayTrack={(idx) => {
+              setCurrentIndex(idx);
+              audioEngine.playTrack(queue[idx]);
+            }}
+            onRemoveFromQueue={handleRemoveFromQueue}
+            onSeek={(sec) => audioEngine.seek(sec)}
           />
+        )}
 
-          {/* Active View Router */}
-          {currentView === 'home' && (
-            <HomeView
-              playlists={playlists}
-              history={history}
-              onPlayTrack={handlePlayTrack}
-              onPlayPlaylist={handlePlayPlaylist}
-              onSelectPlaylist={(id) => handleNavigate('playlist', id)}
-              onOpenImportModal={() => setIsLoginModalOpen(true)}
-            />
-          )}
+        {currentView === 'library' && (
+          <BitChordLibraryView
+            playlists={playlists}
+            favorites={favorites}
+            history={history}
+            onPlayPlaylist={handlePlayPlaylist}
+            onPlayTrack={handlePlayTrack}
+            onSelectPlaylist={(id) => {
+              setSelectedPlaylistId(id);
+              setCurrentView('playlist');
+            }}
+            onOpenImportModal={() => setIsImportModalOpen(true)}
+            onOpenLoginModal={() => setIsLoginModalOpen(true)}
+            ytUser={ytUser}
+          />
+        )}
 
-          {currentView === 'search' && (
-            <SearchView
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onPlayTrack={handlePlayTrack}
-              onAddToQueue={handleAddToQueue}
-              onToggleFavorite={handleToggleFavorite}
-              isFavorite={isFavorite}
-              onImportPlaylist={handleImportSuccess}
-            />
-          )}
-
-          {(currentView === 'playlist' || currentView === 'favorites') && activePlaylist && (
+        {currentView === 'playlist' && activePlaylist && (
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <button
+              onClick={() => setCurrentView('library')}
+              className="mb-4 text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              ← Back to Library
+            </button>
             <PlaylistView
               playlist={activePlaylist}
               currentTrack={currentTrack}
@@ -375,25 +320,11 @@ export default function App() {
               onAddToQueue={handleAddToQueue}
               onDeletePlaylist={handleDeletePlaylist}
             />
-          )}
-        </main>
+          </div>
+        )}
+      </main>
 
-        {/* Slide-over Play Queue Drawer */}
-        <GlassQueue
-          queue={queue}
-          currentIndex={currentIndex}
-          isOpen={isQueueOpen}
-          onClose={() => setIsQueueOpen(false)}
-          onPlayTrack={(index) => {
-            setCurrentIndex(index);
-            audioEngine.playTrack(queue[index]);
-          }}
-          onRemoveTrack={handleRemoveFromQueue}
-          onClearQueue={handleClearQueue}
-        />
-      </div>
-
-      {/* Floating Bottom Liquid Glass Player Bar */}
+      {/* 4. Floating Bottom Glass Capsule Player */}
       <PlayerBar
         track={currentTrack}
         isPlaying={isPlaying}
@@ -404,8 +335,8 @@ export default function App() {
         isShuffle={isShuffle}
         repeatMode={repeatMode}
         isFavorite={currentTrack ? isFavorite(currentTrack.id) : false}
-        isQueueOpen={isQueueOpen}
-        isLyricsOpen={isLyricsOpen}
+        isQueueOpen={false}
+        isLyricsOpen={false}
         onTogglePlay={() => audioEngine.togglePlay()}
         onPrev={playPrev}
         onNext={playNext}
@@ -418,26 +349,29 @@ export default function App() {
         onToggleShuffle={handleToggleShuffle}
         onToggleRepeat={handleToggleRepeat}
         onToggleFavorite={() => currentTrack && handleToggleFavorite(currentTrack)}
-        onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
-        onToggleLyrics={() => setIsLyricsOpen((prev) => !prev)}
+        onToggleQueue={() => setCurrentView('player')}
+        onToggleLyrics={() => setCurrentView('player')}
       />
 
-      {/* Fullscreen Real-Time Synced Lyrics Modal */}
-      <LyricsView
-        track={currentTrack}
-        currentTime={currentTime}
-        isOpen={isLyricsOpen}
-        onClose={() => setIsLyricsOpen(false)}
+      {/* 5. Spotlight Search Command Palette (Ctrl + K) */}
+      <SpotlightSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onPlayTrack={(track) => {
+          handlePlayTrack(track);
+          setCurrentView('player');
+        }}
+        onAddToQueue={handleAddToQueue}
       />
 
-      {/* YouTube Playlist URL Importer Modal */}
+      {/* 6. YouTube Playlist Importer Modal */}
       <YTImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportSuccess={handleImportSuccess}
       />
 
-      {/* YouTube Account Login & Sync Modal */}
+      {/* 7. YouTube Account Login & Sync Modal */}
       <YTLoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}

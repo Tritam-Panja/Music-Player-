@@ -5,6 +5,8 @@ export function formatDuration(seconds) {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+export const formatTime = formatDuration;
+
 export function formatViews(views) {
   if (!views) return '';
   if (views >= 1000000000) return `${(views / 1000000000).toFixed(1)}B`;

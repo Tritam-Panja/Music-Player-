@@ -1,0 +1,234 @@
+import React, { useState } from 'react';
+import { 
+  Play, 
+  Heart, 
+  Clock, 
+  FolderPlus, 
+  Plus, 
+  RefreshCw, 
+  Sparkles, 
+  Music, 
+  ListMusic, 
+  Radio, 
+  Trash2,
+  ExternalLink
+} from 'lucide-react';
+import { formatTime } from '../../utils/formatters';
+
+export default function BitChordLibraryView({
+  playlists = [],
+  favorites = [],
+  history = [],
+  onPlayPlaylist,
+  onPlayTrack,
+  onSelectPlaylist,
+  onOpenImportModal,
+  onOpenLoginModal,
+  ytUser
+}) {
+  const [subTab, setSubTab] = useState('playlists'); // 'playlists' | 'favorites' | 'history'
+
+  return (
+    <div className="w-full max-w-7xl mx-auto px-6 py-8 space-y-8 animate-in fade-in duration-300">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Your Music Library</h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Synced YouTube Music playlists, favorites & listening history
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={onOpenImportModal}
+            className="px-3.5 py-2 rounded-2xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-200 hover:text-white transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <FolderPlus size={14} />
+            <span>Import Playlist URL</span>
+          </button>
+
+          <button
+            onClick={onOpenLoginModal}
+            className="px-3.5 py-2 rounded-2xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-lg flex items-center gap-2 cursor-pointer"
+          >
+            <RefreshCw size={13} />
+            <span>{ytUser ? 'Sync Google Account' : 'Connect YouTube Account'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Sub-tabs: Playlists | Liked Songs | History */}
+      <div className="flex items-center gap-2 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] w-fit">
+        <button
+          onClick={() => setSubTab('playlists')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            subTab === 'playlists'
+              ? 'bg-white text-black shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <ListMusic size={14} />
+          <span>Playlists ({playlists.length})</span>
+        </button>
+
+        <button
+          onClick={() => setSubTab('favorites')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            subTab === 'favorites'
+              ? 'bg-white text-black shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Heart size={14} fill={subTab === 'favorites' ? 'currentColor' : 'none'} />
+          <span>Favorites ({favorites.length})</span>
+        </button>
+
+        <button
+          onClick={() => setSubTab('history')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            subTab === 'history'
+              ? 'bg-white text-black shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Clock size={14} />
+          <span>History ({history.length})</span>
+        </button>
+      </div>
+
+      {/* 1. Playlists Tab Content */}
+      {subTab === 'playlists' && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {playlists.map((pl) => (
+            <div
+              key={pl.id}
+              onClick={() => onSelectPlaylist(pl.id)}
+              className="group relative p-3 rounded-2xl glass-card border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer flex flex-col justify-between"
+            >
+              <div className="relative aspect-square rounded-xl overflow-hidden mb-3 border border-white/10 shadow-lg">
+                <img
+                  src={pl.thumbnail || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500'}
+                  alt={pl.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                
+                {/* Floating Play Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPlayPlaylist(pl);
+                  }}
+                  className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all cursor-pointer"
+                >
+                  <Play size={16} className="fill-current ml-0.5" />
+                </button>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-white truncate group-hover:text-sky-400 transition-colors">
+                  {pl.title}
+                </h4>
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                  {pl.tracks?.length || 0} tracks • {pl.author || 'YouTube'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 2. Favorites Tab Content */}
+      {subTab === 'favorites' && (
+        <div className="space-y-2">
+          {favorites.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 space-y-2">
+              <Heart size={32} className="mx-auto opacity-30 text-rose-400" />
+              <p className="text-sm font-semibold">No favorites yet</p>
+              <p className="text-xs text-slate-500">Click the heart icon on any playing song to add it here</p>
+            </div>
+          ) : (
+            favorites.map((track, i) => (
+              <div
+                key={track.id}
+                onClick={() => onPlayTrack(track)}
+                className="flex items-center justify-between p-3 rounded-2xl hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="w-5 text-center text-xs font-mono text-slate-500">
+                    {i + 1}
+                  </span>
+                  <img
+                    src={track.thumbnail}
+                    alt={track.title}
+                    className="w-11 h-11 rounded-xl object-cover border border-white/10"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate group-hover:text-sky-400 transition-colors">
+                      {track.title}
+                    </p>
+                    <p className="text-[11px] text-slate-400 truncate">
+                      {track.artist}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-mono text-slate-500">
+                    {formatTime(track.duration)}
+                  </span>
+                  <Heart size={16} className="text-rose-500 fill-current" />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* 3. History Tab Content */}
+      {subTab === 'history' && (
+        <div className="space-y-2">
+          {history.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 space-y-2">
+              <Clock size={32} className="mx-auto opacity-30" />
+              <p className="text-sm font-semibold">No playback history yet</p>
+              <p className="text-xs text-slate-500">Songs you listen to will be recorded here</p>
+            </div>
+          ) : (
+            history.map((track, i) => (
+              <div
+                key={`${track.id}-${i}`}
+                onClick={() => onPlayTrack(track)}
+                className="flex items-center justify-between p-3 rounded-2xl hover:bg-white/[0.06] border border-transparent hover:border-white/10 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="w-5 text-center text-xs font-mono text-slate-500">
+                    {i + 1}
+                  </span>
+                  <img
+                    src={track.thumbnail}
+                    alt={track.title}
+                    className="w-11 h-11 rounded-xl object-cover border border-white/10"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate group-hover:text-sky-400 transition-colors">
+                      {track.title}
+                    </p>
+                    <p className="text-[11px] text-slate-400 truncate">
+                      {track.artist}
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-[11px] font-mono text-slate-500">
+                  {formatTime(track.duration)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
