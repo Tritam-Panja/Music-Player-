@@ -38,30 +38,34 @@ class AudioEngine {
   }
 
   createPlayer() {
-    // Hidden container for YouTube IFrame
+    // Hidden container for YouTube IFrame (must meet 200x200 minimum dimension for YouTube widget viewability check)
     let container = document.getElementById('yt-audio-container');
     if (!container) {
       container = document.createElement('div');
       container.id = 'yt-audio-container';
       container.style.position = 'fixed';
       container.style.bottom = '0px';
-      container.style.right = '0px';
-      container.style.width = '16px';
-      container.style.height = '16px';
-      container.style.opacity = '0.01';
+      container.style.left = '0px';
+      container.style.width = '240px';
+      container.style.height = '240px';
+      container.style.opacity = '0.001';
       container.style.pointerEvents = 'none';
       container.style.zIndex = '-999';
       document.body.appendChild(container);
     }
 
-    // Determine reliable origin for web, electron, and capacitor
-    const currentOrigin = typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:')
-      ? window.location.origin
-      : 'https://www.youtube.com';
+    // In Electron, session headers rewrite Referer to https://www.youtube.com/, so origin MUST be https://www.youtube.com
+    const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI?.isElectron);
+    const currentOrigin = isElectron
+      ? 'https://www.youtube.com'
+      : (typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:')
+        ? window.location.origin
+        : 'https://www.youtube.com');
 
     this.ytPlayer = new window.YT.Player('yt-audio-container', {
-      height: '16',
-      width: '16',
+      height: '240',
+      width: '240',
+      host: 'https://www.youtube.com',
       playerVars: {
         autoplay: 1,
         controls: 0,
@@ -78,6 +82,7 @@ class AudioEngine {
         onReady: () => {
           this.isReady = true;
           try {
+            this.ytPlayer.unMute();
             this.ytPlayer.setVolume(this.volume * 100);
           } catch {}
           if (this.currentTrack && this.isPlaying) {
@@ -119,6 +124,12 @@ class AudioEngine {
   loadAndPlay(id) {
     if (!id || !this.ytPlayer) return;
     try {
+      if (typeof this.ytPlayer.unMute === 'function') {
+        this.ytPlayer.unMute();
+      }
+      if (typeof this.ytPlayer.setVolume === 'function') {
+        this.ytPlayer.setVolume((this.isMuted ? 0 : this.volume) * 100);
+      }
       if (typeof this.ytPlayer.loadVideoById === 'function') {
         this.ytPlayer.loadVideoById({ videoId: id, suggestedQuality: 'small' });
         this.ytPlayer.playVideo();

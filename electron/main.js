@@ -18,6 +18,12 @@ const WEB_REMIX_HEADERS = {
   'X-YouTube-Client-Version': '1.20250101.01.00'
 };
 
+// Configure Chromium flags for seamless audio streaming & zero-gesture autoplay
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -34,17 +40,17 @@ function createWindow() {
       contextIsolation: true,
       webSecurity: false,
       allowRunningInsecureContent: true,
-      autoplayPolicy: 'no-user-gesture'
+      backgroundThrottling: false
     }
   });
 
   // Intercept headers so YouTube allows embedded playback from Electron's file:// or custom scheme
   session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    const { url, requestHeaders } = details;
-    if (url.includes('youtube.com') || url.includes('googlevideo.com') || url.includes('ytimg.com')) {
+    const requestHeaders = { ...details.requestHeaders };
+    if (details.url.includes('youtube.com') || details.url.includes('googlevideo.com') || details.url.includes('ytimg.com')) {
       requestHeaders['Origin'] = 'https://www.youtube.com';
       requestHeaders['Referer'] = 'https://www.youtube.com/';
-      requestHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+      requestHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
     }
     callback({ requestHeaders });
   });
@@ -133,6 +139,8 @@ function startLocalServer() {
   globalShortcut.register('MediaPlayPause', () => mainWindow?.webContents.send('media:play-pause'));
   globalShortcut.register('MediaNextTrack', () => mainWindow?.webContents.send('media:next'));
   globalShortcut.register('MediaPreviousTrack', () => mainWindow?.webContents.send('media:prev'));
+  globalShortcut.register('F12', () => mainWindow?.webContents.toggleDevTools());
+  globalShortcut.register('CommandOrControl+Shift+I', () => mainWindow?.webContents.toggleDevTools());
 
   // 1. BitChord-style In-App Google Sign-In for YouTube Music
   ipcMain.handle('yt:open-login-window', () => {
