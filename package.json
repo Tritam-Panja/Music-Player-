@@ -23,6 +23,7 @@
     "youtube-sr": "^4.3.12"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.6.9",
     "@capacitor/cli": "^7.0.1",
     "@capacitor/core": "^7.0.1",
     "@types/react": "^18.3.18",
