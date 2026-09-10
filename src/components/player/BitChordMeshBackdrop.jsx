@@ -40,7 +40,7 @@ export default function BitChordMeshBackdrop({ track, isPlaying }) {
   }, [track?.id, track?.title]);
 
   return (
-    <div className="fixed inset-0 -z-20 overflow-hidden pointer-events-none select-none bg-[#07090e]">
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none select-none bg-[#07090e]">
       {/* 1. Base Blurred Artwork Underlay */}
       {track?.thumbnail && (
         <div 

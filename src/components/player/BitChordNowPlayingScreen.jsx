@@ -151,7 +151,7 @@ export default function BitChordNowPlayingScreen({
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col justify-between p-6 lg:p-10 max-w-7xl mx-auto overflow-hidden animate-in fade-in duration-500">
+    <div className="relative w-full min-h-[calc(100vh-140px)] flex flex-col justify-between p-6 lg:p-10 max-w-7xl mx-auto">
       {/* Top Bar inside Player Studio */}
       <div className="flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
