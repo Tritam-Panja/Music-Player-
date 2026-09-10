@@ -13,6 +13,14 @@ import { audioEngine } from './services/audioEngine';
 import { storageService } from './services/storageService';
 import { ytAuthService } from './services/ytAuthService';
 
+const DEFAULT_INITIAL_TRACK = {
+  id: 'jfKfPfyJRdk',
+  title: 'Lofi Hip Hop Radio - Beats to Study/Relax',
+  artist: 'Lofi Girl',
+  duration: 210,
+  thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800'
+};
+
 export default function App() {
   // Navigation: 'player' (default!) | 'library' | 'playlist'
   const [currentView, setCurrentView] = useState('player');
@@ -30,14 +38,14 @@ export default function App() {
   const [ytUser, setYtUser] = useState(null);
 
   // Queue State
-  const [queue, setQueue] = useState([]);
+  const [queue, setQueue] = useState([DEFAULT_INITIAL_TRACK]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Player Engine State
-  const [currentTrack, setCurrentTrack] = useState(null);
+  const [currentTrack, setCurrentTrack] = useState(DEFAULT_INITIAL_TRACK);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(210);
   const [volume, setVolume] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);

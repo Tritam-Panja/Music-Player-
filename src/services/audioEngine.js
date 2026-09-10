@@ -247,6 +247,14 @@ class AudioEngine {
   emitEvent(eventName, data) {
     window.dispatchEvent(new CustomEvent(`audio:${eventName}`, { detail: data }));
   }
+
+  on(eventName, callback) {
+    window.addEventListener(`audio:${eventName}`, callback);
+  }
+
+  off(eventName, callback) {
+    window.removeEventListener(`audio:${eventName}`, callback);
+  }
 }
 
 export const audioEngine = new AudioEngine();
