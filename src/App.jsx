@@ -13,14 +13,6 @@ import { audioEngine } from './services/audioEngine';
 import { storageService } from './services/storageService';
 import { ytAuthService } from './services/ytAuthService';
 
-const DEFAULT_INITIAL_TRACK = {
-  id: 'jfKfPfyJRdk',
-  title: 'Lofi Hip Hop Radio - Beats to Study/Relax',
-  artist: 'Lofi Girl',
-  duration: 210,
-  thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800'
-};
-
 export default function App() {
   // Navigation: 'player' (default!) | 'library' | 'playlist'
   const [currentView, setCurrentView] = useState('player');
@@ -38,11 +30,11 @@ export default function App() {
   const [ytUser, setYtUser] = useState(null);
 
   // Queue State
-  const [queue, setQueue] = useState([DEFAULT_INITIAL_TRACK]);
+  const [queue, setQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Player Engine State
-  const [currentTrack, setCurrentTrack] = useState(DEFAULT_INITIAL_TRACK);
+  const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(210);
@@ -171,13 +163,17 @@ export default function App() {
 
   // Play specific track
   const handlePlayTrack = (track) => {
+    // Purge any lingering demo tracks from active queue
+    const DEMO_IDS = ['jfKfPfyJRdk', '5yx6BWlEVcY', '7NOSDKb0HlU'];
+    const filteredQueue = queue.filter((t) => !DEMO_IDS.includes(t.id));
+
     // Add to queue if not present
-    let index = queue.findIndex((t) => t.id === track.id);
+    let index = filteredQueue.findIndex((t) => t.id === track.id);
     if (index === -1) {
-      const newQueue = [...queue, track];
-      setQueue(newQueue);
-      index = newQueue.length - 1;
+      filteredQueue.push(track);
+      index = filteredQueue.length - 1;
     }
+    setQueue(filteredQueue);
     setCurrentIndex(index);
     audioEngine.playTrack(track);
     setHistory(storageService.addToHistory(track));
@@ -343,8 +339,12 @@ export default function App() {
         isShuffle={isShuffle}
         repeatMode={repeatMode}
         isFavorite={currentTrack ? isFavorite(currentTrack.id) : false}
-        isQueueOpen={false}
-        isLyricsOpen={false}
+        isQueueOpen={currentView === 'player'}
+        isLyricsOpen={currentView === 'player'}
+        queue={queue}
+        currentIndex={currentIndex}
+        onPlayTrack={handlePlayTrack}
+        onRemoveFromQueue={handleRemoveFromQueue}
         onTogglePlay={() => audioEngine.togglePlay()}
         onPrev={playPrev}
         onNext={playNext}

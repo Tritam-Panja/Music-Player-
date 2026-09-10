@@ -62,7 +62,7 @@ export default function SpotlightSearchModal({
     setSuggestions([]);
 
     try {
-      const searchRes = await searchEngine.search(q, { limit: 20 });
+      const searchRes = await searchEngine.search(q, 'video');
       setResults(searchRes || []);
     } catch (err) {
       console.error('Search error:', err);

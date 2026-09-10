@@ -1,7 +1,7 @@
 {
   "name": "liquid-music",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Free, open-source Spotify-like music player with liquid glass UI, zero ads, and YouTube playlist sync",
   "main": "electron/main.js",
   "type": "module",
@@ -46,7 +46,8 @@
     },
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "node_modules/youtube-sr/**/*"
     ],
     "win": {
       "target": [

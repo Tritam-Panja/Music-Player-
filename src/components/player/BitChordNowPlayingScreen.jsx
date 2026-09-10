@@ -169,7 +169,7 @@ export default function BitChordNowPlayingScreen({
         </div>
 
         {/* View Switcher Capsule (Track/Vinyl on mobile | Lyrics / Queue / Visualizer / Stats) */}
-        <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-2xl shadow-xl">
+        <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-2xl shadow-xl max-w-full overflow-x-auto scrollbar-none">
           {/* Mobile-only Track / Disc view button */}
           <button
             onClick={() => setActiveTab('vinyl')}
@@ -277,22 +277,35 @@ export default function BitChordNowPlayingScreen({
                     isPlaying ? 'animate-[spin_10s_linear_infinite]' : ''
                   }`}
                 >
-                  <img 
-                    src={track?.thumbnail || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500'} 
-                    alt="Center label"
-                    className="w-full h-full object-cover"
-                  />
+                  {track?.thumbnail ? (
+                    <img 
+                      src={track.thumbnail} 
+                      alt="Center label"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                      <Music size={16} className="text-slate-500" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 m-auto w-2.5 sm:w-3.5 h-2.5 sm:h-3.5 rounded-full bg-black border border-white/30" />
                 </div>
               </div>
 
               {/* Main Album Artwork Jacket */}
-              <div className="relative w-44 h-44 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl sm:rounded-3xl overflow-hidden glass-card border border-white/15 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.9)] group-hover:shadow-[0_30px_70px_-10px_rgba(56,189,248,0.25)] transition-shadow duration-500">
-                <img
-                  src={track?.thumbnail || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'}
-                  alt={track?.title || 'Now Playing'}
-                  className="w-full h-full object-cover select-none pointer-events-none group-hover:scale-105 transition-transform duration-700"
-                />
+              <div className="relative w-44 h-44 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-2xl sm:rounded-3xl overflow-hidden glass-card border border-white/15 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.9)] group-hover:shadow-[0_30px_70px_-10px_rgba(56,189,248,0.25)] transition-shadow duration-500 flex items-center justify-center bg-gradient-to-br from-slate-900/80 to-black/90">
+                {track?.thumbnail ? (
+                  <img
+                    src={track.thumbnail}
+                    alt={track?.title || 'Now Playing'}
+                    className="w-full h-full object-cover select-none pointer-events-none group-hover:scale-105 transition-transform duration-700"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 text-center text-slate-500">
+                    <Music size={44} className="opacity-40 mb-2" />
+                    <p className="text-xs font-semibold text-slate-400">No Track Selected</p>
+                  </div>
+                )}
 
                 {/* Subtle glass reflection highlight */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.08] to-transparent pointer-events-none" />
@@ -466,54 +479,66 @@ export default function BitChordNowPlayingScreen({
                 </span>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-2 py-3 scrollbar-thin">
-                {queue.map((t, idx) => {
-                  const isCurrent = idx === currentIndex;
-                  return (
-                    <div
-                      key={`${t.id}-${idx}`}
-                      onClick={() => onPlayTrack && onPlayTrack(idx)}
-                      className={`flex items-center justify-between p-2.5 rounded-2xl cursor-pointer transition-all ${
-                        isCurrent
-                          ? 'bg-white/10 border border-white/15 text-white'
-                          : 'hover:bg-white/5 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="w-5 text-center text-xs font-mono text-slate-500">
-                          {isCurrent ? <Play size={12} className="text-emerald-400 animate-pulse fill-current" /> : idx + 1}
-                        </span>
-                        <img 
-                          src={t.thumbnail} 
-                          alt={t.title} 
-                          className="w-10 h-10 rounded-xl object-cover border border-white/10"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold truncate">{t.title}</p>
-                          <p className="text-[11px] text-slate-400 truncate">{t.artist}</p>
+              {queue.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-3">
+                    <ListMusic size={22} className="text-slate-500" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-300">Your queue is empty</p>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                    Search for songs or playlists above to add them to your playback queue.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto space-y-2 py-3 scrollbar-thin">
+                  {queue.map((t, idx) => {
+                    const isCurrent = idx === currentIndex;
+                    return (
+                      <div
+                        key={`${t.id}-${idx}`}
+                        onClick={() => onPlayTrack && onPlayTrack(idx)}
+                        className={`flex items-center justify-between p-2.5 rounded-2xl cursor-pointer transition-all ${
+                          isCurrent
+                            ? 'bg-white/10 border border-white/15 text-white'
+                            : 'hover:bg-white/5 text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 pr-2">
+                          <span className="w-5 text-center text-xs font-mono text-slate-500 flex-shrink-0">
+                            {isCurrent ? <Play size={12} className="text-emerald-400 animate-pulse fill-current" /> : idx + 1}
+                          </span>
+                          <img 
+                            src={t.thumbnail} 
+                            alt={t.title} 
+                            className="w-10 h-10 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold truncate">{t.title}</p>
+                            <p className="text-[11px] text-slate-400 truncate">{t.artist}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-[11px] font-mono text-slate-500">
+                            {formatTime(t.duration)}
+                          </span>
+                          {onRemoveFromQueue && !isCurrent && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRemoveFromQueue(idx);
+                              }}
+                              className="p-1 rounded-lg text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-mono text-slate-500">
-                          {formatTime(t.duration)}
-                        </span>
-                        {onRemoveFromQueue && !isCurrent && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRemoveFromQueue(idx);
-                            }}
-                            className="p-1 rounded-lg text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-slate-500">
                 <span>Drag or click to jump</span>

@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain, globalShortcut, session } from 'electron';
 import path from 'path';
+import http from 'http';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { YouTube } from 'youtube-sr';
 
@@ -27,7 +29,7 @@ function createWindow() {
     backgroundColor: '#00000000',
     titleBarStyle: 'hidden',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: false,
@@ -57,11 +59,63 @@ function createWindow() {
     callback({ responseHeaders });
   });
 
+let localServer = null;
+
+function startLocalServer() {
+  return new Promise((resolve) => {
+    const distDir = path.join(__dirname, '../dist');
+    const mimeTypes = {
+      '.html': 'text/html',
+      '.js': 'text/javascript',
+      '.css': 'text/css',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf',
+      '.mp3': 'audio/mpeg',
+      '.mp4': 'video/mp4'
+    };
+
+    localServer = http.createServer((req, res) => {
+      let reqPath = decodeURIComponent(req.url.split('?')[0]);
+      let filePath = path.join(distDir, reqPath === '/' ? 'index.html' : reqPath);
+
+      if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+        filePath = path.join(distDir, 'index.html');
+      }
+
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+      fs.readFile(filePath, (err, content) => {
+        if (err) {
+          res.writeHead(500);
+          res.end('Error loading file');
+        } else {
+          res.writeHead(200, { 'Content-Type': contentType });
+          res.end(content);
+        }
+      });
+    });
+
+    localServer.listen(0, '127.0.0.1', () => {
+      resolve(localServer.address().port);
+    });
+  });
+}
+
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    startLocalServer().then((port) => {
+      mainWindow.loadURL(`http://127.0.0.1:${port}`);
+    });
   }
 
   // Window Controls
@@ -167,22 +221,70 @@ function createWindow() {
         type: type === 'playlist' ? 'playlist' : 'video'
       });
 
-      return {
-        success: true,
-        results: results.map(item => ({
-          id: item.id,
-          type: item.type || (item.videos ? 'playlist' : 'video'),
-          title: item.title,
-          artist: item.channel?.name || 'Unknown Artist',
-          duration: item.duration ? Math.floor(item.duration / 1000) : 0,
-          thumbnail: item.thumbnail?.url || `https://i.ytimg.com/vi/${item.id}/hqdefault.jpg`,
-          views: item.views || 0,
-          uploaded: item.uploadedAt || ''
-        }))
-      };
+      if (Array.isArray(results) && results.length > 0) {
+        return {
+          success: true,
+          results: results.map(item => ({
+            id: item.id,
+            type: item.type || (item.videos ? 'playlist' : 'video'),
+            title: item.title,
+            artist: item.channel?.name || 'Unknown Artist',
+            duration: item.duration ? Math.floor(item.duration / 1000) : 0,
+            thumbnail: item.thumbnail?.url || `https://i.ytimg.com/vi/${item.id}/hqdefault.jpg`,
+            views: item.views || 0,
+            uploaded: item.uploadedAt || ''
+          }))
+        };
+      }
     } catch (err) {
-      return { success: false, error: err.message, results: [] };
+      // Fallback to direct Innertube web API if youtube-sr encounters parsing errors
     }
+
+    try {
+      const response = await fetch('https://www.youtube.com/youtubei/v1/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        },
+        body: JSON.stringify({
+          context: { client: { clientName: 'WEB', clientVersion: '2.20240101.00.00' } },
+          query
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const sections = data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents || [];
+        const tracks = [];
+
+        for (const section of sections) {
+          const items = section.itemSectionRenderer?.contents || [];
+          for (const item of items) {
+            const vr = item.videoRenderer;
+            if (vr && vr.videoId && vr.title?.runs?.[0]?.text) {
+              const thumb = vr.thumbnail?.thumbnails?.[vr.thumbnail.thumbnails.length - 1]?.url;
+              tracks.push({
+                id: vr.videoId,
+                type: 'video',
+                title: vr.title.runs[0].text,
+                artist: vr.ownerText?.runs?.[0]?.text || 'Unknown Artist',
+                duration: 210,
+                thumbnail: thumb || `https://i.ytimg.com/vi/${vr.videoId}/hqdefault.jpg`,
+                views: 0,
+                uploaded: vr.publishedTimeText?.simpleText || ''
+              });
+            }
+          }
+        }
+
+        return { success: true, results: tracks };
+      }
+    } catch (fallbackErr) {
+      return { success: false, error: fallbackErr.message, results: [] };
+    }
+
+    return { success: true, results: [] };
   });
 
   ipcMain.handle('yt:suggestions', async (_, query) => {
@@ -240,6 +342,9 @@ app.whenReady().then(() => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+  try {
+    localServer?.close();
+  } catch {}
 });
 
 app.on('window-all-closed', () => {

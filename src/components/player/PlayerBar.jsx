@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { formatDuration } from '../../utils/formatters';
+import MobileNowPlayingModal from './MobileNowPlayingModal';
 
 export default function PlayerBar({
   track,
@@ -28,6 +29,8 @@ export default function PlayerBar({
   isFavorite,
   isQueueOpen,
   isLyricsOpen,
+  queue = [],
+  currentIndex = 0,
   onTogglePlay,
   onPrev,
   onNext,
@@ -38,8 +41,11 @@ export default function PlayerBar({
   onToggleRepeat,
   onToggleFavorite,
   onToggleQueue,
-  onToggleLyrics
+  onToggleLyrics,
+  onPlayTrack,
+  onRemoveFromQueue
 }) {
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
 
@@ -59,100 +65,133 @@ export default function PlayerBar({
   };
 
   return (
-    <div className="fixed bottom-3 inset-x-3 md:bottom-4 md:inset-x-6 z-40">
-      <div className="glass-dock rounded-2xl px-4 py-2.5 md:px-5 md:py-3 flex flex-col gap-1.5 transition-all">
-        <div className="flex items-center justify-between gap-4">
-          {/* Left: Track Information */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial sm:w-1/4">
-            <div className="relative group/cover flex-shrink-0">
-              <img 
-                src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'} 
-                alt={track.title} 
-                className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl object-cover shadow-sm border border-white/10"
-              />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h4 className="text-xs sm:text-sm font-bold text-white truncate hover:underline cursor-pointer">
-                  {track.title}
-                </h4>
-                <span className="hidden lg:inline text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-400 font-semibold border border-white/5">
-                  Lossless
-                </span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 truncate mt-0.5 font-medium">
-                {track.artist}
-              </p>
-            </div>
-
-            <button 
-              onClick={onToggleFavorite}
-              className={`p-1 sm:p-1.5 rounded-full transition-colors flex-shrink-0 ${
-                isFavorite 
-                  ? 'text-rose-500' 
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+    <>
+      <div className="fixed bottom-3 inset-x-3 md:bottom-4 md:inset-x-6 z-40">
+        <div 
+          onClick={(e) => {
+            // If tapped on mobile outside buttons, open full-screen sheet
+            if (window.innerWidth < 768) {
+              setIsMobileModalOpen(true);
+            }
+          }}
+          className="glass-dock rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 flex flex-col gap-1.5 transition-all cursor-pointer md:cursor-default"
+        >
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
+            {/* Left: Track Information */}
+            <div 
+              onClick={() => setIsMobileModalOpen(true)}
+              className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial sm:w-1/4 cursor-pointer"
             >
-              <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} />
-            </button>
-          </div>
+              <div className="relative group/cover flex-shrink-0">
+                <img 
+                  src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'} 
+                  alt={track.title} 
+                  className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl object-cover shadow-sm border border-white/10"
+                />
+              </div>
 
-          {/* Center: Controls & Timeline */}
-          <div className="flex flex-col items-center flex-initial sm:flex-1 max-w-xl">
-            <div className="flex items-center gap-1.5 sm:gap-4 mb-1">
-              <button
-                onClick={onToggleShuffle}
-                className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
-                  isShuffle ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h4 className="text-xs sm:text-sm font-bold text-white truncate hover:underline">
+                    {track.title}
+                  </h4>
+                  <span className="hidden lg:inline text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-400 font-semibold border border-white/5">
+                    Lossless
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 truncate mt-0.5 font-medium">
+                  {track.artist}
+                </p>
+              </div>
+
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite && onToggleFavorite();
+                }}
+                className={`p-1 sm:p-1.5 rounded-full transition-colors flex-shrink-0 ${
+                  isFavorite 
+                    ? 'text-rose-500' 
+                    : 'text-slate-400 hover:text-white'
                 }`}
-                title="Shuffle"
+                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
-                <Shuffle size={14} className="sm:w-[15px] sm:h-[15px]" />
-              </button>
-
-              <button
-                onClick={onPrev}
-                className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
-                title="Previous"
-              >
-                <SkipBack size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </button>
-
-              <button
-                onClick={onTogglePlay}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-slate-100 text-black flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all"
-                title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-              >
-                {isPlaying ? (
-                  <Pause size={15} className="fill-black sm:w-[17px] sm:h-[17px]" />
-                ) : (
-                  <Play size={15} className="fill-black ml-0.5 sm:w-[17px] sm:h-[17px]" />
-                )}
-              </button>
-
-              <button
-                onClick={onNext}
-                className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
-                title="Next"
-              >
-                <SkipForward size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </button>
-
-              <button
-                onClick={onToggleRepeat}
-                className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
-                  repeatMode !== 'off' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
-                }`}
-                title={`Repeat: ${repeatMode}`}
-              >
-                {repeatMode === 'one' ? <Repeat1 size={14} /> : <Repeat size={14} />}
+                <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} />
               </button>
             </div>
 
-            {/* Hairline Timeline Scrubber */}
-            <div className="w-full hidden sm:flex items-center gap-2 text-[10px] text-slate-500 font-mono select-none">
+            {/* Center: Controls & Timeline */}
+            <div className="flex flex-col items-center flex-initial sm:flex-1 max-w-xl">
+              <div className="flex items-center gap-1.5 sm:gap-4 mb-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleShuffle && onToggleShuffle();
+                  }}
+                  className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
+                    isShuffle ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                  title="Shuffle"
+                >
+                  <Shuffle size={14} className="sm:w-[15px] sm:h-[15px]" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPrev && onPrev();
+                  }}
+                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
+                  title="Previous"
+                >
+                  <SkipBack size={16} className="sm:w-[18px] sm:h-[18px]" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTogglePlay && onTogglePlay();
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-slate-100 text-black flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all"
+                  title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+                >
+                  {isPlaying ? (
+                    <Pause size={15} className="fill-black sm:w-[17px] sm:h-[17px]" />
+                  ) : (
+                    <Play size={15} className="fill-black ml-0.5 sm:w-[17px] sm:h-[17px]" />
+                  )}
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNext && onNext();
+                  }}
+                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
+                  title="Next"
+                >
+                  <SkipForward size={16} className="sm:w-[18px] sm:h-[18px]" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleRepeat && onToggleRepeat();
+                  }}
+                  className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
+                    repeatMode !== 'off' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                  title={`Repeat: ${repeatMode}`}
+                >
+                  {repeatMode === 'one' ? <Repeat1 size={14} /> : <Repeat size={14} />}
+                </button>
+              </div>
+
+              {/* Hairline Timeline Scrubber */}
+              <div 
+                onClick={(e) => e.stopPropagation()} 
+                className="w-full hidden sm:flex items-center gap-2 text-[10px] text-slate-500 font-mono select-none"
+              >
               <span className="w-8 text-right font-medium">{formatDuration(displayTime)}</span>
               <div className="relative flex-1 group flex items-center h-3.5">
                 <div className="absolute inset-x-0 h-[3px] group-hover:h-[4px] bg-white/10 rounded-full overflow-hidden transition-all">
@@ -181,7 +220,14 @@ export default function PlayerBar({
           <div className="flex items-center justify-end gap-1.5 sm:gap-3 w-auto sm:w-1/4">
             {/* Synced Lyrics */}
             <button
-              onClick={onToggleLyrics}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.innerWidth < 768) {
+                  setIsMobileModalOpen(true);
+                } else {
+                  onToggleLyrics && onToggleLyrics();
+                }
+              }}
               className={`p-1.5 sm:p-2 rounded-xl transition-all ${
                 isLyricsOpen 
                   ? 'bg-white/10 text-white' 
@@ -194,7 +240,14 @@ export default function PlayerBar({
 
             {/* Queue Trigger */}
             <button
-              onClick={onToggleQueue}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.innerWidth < 768) {
+                  setIsMobileModalOpen(true);
+                } else {
+                  onToggleQueue && onToggleQueue();
+                }
+              }}
               className={`p-1.5 sm:p-2 rounded-xl transition-all ${
                 isQueueOpen 
                   ? 'bg-white/10 text-white' 
@@ -206,7 +259,10 @@ export default function PlayerBar({
             </button>
 
             {/* Compact Volume */}
-            <div className="hidden sm:flex items-center gap-1.5 group/vol">
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="hidden sm:flex items-center gap-1.5 group/vol"
+            >
               <button
                 onClick={onToggleMute}
                 className="p-1 text-slate-400 hover:text-white transition-colors"
@@ -236,5 +292,34 @@ export default function PlayerBar({
         </div>
       </div>
     </div>
+
+    {/* Full-Screen Mobile Expandable Player Modal */}
+    <MobileNowPlayingModal
+      isOpen={isMobileModalOpen}
+      onClose={() => setIsMobileModalOpen(false)}
+      track={track}
+      isPlaying={isPlaying}
+      currentTime={currentTime}
+      duration={duration}
+      volume={volume}
+      isMuted={isMuted}
+      isShuffle={isShuffle}
+      repeatMode={repeatMode}
+      isFavorite={isFavorite}
+      queue={queue}
+      currentIndex={currentIndex}
+      onTogglePlay={onTogglePlay}
+      onPrev={onPrev}
+      onNext={onNext}
+      onSeek={onSeek}
+      onVolumeChange={onVolumeChange}
+      onToggleMute={onToggleMute}
+      onToggleShuffle={onToggleShuffle}
+      onToggleRepeat={onToggleRepeat}
+      onToggleFavorite={onToggleFavorite}
+      onPlayTrack={onPlayTrack}
+      onRemoveFromQueue={onRemoveFromQueue}
+    />
+  </>
   );
 }

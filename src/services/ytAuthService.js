@@ -1,4 +1,5 @@
 import { storageService } from './storageService';
+import { apiUrl } from './apiConfig';
 import { cleanTrackTitle } from '../utils/formatters';
 
 const AUTH_STORAGE_KEY = 'liquid_music_yt_user';
@@ -124,7 +125,7 @@ export const ytAuthService = {
     }
 
     // Try fetching via /api/search or searchEngine
-    const res = await fetch(`/api/search?q=${encodeURIComponent(playlistId)}&type=playlist`);
+    const res = await fetch(apiUrl(`/api/search?q=${encodeURIComponent(playlistId)}&type=playlist`));
     if (res.ok) {
       const data = await res.json();
       if (data.results && data.results.length > 0) {

@@ -6,51 +6,33 @@ const STORAGE_KEYS = {
   QUEUE: 'liquid_music_queue',
 };
 
-// Initial default sample playlist featuring copyright-free chill/lofi music
-const DEFAULT_PLAYLISTS = [
-  {
-    id: 'chill-lofi-beats',
-    title: 'Neon Chillwave & Lofi',
-    description: 'Smooth atmospheric beats to code and relax to',
-    thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=60',
-    tracks: [
-      {
-        id: 'jfKfPfyJRdk',
-        title: 'Lofi Hip Hop Radio - Beats to Relax/Study to',
-        artist: 'Lofi Girl',
-        duration: 210,
-        thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=60',
-      },
-      {
-        id: '5yx6BWlEVcY',
-        title: 'Chillhop Essentials - Summer Vibes',
-        artist: 'Chillhop Music',
-        duration: 185,
-        thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=60',
-      },
-      {
-        id: '7NOSDKb0HlU',
-        title: 'Synthwave Radio - Chill Synth / Retrowave',
-        artist: 'Lofi Cosmic',
-        duration: 240,
-        thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=60',
-      }
-    ]
-  }
-];
+const DEFAULT_PLAYLISTS = [];
 
 export const storageService = {
   getPlaylists() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.PLAYLISTS);
       if (!data) {
-        localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(DEFAULT_PLAYLISTS));
-        return DEFAULT_PLAYLISTS;
+        return [];
       }
-      return JSON.parse(data);
+      let parsed = JSON.parse(data);
+      if (!Array.isArray(parsed)) return [];
+
+      const DEMO_IDS = ['jfKfPfyJRdk', '5yx6BWlEVcY', '7NOSDKb0HlU'];
+      // Filter out legacy default playlist or playlists composed solely of demo songs
+      parsed = parsed.filter(p => {
+        if (p.id === 'chill-lofi-beats') return false;
+        if (Array.isArray(p.tracks)) {
+          p.tracks = p.tracks.filter(t => !DEMO_IDS.includes(t.id));
+        }
+        return true;
+      });
+
+      localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(parsed));
+      return parsed;
     } catch (e) {
       console.error('Failed to load playlists:', e);
-      return DEFAULT_PLAYLISTS;
+      return [];
     }
   },
 

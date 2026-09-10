@@ -1,4 +1,5 @@
 import { cleanTrackTitle } from '../utils/formatters';
+import { apiUrl } from './apiConfig';
 
 export const searchEngine = {
   /**
@@ -6,11 +7,12 @@ export const searchEngine = {
    */
   async search(query, type = 'video') {
     if (!query || query.trim().length === 0) return [];
+    const searchType = typeof type === 'string' ? type : (type?.type || 'video');
 
     // 1. Electron Native IPC (fastest, zero CORS)
     if (typeof window !== 'undefined' && window.electronAPI?.search) {
       try {
-        const res = await window.electronAPI.search(query, type);
+        const res = await window.electronAPI.search(query, searchType);
         if (res?.success && Array.isArray(res.results)) {
           return res.results.map(t => ({
             ...t,
@@ -22,9 +24,9 @@ export const searchEngine = {
       }
     }
 
-    // 2. Web / Vite dev middleware (/api/search)
+    // 2. Web / Vite dev middleware or remote backend (/api/search)
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${type}`);
+      const res = await fetch(apiUrl(`/api/search?q=${encodeURIComponent(query)}&type=${searchType}`));
       if (res.ok) {
         const data = await res.json();
         if (data?.success && Array.isArray(data.results)) {
@@ -107,9 +109,9 @@ export const searchEngine = {
       } catch {}
     }
 
-    // 2. Vite / Web API
+    // 2. Vite / Web API or remote backend
     try {
-      const res = await fetch(`/api/suggestions?q=${encodeURIComponent(query)}`);
+      const res = await fetch(apiUrl(`/api/suggestions?q=${encodeURIComponent(query)}`));
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.suggestions)) return data.suggestions;
@@ -148,38 +150,16 @@ export const searchEngine = {
       } catch {}
     }
 
-    // 2. Web API
+    // 2. Web API or remote backend
     try {
-      const res = await fetch('/api/trending');
+      const res = await fetch(apiUrl('/api/trending'));
       if (res.ok) {
         const data = await res.json();
         if (data?.success && Array.isArray(data.results)) return data.results;
       }
     } catch {}
 
-    // 3. Curated default high-quality charts fallback
-    return [
-      {
-        id: 'jfKfPfyJRdk',
-        title: 'Lofi Hip Hop Radio - Beats to Relax/Study to',
-        artist: 'Lofi Girl',
-        duration: 240,
-        thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'
-      },
-      {
-        id: '7NOSDKb0HlU',
-        title: 'Synthwave Radio - Chill Synth / Retrowave',
-        artist: 'Lofi Cosmic',
-        duration: 215,
-        thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500'
-      },
-      {
-        id: '5yx6BWlEVcY',
-        title: 'Chillhop Essentials - Summer Vibes',
-        artist: 'Chillhop Music',
-        duration: 185,
-        thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500'
-      }
-    ];
+    // 3. Fallback: empty array if trending cannot be reached
+    return [];
   }
 };
