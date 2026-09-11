@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { lyricsService } from '../../services/lyricsService';
-import { audioEngine } from '../../services/audioEngine';
+import { playerService } from '../../core/player/PlayerService';
 import { X, Mic2, Sparkles, Music } from 'lucide-react';
 
 export default function LyricsView({ track, currentTime, isOpen, onClose }) {
@@ -124,7 +124,7 @@ export default function LyricsView({ track, currentTime, isOpen, onClose }) {
                 <p
                   key={idx}
                   ref={isActive ? activeLineRef : null}
-                  onClick={() => audioEngine.seek(line.time)}
+                  onClick={() => playerService.seek(line.time)}
                   className={`cursor-pointer transition-all duration-300 select-none ${
                     isActive 
                       ? 'text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-fuchsia-300 scale-105 drop-shadow-[0_0_20px_rgba(0,240,255,0.6)]' 

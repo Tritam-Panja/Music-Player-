@@ -4,6 +4,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),
+  isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+  onMaximizeChange: (callback) => {
+    const handler = (_, val) => callback(val);
+    ipcRenderer.on('window:maximize-change', handler);
+    return () => ipcRenderer.removeListener('window:maximize-change', handler);
+  },
   onMediaPlayPause: (callback) => ipcRenderer.on('media:play-pause', callback),
   onMediaNext: (callback) => ipcRenderer.on('media:next', callback),
   onMediaPrev: (callback) => ipcRenderer.on('media:prev', callback),

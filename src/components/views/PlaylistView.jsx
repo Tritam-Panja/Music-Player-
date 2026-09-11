@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { formatDuration } from '../../utils/formatters';
 
-export default function PlaylistView({
+function PlaylistView({
   playlist,
   currentTrack,
   isPlaying,
@@ -23,8 +23,10 @@ export default function PlaylistView({
   onTogglePlay,
   onToggleFavorite,
   onAddToQueue,
-  onDeletePlaylist
+  onDeletePlaylist,
+  theme = 'light'
 }) {
+  const isDark = theme === 'dark';
   const [filterText, setFilterText] = useState('');
 
   if (!playlist) return null;
@@ -43,36 +45,39 @@ export default function PlaylistView({
   const isCurrentPlaylistPlaying = isPlaying && tracks.some(t => t.id === currentTrack?.id);
 
   return (
-    <div className="flex-1 overflow-y-auto pb-36">
-      {/* Hero Header with Frosted Glass & Ambient Blurred Backdrop */}
-      <div className="relative p-6 md:p-10 border-b border-white/10 overflow-hidden">
-        {/* Background Blurred Glow */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-20 filter blur-3xl scale-125 pointer-events-none"
-          style={{ backgroundImage: `url(${playlist.thumbnail})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#090a10]/60 to-[#090a10]" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8">
+    <div className="flex-1 overflow-y-auto pb-36 space-y-6">
+      {/* Hero Header in Neuphorism Card */}
+      <div className={`p-6 md:p-8 rounded-[38px] transition-all ${
+        isDark ? 'bg-[#1b1d23] neu-card-shadow neu-dark' : 'bg-[#faf9f6] neu-card-shadow'
+      }`}>
+        <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8">
           <img 
             src={playlist.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'} 
             alt={playlist.title}
-            className="w-48 h-48 md:w-56 md:h-56 rounded-3xl object-cover shadow-2xl border border-white/15"
+            className="w-44 h-44 md:w-52 md:h-52 rounded-3xl object-cover shadow-lg"
           />
 
           <div className="flex-1 text-center md:text-left space-y-2">
-            <span className="text-xs uppercase tracking-widest text-cyan-400 font-bold">
+            <span className={`text-[11px] uppercase tracking-widest font-extrabold ${
+              isDark ? 'text-[#c4956a]' : 'text-[#3c2b20]'
+            }`}>
               Playlist
             </span>
-            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+            <h1 className={`text-2xl md:text-4xl font-black tracking-tight ${
+              isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'
+            }`}>
               {playlist.title}
             </h1>
-            <p className="text-sm text-slate-300 line-clamp-2 max-w-2xl">
+            <p className={`text-xs line-clamp-2 max-w-2xl font-medium ${
+              isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+            }`}>
               {playlist.description || 'Imported YouTube playlist'}
             </p>
 
-            <div className="flex items-center justify-center md:justify-start gap-2 pt-2 text-xs text-slate-400 font-medium">
-              <span className="text-white font-semibold">{playlist.author || 'User'}</span>
+            <div className={`flex items-center justify-center md:justify-start gap-2 pt-2 text-xs font-semibold ${
+              isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+            }`}>
+              <span className={isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'}>{playlist.author || 'User'}</span>
               <span>•</span>
               <span>{tracks.length} songs</span>
               <span>•</span>
@@ -80,68 +85,98 @@ export default function PlaylistView({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Action Bar */}
-      <div className="px-6 md:px-10 py-5 flex items-center justify-between gap-4 border-b border-white/5 bg-white/[0.01]">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              if (isCurrentPlaylistPlaying) {
-                onTogglePlay();
-              } else {
-                onPlayPlaylist(playlist);
-              }
-            }}
-            className="w-14 h-14 rounded-full bg-cyan-400 hover:bg-cyan-300 text-black flex items-center justify-center shadow-neon-cyan hover:scale-105 active:scale-95 transition-all"
-            title={isCurrentPlaylistPlaying ? 'Pause' : 'Play All'}
-          >
-            {isCurrentPlaylistPlaying ? (
-              <Pause size={24} className="fill-black" />
-            ) : (
-              <Play size={24} className="fill-black ml-1" />
+        {/* Action Bar */}
+        <div className={`mt-6 pt-5 flex items-center justify-between gap-4 border-t ${
+          isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'
+        }`}>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (isCurrentPlaylistPlaying) {
+                  onTogglePlay();
+                } else {
+                  onPlayPlaylist(playlist);
+                }
+              }}
+              className="w-13 h-13 rounded-full bg-[#3c2b20] hover:bg-[#4d3729] text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              title={isCurrentPlaylistPlaying ? 'Pause' : 'Play All'}
+            >
+              {isCurrentPlaylistPlaying ? (
+                <Pause size={20} className="fill-white" />
+              ) : (
+                <Play size={20} className="fill-white ml-0.5" />
+              )}
+            </button>
+
+            <button
+              onClick={() => onPlayPlaylist(playlist, true)}
+              className={`p-3 rounded-2xl transition-all cursor-pointer ${
+                isDark 
+                  ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#f3efe8] hover:scale-105 active:scale-95' 
+                  : 'bg-[#faf9f6] neu-btn-shadow text-[#2e221b] hover:scale-105 active:scale-95'
+              }`}
+              title="Shuffle Play"
+            >
+              <Shuffle size={18} />
+            </button>
+
+            {onDeletePlaylist && (
+              <button
+                onClick={() => onDeletePlaylist(playlist.id)}
+                className={`p-3 rounded-2xl transition-all cursor-pointer ${
+                  isDark 
+                    ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-rose-400 hover:scale-105 active:scale-95' 
+                    : 'bg-[#faf9f6] neu-btn-shadow text-rose-500 hover:scale-105 active:scale-95'
+                }`}
+                title="Delete Playlist"
+              >
+                <Trash2 size={18} />
+              </button>
             )}
-          </button>
+          </div>
 
-          <button
-            onClick={() => onPlayPlaylist(playlist, true)}
-            className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
-            title="Shuffle Play"
-          >
-            <Shuffle size={20} />
-          </button>
-        </div>
-
-        {/* Search within playlist */}
-        <div className="relative w-48 sm:w-64">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text"
-            placeholder="Filter in playlist..."
-            value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
-            className="w-full bg-white/5 text-white placeholder-slate-400 text-xs pl-9 pr-3 py-2 rounded-xl border border-white/10 focus:border-cyan-400/50 outline-none"
-          />
+          {/* Search within playlist */}
+          <div className="relative w-48 sm:w-64">
+            <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${
+              isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+            }`} />
+            <input 
+              type="text"
+              placeholder="Filter in playlist..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className={`w-full text-xs pl-9 pr-3 py-2 rounded-2xl outline-none transition-all ${
+                isDark 
+                  ? 'bg-[#111215] neu-groove-inset neu-dark text-[#f3efe8] placeholder-[#828694]' 
+                  : 'bg-[#e8e2d8] neu-groove-inset text-[#2e221b] placeholder-[#8f8075]'
+              }`}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Tracks Table */}
-      <div className="px-6 md:px-10 py-4">
+      {/* Tracks Table in Neuphorism Card */}
+      <div className={`p-4 md:p-6 rounded-[36px] ${
+        isDark ? 'bg-[#1b1d23] neu-card-shadow neu-dark' : 'bg-[#faf9f6] neu-card-shadow'
+      }`}>
         {/* Table Header */}
-        <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold text-slate-400 border-b border-white/10 mb-2 uppercase tracking-wider">
+        <div className={`grid grid-cols-12 gap-4 px-4 py-2 text-[11px] font-bold border-b mb-2 uppercase tracking-wider ${
+          isDark ? 'text-[#828694] border-[#262933]' : 'text-[#8f8075] border-[#e8e2d8]'
+        }`}>
           <span className="col-span-1 text-center">#</span>
           <span className="col-span-6 md:col-span-5">Title</span>
           <span className="hidden md:block col-span-4">Artist</span>
           <span className="col-span-5 md:col-span-2 text-right flex items-center justify-end gap-1">
-            <Clock size={14} />
+            <Clock size={13} />
           </span>
         </div>
 
         {/* Tracks List */}
         {filteredTracks.length === 0 ? (
-          <div className="text-center py-16 text-slate-500">
-            <Music size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No songs found in this playlist</p>
+          <div className={`text-center py-16 space-y-2 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+            <Music size={32} className="mx-auto opacity-40" />
+            <p className="text-sm font-semibold">No songs found in this playlist</p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -154,26 +189,32 @@ export default function PlaylistView({
                 <div
                   key={`${track.id}-${idx}`}
                   onClick={() => onPlayTrack(track, playlist)}
-                  className={`group grid grid-cols-12 gap-4 items-center px-4 py-2.5 rounded-2xl cursor-pointer transition-colors border ${
+                  className={`group grid grid-cols-12 gap-4 items-center px-4 py-2.5 rounded-2xl cursor-pointer transition-all ${
                     isThisCurrent
-                      ? 'bg-cyan-500/10 border-cyan-500/30'
-                      : 'hover:bg-white/5 border-transparent hover:border-white/5'
+                      ? isDark
+                        ? 'bg-[#382417] text-white shadow-md'
+                        : 'bg-[#3d2b20] text-white shadow-md'
+                      : isDark
+                        ? 'hover:bg-[#232630] text-[#f3efe8]'
+                        : 'hover:bg-[#ece6dc] text-[#2e221b]'
                   }`}
                 >
                   {/* Number / Play Indicator */}
-                  <div className="col-span-1 text-center text-xs text-slate-400 font-mono">
+                  <div className={`col-span-1 text-center text-xs font-mono ${
+                    isThisCurrent ? 'text-white' : isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                  }`}>
                     {isThisPlaying ? (
                       <div className="flex gap-0.5 justify-center items-end h-3">
-                        <div className="w-0.5 bg-cyan-400 rounded-full animate-equalizer" style={{ animationDelay: '0.1s' }} />
-                        <div className="w-0.5 bg-cyan-400 rounded-full animate-equalizer" style={{ animationDelay: '0.3s' }} />
-                        <div className="w-0.5 bg-cyan-400 rounded-full animate-equalizer" style={{ animationDelay: '0.2s' }} />
+                        <div className="w-0.5 bg-current rounded-full animate-equalizer" style={{ animationDelay: '0.1s' }} />
+                        <div className="w-0.5 bg-current rounded-full animate-equalizer" style={{ animationDelay: '0.3s' }} />
+                        <div className="w-0.5 bg-current rounded-full animate-equalizer" style={{ animationDelay: '0.2s' }} />
                       </div>
                     ) : (
                       <span className="group-hover:hidden">{idx + 1}</span>
                     )}
                     <Play 
                       size={14} 
-                      className={`hidden ${isThisPlaying ? '' : 'group-hover:inline'} fill-white text-white mx-auto`} 
+                      className={`hidden ${isThisPlaying ? '' : 'group-hover:inline'} fill-current mx-auto`} 
                     />
                   </div>
 
@@ -182,33 +223,37 @@ export default function PlaylistView({
                     <img 
                       src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'} 
                       alt={track.title}
-                      className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                      className="w-10 h-10 rounded-xl object-cover flex-shrink-0 shadow-sm"
                     />
                     <div className="min-w-0">
-                      <p className={`text-sm font-semibold truncate ${
-                        isThisCurrent ? 'text-cyan-300' : 'text-white group-hover:text-cyan-300'
-                      }`}>
+                      <p className="text-sm font-bold truncate">
                         {track.title}
                       </p>
-                      <p className="text-xs text-slate-400 truncate md:hidden">
+                      <p className={`text-xs truncate md:hidden ${
+                        isThisCurrent ? 'text-white/80' : isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                      }`}>
                         {track.artist}
                       </p>
                     </div>
                   </div>
 
                   {/* Artist */}
-                  <div className="hidden md:block col-span-4 min-w-0 text-xs text-slate-400 truncate">
+                  <div className={`hidden md:block col-span-4 min-w-0 text-xs truncate ${
+                    isThisCurrent ? 'text-white/80' : isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                  }`}>
                     {track.artist}
                   </div>
 
                   {/* Duration & Actions */}
-                  <div className="col-span-5 md:col-span-2 flex items-center justify-end gap-2 text-xs font-mono text-slate-400">
+                  <div className={`col-span-5 md:col-span-2 flex items-center justify-end gap-2 text-xs font-mono ${
+                    isThisCurrent ? 'text-white' : isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                  }`}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onAddToQueue(track);
                       }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1.5 rounded-lg opacity-60 hover:opacity-100 transition-opacity"
                       title="Add to queue"
                     >
                       <ListPlus size={15} />
@@ -221,8 +266,8 @@ export default function PlaylistView({
                       }}
                       className={`p-1.5 rounded-lg transition-colors ${
                         isFav 
-                          ? 'text-pink-500' 
-                          : 'text-slate-400 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100'
+                          ? 'text-rose-500' 
+                          : 'opacity-60 hover:opacity-100'
                       }`}
                       title={isFav ? 'Remove from favorites' : 'Add to favorites'}
                     >
@@ -240,3 +285,5 @@ export default function PlaylistView({
     </div>
   );
 }
+
+export default React.memo(PlaylistView);

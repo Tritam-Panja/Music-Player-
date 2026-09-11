@@ -43,8 +43,10 @@ export default function PlayerBar({
   onToggleQueue,
   onToggleLyrics,
   onPlayTrack,
-  onRemoveFromQueue
+  onRemoveFromQueue,
+  theme = 'light'
 }) {
+  const isDark = theme === 'dark';
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
@@ -66,15 +68,18 @@ export default function PlayerBar({
 
   return (
     <>
-      <div className="fixed bottom-3 inset-x-3 md:bottom-4 md:inset-x-6 z-40">
+      <div className="fixed bottom-16 sm:bottom-3 inset-x-2 sm:inset-x-3 md:bottom-5 md:inset-x-6 z-40 max-w-5xl mx-auto">
         <div 
           onClick={(e) => {
-            // If tapped on mobile outside buttons, open full-screen sheet
             if (window.innerWidth < 768) {
               setIsMobileModalOpen(true);
             }
           }}
-          className="glass-dock rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 flex flex-col gap-1.5 transition-all cursor-pointer md:cursor-default"
+          className={`rounded-[30px] px-3.5 py-2 sm:px-5 sm:py-3 flex flex-col gap-1.5 transition-all cursor-pointer md:cursor-default ${
+            isDark 
+              ? 'bg-[#1b1d23] neu-pill-shadow neu-dark text-[#f3efe8]' 
+              : 'bg-[#faf9f6] neu-pill-shadow text-[#2e221b]'
+          }`}
         >
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             {/* Left: Track Information */}
@@ -92,14 +97,15 @@ export default function PlayerBar({
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <h4 className="text-xs sm:text-sm font-bold text-white truncate hover:underline">
+                  <h4 className={`text-xs sm:text-sm font-bold truncate hover:underline ${
+                    isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'
+                  }`}>
                     {track.title}
                   </h4>
-                  <span className="hidden lg:inline text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-400 font-semibold border border-white/5">
-                    Lossless
-                  </span>
                 </div>
-                <p className="text-[10px] sm:text-[11px] text-slate-400 truncate mt-0.5 font-medium">
+                <p className={`text-[10px] sm:text-[11px] truncate mt-0.5 font-medium ${
+                  isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                }`}>
                   {track.artist}
                 </p>
               </div>
@@ -112,7 +118,7 @@ export default function PlayerBar({
                 className={`p-1 sm:p-1.5 rounded-full transition-colors flex-shrink-0 ${
                   isFavorite 
                     ? 'text-rose-500' 
-                    : 'text-slate-400 hover:text-white'
+                    : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
                 }`}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
@@ -129,7 +135,9 @@ export default function PlayerBar({
                     onToggleShuffle && onToggleShuffle();
                   }}
                   className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
-                    isShuffle ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                    isShuffle 
+                      ? isDark ? 'text-[#c4956a]' : 'text-[#3c2b20]' 
+                      : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
                   }`}
                   title="Shuffle"
                 >
@@ -141,7 +149,9 @@ export default function PlayerBar({
                     e.stopPropagation();
                     onPrev && onPrev();
                   }}
-                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
+                  className={`p-1 sm:p-1.5 transition-colors ${
+                    isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
+                  }`}
                   title="Previous"
                 >
                   <SkipBack size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -152,13 +162,13 @@ export default function PlayerBar({
                     e.stopPropagation();
                     onTogglePlay && onTogglePlay();
                   }}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-slate-100 text-black flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#3c2b20] hover:bg-[#4d3729] text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all"
                   title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
                 >
                   {isPlaying ? (
-                    <Pause size={15} className="fill-black sm:w-[17px] sm:h-[17px]" />
+                    <Pause size={15} className="fill-white sm:w-[17px] sm:h-[17px]" />
                   ) : (
-                    <Play size={15} className="fill-black ml-0.5 sm:w-[17px] sm:h-[17px]" />
+                    <Play size={15} className="fill-white ml-0.5 sm:w-[17px] sm:h-[17px]" />
                   )}
                 </button>
 
@@ -167,7 +177,9 @@ export default function PlayerBar({
                     e.stopPropagation();
                     onNext && onNext();
                   }}
-                  className="p-1 sm:p-1.5 text-slate-400 hover:text-white transition-colors"
+                  className={`p-1 sm:p-1.5 transition-colors ${
+                    isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
+                  }`}
                   title="Next"
                 >
                   <SkipForward size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -179,7 +191,9 @@ export default function PlayerBar({
                     onToggleRepeat && onToggleRepeat();
                   }}
                   className={`hidden xs:block sm:block p-1.5 rounded-lg transition-colors ${
-                    repeatMode !== 'off' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                    repeatMode !== 'off' 
+                      ? isDark ? 'text-[#c4956a]' : 'text-[#3c2b20]' 
+                      : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
                   }`}
                   title={`Repeat: ${repeatMode}`}
                 >
@@ -190,13 +204,19 @@ export default function PlayerBar({
               {/* Hairline Timeline Scrubber */}
               <div 
                 onClick={(e) => e.stopPropagation()} 
-                className="w-full hidden sm:flex items-center gap-2 text-[10px] text-slate-500 font-mono select-none"
+                className={`w-full hidden sm:flex items-center gap-2 text-[10px] font-mono select-none ${
+                  isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                }`}
               >
               <span className="w-8 text-right font-medium">{formatDuration(displayTime)}</span>
               <div className="relative flex-1 group flex items-center h-3.5">
-                <div className="absolute inset-x-0 h-[3px] group-hover:h-[4px] bg-white/10 rounded-full overflow-hidden transition-all">
+                <div className={`absolute inset-x-0 h-[4px] rounded-full overflow-hidden transition-all ${
+                  isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
+                }`}>
                   <div 
-                    className="h-full bg-white rounded-full transition-all"
+                    className={`h-full rounded-full transition-all ${
+                      isDark ? 'bg-[#c4956a]' : 'bg-[#3d2b20]'
+                    }`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -217,7 +237,7 @@ export default function PlayerBar({
           </div>
 
           {/* Right: Actions, Lyrics, Volume */}
-          <div className="flex items-center justify-end gap-1.5 sm:gap-3 w-auto sm:w-1/4">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 w-auto sm:w-1/4">
             {/* Synced Lyrics */}
             <button
               onClick={(e) => {
@@ -228,10 +248,14 @@ export default function PlayerBar({
                   onToggleLyrics && onToggleLyrics();
                 }
               }}
-              className={`p-1.5 sm:p-2 rounded-xl transition-all ${
+              className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
                 isLyricsOpen 
-                  ? 'bg-white/10 text-white' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? isDark 
+                    ? 'bg-[#111215] neu-groove-inset neu-dark text-[#c4956a]' 
+                    : 'bg-[#e8e2d8] neu-groove-inset text-[#3c2b20]'
+                  : isDark 
+                    ? 'text-[#828694] hover:text-[#f3efe8]' 
+                    : 'text-[#8f8075] hover:text-[#2e221b]'
               }`}
               title="Lyrics"
             >
@@ -248,10 +272,14 @@ export default function PlayerBar({
                   onToggleQueue && onToggleQueue();
                 }
               }}
-              className={`p-1.5 sm:p-2 rounded-xl transition-all ${
+              className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
                 isQueueOpen 
-                  ? 'bg-white/10 text-white' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? isDark 
+                    ? 'bg-[#111215] neu-groove-inset neu-dark text-[#c4956a]' 
+                    : 'bg-[#e8e2d8] neu-groove-inset text-[#3c2b20]'
+                  : isDark 
+                    ? 'text-[#828694] hover:text-[#f3efe8]' 
+                    : 'text-[#8f8075] hover:text-[#2e221b]'
               }`}
               title="Queue"
             >
@@ -265,15 +293,21 @@ export default function PlayerBar({
             >
               <button
                 onClick={onToggleMute}
-                className="p-1 text-slate-400 hover:text-white transition-colors"
+                className={`p-1 transition-colors cursor-pointer ${
+                  isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
+                }`}
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
               <div className="w-16 relative flex items-center h-3">
-                <div className="absolute inset-x-0 h-[3px] bg-white/10 rounded-full overflow-hidden">
+                <div className={`absolute inset-x-0 h-[4px] rounded-full overflow-hidden ${
+                  isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
+                }`}>
                   <div 
-                    className="h-full bg-white/80 rounded-full"
+                    className={`h-full rounded-full ${
+                      isDark ? 'bg-[#c4956a]' : 'bg-[#3d2b20]'
+                    }`}
                     style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                   />
                 </div>
@@ -319,6 +353,7 @@ export default function PlayerBar({
       onToggleFavorite={onToggleFavorite}
       onPlayTrack={onPlayTrack}
       onRemoveFromQueue={onRemoveFromQueue}
+      theme={theme}
     />
   </>
   );

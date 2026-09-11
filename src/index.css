@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
+}
+
+:root.dark, body.dark {
   color-scheme: dark;
 }
 
@@ -12,54 +16,226 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  background-color: #07080c;
+  background-color: #f3f2ee;
+  color: #2e221b;
+  transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* Minimalist Frosted Glass Primitives */
+body.dark, .dark body {
+  background-color: #131417;
+  color: #f3efe8;
+}
+
+/* Minimalist Soft Clay Primitives (Forward-compatible Neuphorism) */
 .glass-panel {
-  background: rgba(13, 14, 21, 0.72);
-  backdrop-filter: blur(32px) saturate(170%);
-  -webkit-backdrop-filter: blur(32px) saturate(170%);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.6);
+  background: #faf9f6;
+  border: 1px solid #e8e2d8;
+  box-shadow: 16px 22px 48px rgba(165, 150, 135, 0.28), -12px -12px 36px rgba(255, 255, 255, 0.98);
+}
+.dark .glass-panel {
+  background: #1b1d23;
+  border-color: #262933;
+  box-shadow: 16px 22px 48px rgba(0, 0, 0, 0.72), -8px -8px 24px rgba(255, 255, 255, 0.035);
 }
 
 .glass-dock {
-  background: rgba(15, 16, 24, 0.82);
-  backdrop-filter: blur(40px) saturate(190%);
-  -webkit-backdrop-filter: blur(40px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), 0 0 1px 1px rgba(255, 255, 255, 0.05) inset;
+  background: #faf9f6;
+  border: 1px solid #e8e2d8;
+  box-shadow: 10px 14px 30px rgba(165, 150, 135, 0.24), -8px -8px 24px rgba(255, 255, 255, 0.95);
+}
+.dark .glass-dock {
+  background: #1b1d23;
+  border-color: #262933;
+  box-shadow: 10px 14px 28px rgba(0, 0, 0, 0.65), -6px -6px 18px rgba(255, 255, 255, 0.03);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.025);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #faf9f6;
+  border: 1px solid #e8e2d8;
+  box-shadow: 6px 8px 18px rgba(165, 150, 135, 0.26), -6px -6px 16px rgba(255, 255, 255, 0.95);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dark .glass-card {
+  background: #1b1d23;
+  border-color: #262933;
+  box-shadow: 5px 7px 16px rgba(0, 0, 0, 0.65), -4px -4px 12px rgba(255, 255, 255, 0.035);
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.055);
-  border-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5);
+  box-shadow: 8px 10px 22px rgba(165, 150, 135, 0.32), -7px -7px 18px rgba(255, 255, 255, 0.98);
+}
+.dark .glass-card:hover {
+  box-shadow: 7px 9px 20px rgba(0, 0, 0, 0.78), -5px -5px 14px rgba(255, 255, 255, 0.045);
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
+  background: #faf9f6;
+  border: 1px solid #e8e2d8;
+  box-shadow: 4px 6px 14px rgba(165, 150, 135, 0.2), -4px -4px 12px rgba(255, 255, 255, 0.9);
   transition: all 0.18s ease;
 }
+.dark .glass-pill {
+  background: #1b1d23;
+  border-color: #262933;
+  box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.6), -3px -3px 10px rgba(255, 255, 255, 0.03);
+}
 
-.glass-pill:hover, .glass-pill.active {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.22);
+/* ===================================================
+   Neuphorism (Soft UI / Warm Clay) Primitives
+   =================================================== */
+.neu-canvas-bg {
+  background-color: #f3f2ee;
+  background-image: 
+    radial-gradient(circle at 100% 0%, rgba(220, 212, 200, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(225, 218, 208, 0.4) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 60 C 20 40, 40 40, 60 60 C 80 80, 100 80, 120 60' stroke='rgba(195,182,168,0.18)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 30 C 20 10, 40 10, 60 30 C 80 50, 100 50, 120 30' stroke='rgba(195,182,168,0.14)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 90 C 20 70, 40 70, 60 90 C 80 110, 100 110, 120 90' stroke='rgba(195,182,168,0.14)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 0 C 20 -20, 40 -20, 60 0 C 80 20, 100 20, 120 0' stroke='rgba(195,182,168,0.1)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 120 C 20 100, 40 100, 60 120 C 80 140, 100 140, 120 120' stroke='rgba(195,182,168,0.1)' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-size: auto, auto, 90px 90px;
+}
+
+.neu-card-shadow {
+  box-shadow: 
+    16px 22px 48px rgba(165, 150, 135, 0.28), 
+    -12px -12px 36px rgba(255, 255, 255, 0.98),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.85);
+}
+
+.neu-pill-shadow {
+  box-shadow: 
+    10px 14px 30px rgba(165, 150, 135, 0.24), 
+    -8px -8px 24px rgba(255, 255, 255, 0.95),
+    inset 1px 1px 1.5px rgba(255, 255, 255, 0.9);
+}
+
+.neu-btn-shadow {
+  box-shadow: 
+    6px 8px 18px rgba(165, 150, 135, 0.26), 
+    -6px -6px 16px rgba(255, 255, 255, 0.95);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-btn-shadow:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    8px 10px 22px rgba(165, 150, 135, 0.32), 
+    -7px -7px 18px rgba(255, 255, 255, 0.98);
+}
+
+.neu-btn-shadow:active {
+  transform: translateY(1px);
+  box-shadow: 
+    inset 3px 3px 6px rgba(165, 150, 135, 0.32), 
+    inset -3px -3px 6px rgba(255, 255, 255, 0.85);
+}
+
+.neu-btn-pressed {
+  box-shadow: 
+    inset 3px 3px 7px rgba(165, 150, 135, 0.34), 
+    inset -3px -3px 7px rgba(255, 255, 255, 0.85);
+}
+
+.neu-play-shadow {
+  box-shadow: 
+    8px 14px 28px rgba(46, 34, 27, 0.38), 
+    -4px -4px 14px rgba(255, 255, 255, 0.85);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-play-shadow:hover {
+  transform: scale(1.04);
+  box-shadow: 
+    10px 18px 34px rgba(46, 34, 27, 0.44), 
+    -5px -5px 16px rgba(255, 255, 255, 0.95);
+}
+
+.neu-play-shadow:active {
+  transform: scale(0.96);
+  box-shadow: 
+    inset 3px 3px 8px rgba(0, 0, 0, 0.5), 
+    inset -2px -2px 6px rgba(255, 255, 255, 0.2);
+}
+
+.neu-groove-inset {
+  box-shadow: 
+    inset 2.5px 2.5px 5px rgba(165, 150, 135, 0.35), 
+    inset -2.5px -2.5px 5px rgba(255, 255, 255, 0.9);
+}
+
+.neu-teardrop-mask {
+  border-radius: 50% 12% 50% 50%;
+}
+
+/* ===================================================
+   Dark Neuphorism (Matte Charcoal / Obsidian Soft UI)
+   =================================================== */
+.neu-canvas-bg.neu-dark,
+.dark .neu-canvas-bg {
+  background-color: #131417;
+  background-image: 
+    radial-gradient(circle at 100% 0%, rgba(40, 44, 54, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(28, 30, 38, 0.45) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 60 C 20 40, 40 40, 60 60 C 80 80, 100 80, 120 60' stroke='rgba(255,255,255,0.035)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 30 C 20 10, 40 10, 60 30 C 80 50, 100 50, 120 30' stroke='rgba(255,255,255,0.025)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 90 C 20 70, 40 70, 60 90 C 80 110, 100 110, 120 90' stroke='rgba(255,255,255,0.025)' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+}
+
+.neu-card-shadow.neu-dark,
+.dark .neu-card-shadow {
+  background-color: #1b1d23;
+  box-shadow: 
+    16px 22px 48px rgba(0, 0, 0, 0.72), 
+    -8px -8px 24px rgba(255, 255, 255, 0.035),
+    inset 1px 1px 1.5px rgba(255, 255, 255, 0.08);
+}
+
+.neu-pill-shadow.neu-dark,
+.dark .neu-pill-shadow {
+  background-color: #1b1d23;
+  box-shadow: 
+    10px 14px 28px rgba(0, 0, 0, 0.65), 
+    -6px -6px 18px rgba(255, 255, 255, 0.03),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.07);
+}
+
+.neu-btn-shadow.neu-dark,
+.dark .neu-btn-shadow {
+  background-color: #1b1d23;
+  box-shadow: 
+    5px 7px 16px rgba(0, 0, 0, 0.65), 
+    -4px -4px 12px rgba(255, 255, 255, 0.035);
+}
+
+.neu-btn-shadow.neu-dark:hover,
+.dark .neu-btn-shadow:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    7px 9px 20px rgba(0, 0, 0, 0.78), 
+    -5px -5px 14px rgba(255, 255, 255, 0.045);
+}
+
+.neu-btn-shadow.neu-dark:active,
+.dark .neu-btn-shadow:active {
+  transform: translateY(1px);
+  box-shadow: 
+    inset 3px 3px 6px rgba(0, 0, 0, 0.8), 
+    inset -2px -2px 5px rgba(255, 255, 255, 0.04);
+}
+
+.neu-play-shadow.neu-dark,
+.dark .neu-play-shadow {
+  background-color: #382417;
+  box-shadow: 
+    8px 14px 28px rgba(0, 0, 0, 0.82), 
+    -3px -3px 10px rgba(255, 255, 255, 0.05);
+}
+
+.neu-groove-inset.neu-dark,
+.dark .neu-groove-inset {
+  background-color: #111215;
+  box-shadow: 
+    inset 2.5px 2.5px 5px rgba(0, 0, 0, 0.82), 
+    inset -1px -1px 3px rgba(255, 255, 255, 0.04);
 }
 
 /* Subtle, Breathing Ambient Lighting */

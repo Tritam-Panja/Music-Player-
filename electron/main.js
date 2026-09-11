@@ -134,6 +134,10 @@ function startLocalServer() {
     }
   });
   ipcMain.on('window:close', () => mainWindow?.close());
+  ipcMain.handle('window:is-maximized', () => mainWindow?.isMaximized() ?? false);
+
+  mainWindow.on('maximize', () => mainWindow?.webContents.send('window:maximize-change', true));
+  mainWindow.on('unmaximize', () => mainWindow?.webContents.send('window:maximize-change', false));
 
   // Global Media Shortcuts
   globalShortcut.register('MediaPlayPause', () => mainWindow?.webContents.send('media:play-pause'));

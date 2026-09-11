@@ -22,6 +22,18 @@ export default {
           pink: '#EC4899',
           green: '#10B981',
           blue: '#3B82F6',
+        },
+        neu: {
+          bg: '#f3f2ee',
+          'bg-dark': '#ebe8e1',
+          card: '#faf9f6',
+          espresso: '#2e221b',
+          'espresso-dark': '#241a14',
+          chocolate: '#3d2b20',
+          taupe: '#8f8075',
+          'taupe-light': '#b8ada5',
+          groove: '#e6e1d8',
+          'groove-dark': '#d8d2c6',
         }
       },
       backdropBlur: {
@@ -35,6 +47,12 @@ export default {
         'glass-glow': '0 0 35px -5px rgba(168, 85, 247, 0.35)',
         'neon-cyan': '0 0 20px rgba(0, 240, 255, 0.4)',
         'neon-purple': '0 0 20px rgba(168, 85, 247, 0.4)',
+        'neu-card': '16px 20px 42px rgba(165, 150, 135, 0.28), -12px -12px 30px rgba(255, 255, 255, 0.95)',
+        'neu-card-sm': '8px 12px 24px rgba(165, 150, 135, 0.22), -8px -8px 20px rgba(255, 255, 255, 0.95)',
+        'neu-button': '5px 7px 15px rgba(165, 150, 135, 0.28), -5px -5px 12px rgba(255, 255, 255, 0.95)',
+        'neu-button-pressed': 'inset 3px 3px 6px rgba(165, 150, 135, 0.35), inset -3px -3px 6px rgba(255, 255, 255, 0.8)',
+        'neu-button-play': '8px 12px 24px rgba(46, 34, 27, 0.38), -4px -4px 12px rgba(255, 255, 255, 0.85)',
+        'neu-groove': 'inset 2px 2px 5px rgba(165, 150, 135, 0.35), inset -2px -2px 5px rgba(255, 255, 255, 0.85)',
       },
       animation: {
         'fluid-slow': 'fluid 18s ease-in-out infinite alternate',
