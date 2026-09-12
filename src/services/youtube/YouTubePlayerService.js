@@ -76,14 +76,16 @@ class YouTubePlayerService {
       container.style.left = '0px';
       container.style.width = '240px';
       container.style.height = '240px';
-      container.style.opacity = '0.001';
+      container.style.opacity = '0.01';
       container.style.pointerEvents = 'none';
-      container.style.zIndex = '-999';
+      container.style.zIndex = '-1';
       document.body.appendChild(container);
     }
 
-    const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI?.isElectron);
-    const origin = isElectron ? 'https://www.youtube.com' : (window.location.origin || 'https://www.youtube.com');
+    // Must match window.location.origin so postMessage communication between parent and iframe succeeds
+    const origin = (typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:'))
+      ? window.location.origin
+      : 'https://www.youtube.com';
 
     try {
       this.player = new window.YT.Player('yt-audio-container', {
@@ -99,11 +101,16 @@ class YouTubePlayerService {
           modestbranding: 1,
           playsinline: 1,
           enablejsapi: 1,
+          iv_load_policy: 3,
           origin
         },
         events: {
           onReady: () => {
             this.isReady = true;
+            try {
+              if (typeof this.player?.unMute === 'function') this.player.unMute();
+              if (typeof this.player?.setVolume === 'function') this.player.setVolume(100);
+            } catch {}
             this.notify('ready');
 
             if (this.pendingVideoId) {
@@ -149,16 +156,27 @@ class YouTubePlayerService {
 
     if (!this.isReady || !this.player || typeof this.player.loadVideoById !== 'function') {
       this.pendingVideoId = videoId;
+      if (!this.player && window.YT?.Player) {
+        this.createPlayerInstance();
+      }
       return;
     }
 
     try {
-      this.player.loadVideoById({
-        videoId,
-        startSeconds,
-        suggestedQuality: 'small'
-      });
-      this.player.playVideo();
+      if (typeof this.player.unMute === 'function') {
+        this.player.unMute();
+      }
+      if (typeof this.player.loadVideoById === 'function') {
+        this.player.loadVideoById({
+          videoId,
+          startSeconds,
+          suggestedQuality: 'small'
+        });
+        this.player.playVideo();
+      } else if (typeof this.player.cueVideoById === 'function') {
+        this.player.cueVideoById(videoId);
+        this.player.playVideo();
+      }
     } catch (err) {
       console.warn('loadVideoById failed:', err);
       this.notify('error', {

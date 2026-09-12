@@ -72,11 +72,14 @@ class PlayerService {
     if (typeof window === 'undefined') return;
 
     this.htmlAudio = new Audio();
+    this.consecutiveErrors = 0;
     this.htmlAudio.preload = 'auto';
 
     this.htmlAudio.addEventListener('playing', () => {
       this.isPlaying = true;
       this.isLoading = false;
+      this.consecutiveErrors = 0;
+      this.error = null;
       this.startTimer();
       this.updateMediaSessionState('playing');
       this.notify();
@@ -94,17 +97,15 @@ class PlayerService {
     });
 
     this.htmlAudio.addEventListener('error', (e) => {
+      // Guard: only handle errors if actively using the HTML5 audio engine with a valid src
+      if (this.activeEngine !== 'audio' || !this.htmlAudio?.src || this.htmlAudio.src === window.location.href) {
+        return;
+      }
       console.warn('HTML5 Audio stream error:', e);
       if (this.currentTrack) {
         ytResolver.invalidate(this.currentTrack.id);
       }
-      this.error = new MusicError({
-        code: ErrorCodes.AUDIO_DECODE_FAILED,
-        userMessage: 'Stream decode failed. Auto-advancing to next track...',
-        retryable: true
-      });
-      this.notify();
-      setTimeout(() => this.next(), 1200);
+      this.handlePlaybackFailure('Stream decode failed');
     });
 
     this.htmlAudio.addEventListener('loadedmetadata', () => {
@@ -122,6 +123,8 @@ class PlayerService {
       if (event === 'playing') {
         this.isPlaying = true;
         this.isLoading = false;
+        this.consecutiveErrors = 0;
+        this.error = null;
         if (data?.duration && data.duration > 0) {
           this.duration = data.duration;
         }
@@ -140,35 +143,55 @@ class PlayerService {
         this.notify();
       } else if (event === 'error') {
         console.warn('YouTubePlayer error event:', data);
-        if (data?.isEmbedRestricted) {
-          this.fallbackToDirectStream();
-        } else {
-          this.fallbackToDirectStream();
-        }
+        this.fallbackToDirectStream();
       }
     });
   }
 
+  handlePlaybackFailure(reason = 'Playback failed') {
+    this.isLoading = false;
+    this.isPlaying = false;
+    this.stopTimer();
+
+    this.consecutiveErrors = (this.consecutiveErrors || 0) + 1;
+    if (this.consecutiveErrors < 3) {
+      this.error = new MusicError({
+        code: ErrorCodes.AUDIO_DECODE_FAILED,
+        userMessage: `${reason}. Trying next track...`,
+        retryable: true
+      });
+      this.notify();
+      setTimeout(() => this.next(), 1500);
+    } else {
+      this.error = new MusicError({
+        code: ErrorCodes.AUDIO_DECODE_FAILED,
+        userMessage: 'Unable to stream these tracks right now. Please select another song.',
+        retryable: false
+      });
+      this.notify();
+    }
+  }
+
   async fallbackToDirectStream() {
     if (!this.currentTrack || !this.currentTrack.id) return;
-    this.activeEngine = 'audio';
-    this.isLoading = true;
-    this.notify();
 
     try {
       const stream = await ytResolver.resolveAudioStream(this.currentTrack.id);
       if (stream && stream.streamUrl && this.htmlAudio) {
+        this.activeEngine = 'audio';
+        this.isLoading = true;
+        this.notify();
         this.htmlAudio.src = stream.streamUrl;
         this.htmlAudio.volume = this.isMuted ? 0 : this.volume;
         await this.htmlAudio.play();
         return;
       }
     } catch (err) {
-      console.warn('Fallback stream failed:', err);
+      console.warn('Fallback stream resolution failed:', err);
     }
 
-    // Auto-advance if stream cannot be played
-    this.onEnded();
+    // Direct stream resolution could not find a playable stream
+    this.handlePlaybackFailure('Track unavailable');
   }
 
   /**
@@ -196,10 +219,11 @@ class PlayerService {
     // Record listening history
     storageService.addToHistory(track);
 
-    // Stop html audio if currently playing
-    if (this.htmlAudio && !this.htmlAudio.paused) {
+    // Stop and cleanly reset html audio without firing error events
+    if (this.htmlAudio) {
       this.htmlAudio.pause();
-      this.htmlAudio.src = '';
+      this.htmlAudio.removeAttribute('src');
+      this.htmlAudio.load();
     }
 
     this.updateMediaSessionMetadata(track);
@@ -209,13 +233,13 @@ class PlayerService {
     ytPlayerService.setVolume((this.isMuted ? 0 : this.volume) * 100);
     ytPlayerService.loadVideo(track.id);
 
-    // Fail-safe watchdog: if iframe does not start playing after 6 seconds, fallback
+    // Fail-safe watchdog: if iframe does not start playing after 10 seconds, attempt fallback
     setTimeout(() => {
       if (this.currentTrack?.id === track.id && this.isLoading && this.activeEngine === 'iframe') {
-        console.warn('Watchdog triggered: iframe slow to buffer. Switching to direct audio stream...');
+        console.warn('Watchdog triggered: iframe buffer timeout. Checking fallback...');
         this.fallbackToDirectStream();
       }
-    }, 6000);
+    }, 10000);
   }
 
   pause() {

@@ -22,6 +22,12 @@ public class MainActivity extends BridgeActivity {
                 settings.setAllowFileAccess(true);
                 settings.setAllowContentAccess(true);
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+                // Strip '; wv' from User-Agent so YouTube iframe does not block playback with Error 150
+                String ua = settings.getUserAgentString();
+                if (ua != null && ua.contains("; wv")) {
+                    settings.setUserAgentString(ua.replace("; wv", ""));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
