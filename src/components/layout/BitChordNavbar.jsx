@@ -79,7 +79,7 @@ function BitChordNavbar({
   return (
     <header 
       onDoubleClick={handleHeaderDoubleClick}
-      className={`sticky top-0 z-40 w-full px-3 sm:px-6 py-2.5 sm:py-3.5 app-drag-region select-none transition-colors duration-300 ${
+      className={`sticky top-0 z-40 w-full px-3 sm:px-6 pt-safe pb-2.5 sm:py-3.5 app-drag-region select-none transition-colors duration-300 ${
         isDark 
           ? 'bg-[#131417]/90 backdrop-blur-xl border-b border-[#23262f]' 
           : 'bg-[#f3f2ee]/85 backdrop-blur-xl border-b border-[#e6dfd3]'
@@ -87,12 +87,13 @@ function BitChordNavbar({
     >
       <div className="w-full flex items-center justify-between gap-2 sm:gap-4">
         
-        {/* Brand / Logo + Spotify-style Home Icon Button */}
+        {/* Brand / Logo */}
         <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 app-no-drag">
           <div 
             onClick={() => onViewChange('home')}
             className="flex items-center gap-2 sm:gap-3 cursor-pointer group select-none"
             title="Go to Home"
+            aria-label="Liquid Music Home"
           >
             <div className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105 ${
               isDark
@@ -129,10 +130,10 @@ function BitChordNavbar({
             </div>
           </div>
 
-          {/* Spotify-style Standalone Round Home Button */}
+          {/* Spotify-style Standalone Round Home Button (Desktop Only) */}
           <button
             onClick={() => onViewChange('home')}
-            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+            className={`hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full items-center justify-center transition-all cursor-pointer ${
               currentView === 'home'
                 ? isDark
                   ? 'bg-[#f3efe8] text-[#131417] shadow-md scale-105'
@@ -148,10 +149,11 @@ function BitChordNavbar({
           </button>
         </div>
 
-        {/* Center: Spotify-style "What do you want to play?" Search Capsule Trigger (Ctrl + K) */}
+        {/* Center: Spotify-style "What do you want to play?" Search Capsule Trigger (Desktop Only) */}
         <div className="flex-1 max-w-lg hidden sm:block app-no-drag mx-2">
           <button
             onClick={onOpenSearch}
+            aria-label="Search songs, albums and artists"
             className={`w-full flex items-center justify-between px-4 py-2 rounded-full transition-all shadow-md cursor-pointer group ${
               isDark
                 ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#828694] hover:text-[#f3efe8]'
@@ -178,24 +180,12 @@ function BitChordNavbar({
 
         {/* Right Navigation, Theme Toggle, Profile & Desktop Window Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 app-no-drag">
-          {/* Mobile Search Button */}
-          <button
-            onClick={onOpenSearch}
-            className={`sm:hidden p-2 rounded-xl cursor-pointer ${
-              isDark
-                ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#f3efe8]'
-                : 'bg-[#faf9f6] neu-btn-shadow text-[#2e221b]'
-            }`}
-            title="Search"
-          >
-            <Search size={15} />
-          </button>
-
           {/* Alternate Dark Mode / Light Mode Neuphorism Toggle */}
           {onToggleTheme && (
             <button
               onClick={onToggleTheme}
-              className={`p-1.5 sm:p-2 rounded-xl sm:rounded-2xl transition-all cursor-pointer flex items-center gap-1.5 ${
+              aria-label={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
+              className={`p-2 rounded-xl sm:rounded-2xl transition-all cursor-pointer flex items-center justify-center min-w-[36px] min-h-[36px] ${
                 isDark
                   ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-amber-400 hover:scale-105 active:scale-95'
                   : 'bg-[#faf9f6] neu-btn-shadow text-[#3c2b20] hover:scale-105 active:scale-95'
@@ -213,8 +203,8 @@ function BitChordNavbar({
             </button>
           )}
 
-          {/* View Switcher: Home vs Player vs Library */}
-          <div className={`flex items-center p-0.5 sm:p-1 rounded-xl sm:rounded-2xl ${
+          {/* View Switcher: Home vs Player vs Library (Desktop/Tablet Only) */}
+          <div className={`hidden md:flex items-center p-0.5 sm:p-1 rounded-xl sm:rounded-2xl ${
             isDark
               ? 'bg-[#111215] neu-groove-inset neu-dark'
               : 'bg-[#e8e2d8] neu-groove-inset'
@@ -270,7 +260,8 @@ function BitChordNavbar({
           <button
             onClick={onOpenLogin}
             title={ytUser ? ytUser.name : "Connect Google"}
-            className={`flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-2xl transition-all cursor-pointer ${
+            aria-label={ytUser ? `Signed in as ${ytUser.name}` : "Connect Google Account"}
+            className={`flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-2xl transition-all cursor-pointer min-w-[36px] min-h-[36px] justify-center ${
               isDark
                 ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#f3efe8] hover:scale-105'
                 : 'bg-[#faf9f6] neu-btn-shadow text-[#2e221b] hover:scale-105'

@@ -133,7 +133,7 @@ export default function MobileNowPlayingModal({
   if (!isOpen || !track) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col justify-between p-4 sm:p-6 animate-in slide-in-from-bottom duration-300 select-none overflow-hidden transition-colors ${
+    <div className={`fixed inset-0 z-50 flex flex-col justify-between pt-safe pb-safe px-4 sm:px-6 animate-in slide-in-from-bottom duration-300 select-none overflow-hidden transition-colors ${
       isDark ? 'neu-canvas-bg neu-dark text-[#f3efe8]' : 'neu-canvas-bg text-[#2e221b]'
     }`}>
       

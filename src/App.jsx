@@ -252,7 +252,7 @@ export default function App() {
       )}
 
       {/* 2. Main Stage: Neuphorism Home vs Player Studio vs Library vs Playlist */}
-      <main className="flex-1 overflow-y-auto pb-20 relative z-10 scrollbar-none flex flex-col">
+      <main className="flex-1 overflow-y-auto pb-36 sm:pb-24 relative z-10 scrollbar-none flex flex-col">
         {currentView === 'home' && (
           <HomeView
             playlists={playlists}
@@ -405,52 +405,56 @@ export default function App() {
       />
 
       {/* 7. Spotify-Style Mobile Bottom Navigation Bar */}
-      <nav className={`md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 py-2 flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 ${
+      <nav className={`md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 pt-2 pb-safe flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 ${
         theme === 'dark'
           ? 'bg-[#131417]/95 border-[#23262f] text-[#828694]'
           : 'bg-[#f3f2ee]/95 border-[#e6dfd3] text-[#8f8075]'
       }`}>
         <button
           onClick={() => setCurrentView('home')}
-          className={`flex flex-col items-center gap-1 transition-all cursor-pointer ${
+          aria-label="Home"
+          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
             currentView === 'home'
               ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
               : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
           }`}
         >
-          <Disc3 size={19} className={currentView === 'home' ? 'stroke-[2.5]' : ''} />
+          <Disc3 size={20} className={currentView === 'home' ? 'stroke-[2.5]' : ''} />
           <span className="text-[10px] font-bold">Home</span>
         </button>
 
         <button
           onClick={() => setIsSearchOpen(true)}
-          className="flex flex-col items-center gap-1 transition-all cursor-pointer hover:text-[#2e221b] dark:hover:text-[#f3efe8]"
+          aria-label="Search"
+          className="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer hover:text-[#2e221b] dark:hover:text-[#f3efe8]"
         >
-          <Search size={19} />
+          <Search size={20} />
           <span className="text-[10px] font-bold">Search</span>
         </button>
 
         <button
           onClick={() => setCurrentView('player')}
-          className={`flex flex-col items-center gap-1 transition-all cursor-pointer ${
+          aria-label="Player"
+          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
             currentView === 'player'
               ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
               : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
           }`}
         >
-          <Music size={19} className={currentView === 'player' ? 'stroke-[2.5]' : ''} />
+          <Music size={20} className={currentView === 'player' ? 'stroke-[2.5]' : ''} />
           <span className="text-[10px] font-bold">Player</span>
         </button>
 
         <button
           onClick={() => setCurrentView('library')}
-          className={`flex flex-col items-center gap-1 transition-all cursor-pointer ${
+          aria-label="Your Library"
+          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
             currentView === 'library' || currentView === 'playlist'
               ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
               : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
           }`}
         >
-          <Library size={19} className={currentView === 'library' || currentView === 'playlist' ? 'stroke-[2.5]' : ''} />
+          <Library size={20} className={currentView === 'library' || currentView === 'playlist' ? 'stroke-[2.5]' : ''} />
           <span className="text-[10px] font-bold">Library</span>
         </button>
       </nav>

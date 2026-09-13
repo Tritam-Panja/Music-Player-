@@ -68,7 +68,7 @@ export default function PlayerBar({
 
   return (
     <>
-      <div className="fixed bottom-16 sm:bottom-3 inset-x-2 sm:inset-x-3 md:bottom-5 md:inset-x-6 z-40 max-w-5xl mx-auto">
+      <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:bottom-3 md:bottom-5 inset-x-2 sm:inset-x-3 md:inset-x-6 z-40 max-w-5xl mx-auto">
         <div 
           onClick={(e) => {
             if (window.innerWidth < 768) {

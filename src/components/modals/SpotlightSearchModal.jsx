@@ -85,11 +85,11 @@ export default function SpotlightSearchModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4 bg-black/50 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-safe sm:pt-24 p-2 sm:p-4 bg-black/50 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-2xl rounded-[32px] overflow-hidden flex flex-col max-h-[78vh] animate-in zoom-in-95 duration-200 transition-colors ${
+        className={`relative w-full max-w-2xl rounded-[28px] sm:rounded-[32px] overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[78vh] animate-in zoom-in-95 duration-200 transition-colors ${
           isDark 
             ? 'bg-[#1b1d23] neu-card-shadow neu-dark text-[#f3efe8] border border-[#262933]' 
             : 'bg-[#faf9f6] neu-card-shadow text-[#2e221b] border border-[#e8e2d8]'
@@ -97,7 +97,7 @@ export default function SpotlightSearchModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Header Input */}
-        <div className={`flex items-center gap-3 px-6 py-4 border-b ${
+        <div className={`flex items-center gap-3 px-4 sm:px-6 py-3.5 sm:py-4 border-b ${
           isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'
         }`}>
           <Search size={18} className={`flex-shrink-0 ${isDark ? 'text-[#c4956a]' : 'text-[#3c2b20]'}`} />
@@ -107,7 +107,8 @@ export default function SpotlightSearchModal({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search YouTube Music (e.g. Starboy, Lofi, Synthwave, Coldplay)..."
+            aria-label="Search songs, artists or playlists"
+            placeholder="Search YouTube Music (e.g. Starboy, Lofi, Synthwave)..."
             className={`w-full bg-transparent text-sm focus:outline-none font-medium ${
               isDark ? 'text-[#f3efe8] placeholder-[#828694]' : 'text-[#2e221b] placeholder-[#8f8075]'
             }`}

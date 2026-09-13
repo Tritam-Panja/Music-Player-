@@ -10,6 +10,20 @@
   color-scheme: dark;
 }
 
+/* Safe area padding utilities for mobile notch and bottom navigation */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 8px);
+}
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+.pl-safe {
+  padding-left: max(env(safe-area-inset-left, 0px), 8px);
+}
+.pr-safe {
+  padding-right: max(env(safe-area-inset-right, 0px), 8px);
+}
+
 body {
   margin: 0;
   padding: 0;
