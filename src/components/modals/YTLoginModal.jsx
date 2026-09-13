@@ -7,11 +7,7 @@ import {
   LogOut, 
   Sparkles, 
   UserCheck, 
-  ShieldCheck, 
-  Music2, 
-  Link2, 
   ArrowRight,
-  Key,
   AtSign,
   Monitor
 } from 'lucide-react';
@@ -28,13 +24,11 @@ export default function YTLoginModal({
   theme = 'light'
 }) {
   const isDark = theme === 'dark';
-  const [activeTab, setActiveTab] = useState('token'); // 'token' | 'handle' | 'desktop'
-  const [tokenInput, setTokenInput] = useState('');
+  const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI?.isElectron);
+  const [activeTab, setActiveTab] = useState(isElectron ? 'desktop' : 'handle'); // 'handle' | 'desktop'
   const [handleInput, setHandleInput] = useState('');
   const [connState, setConnState] = useState(ytConnectionService.getState());
   const [successMsg, setSuccessMsg] = useState(null);
-
-  const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI?.isElectron);
 
   useEffect(() => {
     const unsub = ytConnectionService.subscribe((state) => {
@@ -71,13 +65,11 @@ export default function YTLoginModal({
     }
   };
 
-  const handleConnectToken = async (e) => {
-    if (e) e.preventDefault();
+  const handleConnectGoogle = async () => {
     setSuccessMsg(null);
     try {
-      const loggedUser = await ytConnectionService.connectWithToken(tokenInput);
+      const loggedUser = await ytConnectionService.connectWithGoogleOAuth();
       setSuccessMsg(`Connected successfully as ${loggedUser.name}!`);
-      setTokenInput('');
     } catch (err) {}
   };
 
@@ -223,12 +215,39 @@ export default function YTLoginModal({
           ) : (
             /* Connection Options */
             <div className="space-y-4">
+              {/* Primary Google OAuth Button */}
+              <button
+                type="button"
+                onClick={handleConnectGoogle}
+                disabled={isConnecting}
+                className={`w-full py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2.5 cursor-pointer transition-all disabled:opacity-50 ${
+                  isDark ? 'bg-[#c4956a] text-[#131417] neu-play-shadow hover:brightness-105' : 'bg-[#2e221b] text-[#faf9f6] neu-play-shadow hover:brightness-110'
+                }`}
+              >
+                {isConnecting ? (
+                  <RefreshCw size={15} className="animate-spin" />
+                ) : (
+                  <YoutubeIcon size={16} />
+                )}
+                <span>{isConnecting ? getStatusText() : 'Continue with Google'}</span>
+              </button>
+
+              {/* Alternative Options Divider */}
+              <div className="relative flex py-1 items-center">
+                <div className={`flex-grow border-t ${isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'}`} />
+                <span className={`flex-shrink mx-3 text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+                  or
+                </span>
+                <div className={`flex-grow border-t ${isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'}`} />
+              </div>
+
               {/* Strategy Tabs */}
               <div className={`flex items-center p-1 rounded-xl ${
                 isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
               }`}>
                 {isElectron && (
                   <button
+                    type="button"
                     onClick={() => setActiveTab('desktop')}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       activeTab === 'desktop'
@@ -240,16 +259,7 @@ export default function YTLoginModal({
                   </button>
                 )}
                 <button
-                  onClick={() => setActiveTab('token')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    activeTab === 'token'
-                      ? isDark ? 'bg-[#1b1d23] text-[#f3efe8] neu-btn-shadow neu-dark' : 'bg-[#faf9f6] text-[#2e221b] neu-btn-shadow'
-                      : isDark ? 'text-[#828694]' : 'text-[#8f8075]'
-                  }`}
-                >
-                  Google Token
-                </button>
-                <button
+                  type="button"
                   onClick={() => setActiveTab('handle')}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     activeTab === 'handle'
@@ -282,45 +292,6 @@ export default function YTLoginModal({
                     <span>{isConnecting ? getStatusText() : 'Open Google Sign-In Window'}</span>
                   </button>
                 </div>
-              )}
-
-              {/* OAuth Token Option */}
-              {activeTab === 'token' && (
-                <form onSubmit={handleConnectToken} className="space-y-3">
-                  <div>
-                    <label className={`block text-[11px] font-bold mb-1 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
-                      Google OAuth Access Token
-                    </label>
-                    <div className="relative">
-                      <Key size={14} className={`absolute left-3 top-3 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`} />
-                      <input
-                        type="password"
-                        value={tokenInput}
-                        onChange={(e) => setTokenInput(e.target.value)}
-                        placeholder="ya29.a0AfH6SM..."
-                        className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs outline-none transition-all ${
-                          isDark 
-                            ? 'bg-[#111215] border border-[#262933] text-[#f3efe8] focus:border-[#c4956a]' 
-                            : 'bg-[#faf9f6] border border-[#e8e2d8] text-[#2e221b] focus:border-[#2e221b]'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isConnecting || !tokenInput.trim()}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 ${
-                      isDark ? 'bg-[#c4956a] text-[#131417] neu-play-shadow' : 'bg-[#2e221b] text-[#faf9f6] neu-play-shadow'
-                    }`}
-                  >
-                    {isConnecting ? (
-                      <RefreshCw size={14} className="animate-spin" />
-                    ) : (
-                      <ShieldCheck size={14} />
-                    )}
-                    <span>{isConnecting ? getStatusText() : 'Validate & Connect Session'}</span>
-                  </button>
-                </form>
               )}
 
               {/* Public Channel Handle Option */}

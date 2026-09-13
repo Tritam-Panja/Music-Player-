@@ -1,7 +1,7 @@
 {
   "name": "liquid-music",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Free, open-source Spotify-like music player with liquid glass UI, zero ads, and YouTube playlist sync",
   "main": "electron/main.js",
   "type": "module",
@@ -15,6 +15,7 @@
     "cap:open:android": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor-community/generic-oauth2": "^7.1.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "react": "^18.3.1",

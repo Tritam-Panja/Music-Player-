@@ -6,6 +6,8 @@
 
 import { MusicError, ErrorCodes } from '../../core/errors/MusicError';
 import { ytSessionService } from './YouTubeSessionService';
+import { GenericOAuth2 } from '@capacitor-community/generic-oauth2';
+import capacitorConfig from '../../../capacitor.config.json';
 
 export const ConnectionStatus = {
   DISCONNECTED: 'DISCONNECTED',
@@ -79,7 +81,7 @@ class YouTubeConnectionService {
       this.notify();
 
       // Validate session based on type
-      if (session.type === 'oauth' && session.token) {
+      if ((session.type === 'oauth' || session.type === 'oauth_pkce') && session.token) {
         const isValid = await this.validateOAuthToken(session.token);
         if (isValid) {
           this.status = ConnectionStatus.CONNECTED;
@@ -106,6 +108,113 @@ class YouTubeConnectionService {
       this.user = null;
     } finally {
       this.notify();
+    }
+  }
+
+  /**
+   * Connect via Google OAuth (PKCE) using GenericOAuth2 Capacitor plugin
+   */
+  async connectWithGoogleOAuth() {
+    // If running in Desktop Electron, use the native desktop loopback flow
+    if (typeof window !== 'undefined' && window.electronAPI?.isElectron) {
+      return await this.connectWithElectron();
+    }
+
+    try {
+      this.setStatus(ConnectionStatus.CONNECTING);
+
+      const isNative = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
+      const rawConfig = capacitorConfig?.plugins?.GenericOAuth2?.Google || capacitorConfig?.plugins?.GenericOAuth2 || {};
+
+      const appId = isNative
+        ? (rawConfig.android?.appId || rawConfig.appId || '')
+        : (rawConfig.web?.appId || rawConfig.appId || '');
+
+      const redirectUrl = isNative
+        ? (rawConfig.android?.redirectUri || rawConfig.android?.redirectUrl || 'com.liquidmusic.app:/oauth2redirect')
+        : (typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:5173');
+
+      if (!appId || appId.includes('<MY_')) {
+        const platformName = isNative ? 'Android' : 'Web';
+        const err = new MusicError({
+          code: ErrorCodes.SESSION_INITIALIZATION_FAILED,
+          userMessage: `Please configure your ${platformName} Google OAuth Client ID in capacitor.config.json before signing in.`
+        });
+        this.setStatus(ConnectionStatus.CONNECTION_FAILED, err);
+        throw err;
+      }
+
+      const options = {
+        ...rawConfig,
+        appId,
+        redirectUrl,
+        responseType: isNative ? (rawConfig.responseType || 'code') : 'token',
+        accessTokenEndpoint: isNative ? rawConfig.accessTokenEndpoint : '',
+        pkceEnabled: isNative ? true : false,
+        android: {
+          ...rawConfig.android,
+          appId: rawConfig.android?.appId || appId,
+          redirectUrl: rawConfig.android?.redirectUrl || rawConfig.android?.redirectUri || redirectUrl,
+          pkceEnabled: true
+        },
+        web: {
+          appId: rawConfig.web?.appId || appId,
+          redirectUrl: typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:5173',
+          responseType: 'token',
+          accessTokenEndpoint: '',
+          pkceEnabled: false
+        }
+      };
+
+      const authResponse = await GenericOAuth2.authenticate(options);
+
+      const accessToken = authResponse?.access_token || authResponse?.accessToken;
+      if (!accessToken || !accessToken.trim()) {
+        const err = new MusicError({
+          code: ErrorCodes.SESSION_INITIALIZATION_FAILED,
+          userMessage: 'No access token received from Google OAuth.'
+        });
+        this.setStatus(ConnectionStatus.CONNECTION_FAILED, err);
+        throw err;
+      }
+
+      await new Promise(r => setTimeout(r, 200));
+
+      this.setStatus(ConnectionStatus.ESTABLISHING_SESSION);
+      await new Promise(r => setTimeout(r, 250));
+
+      this.setStatus(ConnectionStatus.VALIDATING_SESSION);
+      const profile = await this.fetchAndValidateGoogleProfile(accessToken.trim());
+
+      const user = {
+        id: profile.id,
+        name: profile.name || 'YouTube Music User',
+        email: profile.email || '',
+        picture: profile.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+        connectedAt: new Date().toISOString()
+      };
+
+      this.user = user;
+      this.status = ConnectionStatus.CONNECTED;
+      this.lastValidated = Date.now();
+      this.error = null;
+
+      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({
+        type: 'oauth_pkce',
+        token: accessToken.trim(),
+        user
+      }));
+
+      this.notify();
+      return user;
+    } catch (err) {
+      const musicErr = err instanceof MusicError ? err : new MusicError({
+        code: ErrorCodes.SESSION_VALIDATION_FAILED,
+        userMessage: err.message || 'Failed to authenticate with Google.',
+        originalError: err
+      });
+      this.setStatus(ConnectionStatus.CONNECTION_FAILED, musicErr);
+      throw musicErr;
     }
   }
 
@@ -214,7 +323,7 @@ class YouTubeConnectionService {
       this.setStatus(ConnectionStatus.ESTABLISHING_SESSION);
 
       const result = await window.electronAPI.openLoginWindow();
-      if (!result || !result.success || !result.user) {
+      if (!result || !result.success || (!result.user && !result.accessToken)) {
         throw new MusicError({
           code: ErrorCodes.AUTH_CANCELLED,
           userMessage: result?.error || 'Sign in window was closed before completion.'
@@ -222,17 +331,29 @@ class YouTubeConnectionService {
       }
 
       this.setStatus(ConnectionStatus.VALIDATING_SESSION);
-      const user = result.user;
+      let user = result.user;
 
-      this.user = user;
-      this.status = ConnectionStatus.CONNECTED;
-      this.lastValidated = Date.now();
-      this.error = null;
+      if (!user && result.accessToken) {
+        const profile = await this.fetchAndValidateGoogleProfile(result.accessToken);
+        user = {
+          id: profile.id,
+          name: profile.name || 'YouTube Music User',
+          email: profile.email || '',
+          picture: profile.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+          connectedAt: new Date().toISOString()
+        };
 
-      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({
-        type: 'electron_cookie',
-        user
-      }));
+        localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({
+          type: 'oauth_pkce',
+          token: result.accessToken,
+          user
+        }));
+      } else {
+        localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({
+          type: 'electron_cookie',
+          user
+        }));
+      }
 
       this.notify();
       return user;

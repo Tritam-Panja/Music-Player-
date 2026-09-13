@@ -9,6 +9,44 @@
   "plugins": {
     "CapacitorHttp": {
       "enabled": true
+    },
+    "GenericOAuth2": {
+      "authorizationBaseUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+      "accessTokenEndpoint": "https://oauth2.googleapis.com/token",
+      "scope": "openid email profile https://www.googleapis.com/auth/youtube.readonly",
+      "responseType": "code",
+      "pkceEnabled": true,
+      "Google": {
+        "authorizationBaseUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+        "accessTokenEndpoint": "https://oauth2.googleapis.com/token",
+        "scope": "openid email profile https://www.googleapis.com/auth/youtube.readonly",
+        "responseType": "code",
+        "pkceEnabled": true,
+        "android": {
+          "appId": "197608102093-nf71s764ks8h1o4qoa0joapfh45ncuol.apps.googleusercontent.com",
+          "redirectUri": "com.liquidmusic.app:/oauth2redirect",
+          "redirectUrl": "com.liquidmusic.app:/oauth2redirect"
+        },
+        "web": {
+          "appId": "197608102093-effp19d9tg0pbktm096n515a09rgrod4.apps.googleusercontent.com",
+          "redirectUrl": "http://localhost:5173",
+          "responseType": "token",
+          "accessTokenEndpoint": "",
+          "pkceEnabled": false
+        }
+      },
+      "android": {
+        "appId": "197608102093-nf71s764ks8h1o4qoa0joapfh45ncuol.apps.googleusercontent.com",
+        "redirectUri": "com.liquidmusic.app:/oauth2redirect",
+        "redirectUrl": "com.liquidmusic.app:/oauth2redirect"
+      },
+      "web": {
+        "appId": "197608102093-effp19d9tg0pbktm096n515a09rgrod4.apps.googleusercontent.com",
+        "redirectUrl": "http://localhost:5173",
+        "responseType": "token",
+        "accessTokenEndpoint": "",
+        "pkceEnabled": false
+      }
     }
   }
 }

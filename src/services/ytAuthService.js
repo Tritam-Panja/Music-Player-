@@ -35,6 +35,13 @@ export const ytAuthService = {
   },
 
   /**
+   * Connect via Google OAuth (PKCE)
+   */
+  async loginWithGoogleOAuth() {
+    return await ytConnectionService.connectWithGoogleOAuth();
+  },
+
+  /**
    * Connect with Google OAuth Access Token
    */
   async loginWithAccessToken(accessToken) {

@@ -1,6 +1,7 @@
 package com.liquidmusic.app;
 
 import android.os.Bundle;
+import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
@@ -28,6 +29,8 @@ public class MainActivity extends BridgeActivity {
                 if (ua != null && ua.contains("; wv")) {
                     settings.setUserAgentString(ua.replace("; wv", ""));
                 }
+
+                CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
             }
         } catch (Exception e) {
             e.printStackTrace();

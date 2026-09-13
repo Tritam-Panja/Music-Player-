@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, globalShortcut, session } from 'electron';
 import path from 'path';
 import http from 'http';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { YouTube } from 'youtube-sr';
 
@@ -10,13 +11,6 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow = null;
 let loginWindow = null;
-
-const WEB_REMIX_HEADERS = {
-  'Content-Type': 'application/json',
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
-  'X-YouTube-Client-Name': '67',
-  'X-YouTube-Client-Version': '1.20250101.01.00'
-};
 
 // Configure Chromium flags for seamless audio streaming & zero-gesture autoplay
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -44,26 +38,7 @@ function createWindow() {
     }
   });
 
-  // Intercept headers so YouTube allows embedded playback from Electron's file:// or custom scheme
-  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    const requestHeaders = { ...details.requestHeaders };
-    if (details.url.includes('youtube.com') || details.url.includes('googlevideo.com') || details.url.includes('ytimg.com')) {
-      requestHeaders['Origin'] = 'https://www.youtube.com';
-      requestHeaders['Referer'] = 'https://www.youtube.com/';
-      requestHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
-    }
-    callback({ requestHeaders });
-  });
 
-  // Strip restrictive framing headers from YouTube embeds
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    const responseHeaders = { ...details.responseHeaders };
-    delete responseHeaders['x-frame-options'];
-    delete responseHeaders['X-Frame-Options'];
-    delete responseHeaders['content-security-policy'];
-    delete responseHeaders['Content-Security-Policy'];
-    callback({ responseHeaders });
-  });
 
 let localServer = null;
 
@@ -146,7 +121,7 @@ function startLocalServer() {
   globalShortcut.register('F12', () => mainWindow?.webContents.toggleDevTools());
   globalShortcut.register('CommandOrControl+Shift+I', () => mainWindow?.webContents.toggleDevTools());
 
-  // 1. BitChord-style In-App Google Sign-In for YouTube Music
+  // 1. Google OAuth2 Authorization Code + PKCE Flow for Desktop
   ipcMain.handle('yt:open-login-window', () => {
     return new Promise((resolve) => {
       if (loginWindow) {
@@ -154,73 +129,158 @@ function startLocalServer() {
         return;
       }
 
-      loginWindow = new BrowserWindow({
-        width: 520,
-        height: 680,
-        parent: mainWindow,
-        modal: true,
-        title: 'Sign In to YouTube Music',
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true
-        }
-      });
+      // Step 1: Generate a code_verifier and code_challenge (S256) using Node's crypto module
+      const codeVerifier = crypto.randomBytes(32).toString('base64url');
+      const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
 
-      const loginUrl = 'https://accounts.google.com/ServiceLogin?ltmpl=music&service=youtube&passive=true&continue=https%3A%2F%2Fmusic.youtube.com%2F';
-      loginWindow.loadURL(loginUrl);
+      const OAUTH_PORT = 53261;
+      const redirectUri = `http://localhost:${OAUTH_PORT}/oauth2callback`;
+      const clientId = process.env.DESKTOP_OAUTH_CLIENT_ID || '197608102093-8b8cfiun129m17h96l35v6f3o7q6fcol.apps.googleusercontent.com';
+      const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly';
 
-      // Listen for redirect to music.youtube.com
-      loginWindow.webContents.on('did-navigate', async (_, url) => {
-        if (url.includes('music.youtube.com')) {
+      // Step 2: Formulate authUrl for https://accounts.google.com/o/oauth2/v2/auth
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.set('client_id', clientId);
+      authUrl.searchParams.set('redirect_uri', redirectUri);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('scope', scope);
+      authUrl.searchParams.set('code_challenge', codeChallenge);
+      authUrl.searchParams.set('code_challenge_method', 'S256');
+
+      let isResolved = false;
+      let oauthServer = null;
+
+      const cleanup = () => {
+        if (oauthServer) {
           try {
-            const cookies = await session.defaultSession.cookies.get({ domain: '.youtube.com' });
-            const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
-            
-            // Fetch user info from YouTube Music
-            const accountRes = await fetch('https://music.youtube.com/youtubei/v1/account/account_menu', {
-              method: 'POST',
-              headers: { ...WEB_REMIX_HEADERS, 'Cookie': cookieString },
-              body: JSON.stringify({
-                context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20250101.01.00', hl: 'en', gl: 'US' } }
-              })
-            });
+            oauthServer.close();
+          } catch {}
+          oauthServer = null;
+        }
+      };
 
-            let userName = 'YouTube Music User';
-            let userAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+      // Step 3: Local HTTP server to catch GET request to /oauth2callback and extract code
+      oauthServer = http.createServer(async (req, res) => {
+        try {
+          const reqUrl = new URL(req.url, `http://localhost:${OAUTH_PORT}`);
+          if (reqUrl.pathname === '/oauth2callback') {
+            const code = reqUrl.searchParams.get('code');
+            const error = reqUrl.searchParams.get('error');
 
-            if (accountRes.ok) {
-              const accountData = await accountRes.json();
-              const header = accountData?.actions?.[0]?.openPopupAction?.popup?.multiPageMenuRenderer?.header?.activeAccountHeaderRenderer;
-              if (header?.accountName?.runs?.[0]?.text) {
-                userName = header.accountName.runs[0].text;
+            if (error) {
+              res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+              res.end('<html><body style="font-family:sans-serif;text-align:center;padding-top:40px;background:#18181b;color:#f87171;"><h2>Sign-in failed</h2><p>' + error + '</p></body></html>');
+
+              if (!isResolved) {
+                isResolved = true;
+                if (loginWindow) {
+                  loginWindow.close();
+                  loginWindow = null;
+                }
+                cleanup();
+                resolve({ success: false, error });
               }
-              if (header?.accountPhoto?.thumbnails?.[0]?.url) {
-                userAvatar = header.accountPhoto.thumbnails[0].url;
-              }
+              return;
             }
 
-            loginWindow.close();
-            loginWindow = null;
+            if (code) {
+              res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+              res.end('<html><body style="font-family:sans-serif;text-align:center;padding-top:40px;background:#18181b;color:#4ade80;"><h2>Sign-in successful!</h2><p>You can close this window and return to Liquid Music.</p></body></html>');
 
-            resolve({
-              success: true,
-              user: {
-                name: userName,
-                picture: userAvatar,
-                cookie: cookieString,
-                connectedAt: new Date().toISOString()
+              // Step 4: POST that code plus code_verifier to https://oauth2.googleapis.com/token
+              try {
+                const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                  },
+                  body: new URLSearchParams({
+                    client_id: clientId,
+                    code: code,
+                    code_verifier: codeVerifier,
+                    grant_type: 'authorization_code',
+                    redirect_uri: redirectUri
+                  }).toString()
+                });
+
+                const tokenData = await tokenRes.json();
+
+                if (!isResolved) {
+                  isResolved = true;
+                  // Step 5: Close loginWindow and resolve promise with { success: true, accessToken }
+                  if (loginWindow) {
+                    loginWindow.close();
+                    loginWindow = null;
+                  }
+                  cleanup();
+
+                  if (tokenData.access_token) {
+                    resolve({
+                      success: true,
+                      accessToken: tokenData.access_token
+                    });
+                  } else {
+                    resolve({
+                      success: false,
+                      error: tokenData.error_description || tokenData.error || 'Failed to exchange authorization code for access token.'
+                    });
+                  }
+                }
+              } catch (tokenErr) {
+                if (!isResolved) {
+                  isResolved = true;
+                  if (loginWindow) {
+                    loginWindow.close();
+                    loginWindow = null;
+                  }
+                  cleanup();
+                  resolve({ success: false, error: tokenErr.message });
+                }
               }
-            });
-          } catch (err) {
-            loginWindow?.close();
-            loginWindow = null;
-            resolve({ success: false, error: err.message });
+            }
           }
+        } catch (err) {
+          console.error('Error handling OAuth callback:', err);
         }
       });
 
-      loginWindow.on('closed', () => {
-        loginWindow = null;
+      oauthServer.listen(OAUTH_PORT, '127.0.0.1', () => {
+        // Step 2: Open loginWindow to Google OAuth endpoint
+        loginWindow = new BrowserWindow({
+          width: 520,
+          height: 680,
+          parent: mainWindow,
+          modal: true,
+          title: 'Sign In to Google',
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true
+          }
+        });
+
+        loginWindow.loadURL(authUrl.toString());
+
+        loginWindow.on('closed', () => {
+          loginWindow = null;
+          cleanup();
+          if (!isResolved) {
+            isResolved = true;
+            resolve({ success: false, error: 'Sign in window was closed before completion.' });
+          }
+        });
+      });
+
+      oauthServer.on('error', (err) => {
+        console.error('OAuth callback server error:', err);
+        cleanup();
+        if (!isResolved) {
+          isResolved = true;
+          if (loginWindow) {
+            loginWindow.close();
+            loginWindow = null;
+          }
+          resolve({ success: false, error: `Failed to start local OAuth listener: ${err.message}` });
+        }
       });
     });
   });
