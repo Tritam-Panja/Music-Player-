@@ -226,8 +226,8 @@ export default function App() {
   const activePlaylist = playlists.find((p) => p.id === selectedPlaylistId);
 
   return (
-    <div className={`relative w-screen h-screen overflow-hidden flex flex-col font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-500 neu-canvas-bg ${
-      theme === 'dark' ? 'neu-dark text-[#f3efe8]' : 'text-[#2e221b]'
+    <div className={`relative w-screen h-screen overflow-hidden flex flex-col font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-500 bg-ui2-gradient dark:bg-ui2-gradient-dark ${
+      theme === 'dark' ? 'text-[#f3efe8]' : 'text-[#2e221b]'
     }`}>
       {/* 1. Top Floating Navbar with Theme Toggle & Window Controls */}
       <BitChordNavbar
@@ -404,60 +404,62 @@ export default function App() {
         theme={theme}
       />
 
-      {/* 7. Spotify-Style Mobile Bottom Navigation Bar */}
-      <nav className={`md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 pt-2 pb-safe flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 ${
-        theme === 'dark'
-          ? 'bg-[#131417]/95 border-[#23262f] text-[#828694]'
-          : 'bg-[#f3f2ee]/95 border-[#e6dfd3] text-[#8f8075]'
-      }`}>
-        <button
-          onClick={() => setCurrentView('home')}
-          aria-label="Home"
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-            currentView === 'home'
-              ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
-              : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
-          }`}
-        >
-          <Disc3 size={20} className={currentView === 'home' ? 'stroke-[2.5]' : ''} />
-          <span className="text-[10px] font-bold">Home</span>
-        </button>
+      {/* 7. Mobile Bottom Navigation Bar (only when no track is playing) */}
+      {!currentTrack && (
+        <nav className={`md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 pt-2 pb-safe flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 ${
+          theme === 'dark'
+            ? 'bg-[#131417]/95 border-[#23262f] text-[#828694]'
+            : 'bg-[#f3f2ee]/95 border-[#e6dfd3] text-[#8f8075]'
+        }`}>
+          <button
+            onClick={() => setCurrentView('home')}
+            aria-label="Home"
+            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
+              currentView === 'home'
+                ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
+                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
+            }`}
+          >
+            <Disc3 size={20} className={currentView === 'home' ? 'stroke-[2.5]' : ''} />
+            <span className="text-[10px] font-bold">Home</span>
+          </button>
 
-        <button
-          onClick={() => setIsSearchOpen(true)}
-          aria-label="Search"
-          className="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer hover:text-[#2e221b] dark:hover:text-[#f3efe8]"
-        >
-          <Search size={20} />
-          <span className="text-[10px] font-bold">Search</span>
-        </button>
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            aria-label="Search"
+            className="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer hover:text-[#2e221b] dark:hover:text-[#f3efe8]"
+          >
+            <Search size={20} />
+            <span className="text-[10px] font-bold">Search</span>
+          </button>
 
-        <button
-          onClick={() => setCurrentView('player')}
-          aria-label="Player"
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-            currentView === 'player'
-              ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
-              : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
-          }`}
-        >
-          <Music size={20} className={currentView === 'player' ? 'stroke-[2.5]' : ''} />
-          <span className="text-[10px] font-bold">Player</span>
-        </button>
+          <button
+            onClick={() => setCurrentView('player')}
+            aria-label="Player"
+            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
+              currentView === 'player'
+                ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
+                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
+            }`}
+          >
+            <Music size={20} className={currentView === 'player' ? 'stroke-[2.5]' : ''} />
+            <span className="text-[10px] font-bold">Player</span>
+          </button>
 
-        <button
-          onClick={() => setCurrentView('library')}
-          aria-label="Your Library"
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-            currentView === 'library' || currentView === 'playlist'
-              ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
-              : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
-          }`}
-        >
-          <Library size={20} className={currentView === 'library' || currentView === 'playlist' ? 'stroke-[2.5]' : ''} />
-          <span className="text-[10px] font-bold">Library</span>
-        </button>
-      </nav>
+          <button
+            onClick={() => setCurrentView('library')}
+            aria-label="Your Library"
+            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
+              currentView === 'library' || currentView === 'playlist'
+                ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
+                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
+            }`}
+          >
+            <Library size={20} className={currentView === 'library' || currentView === 'playlist' ? 'stroke-[2.5]' : ''} />
+            <span className="text-[10px] font-bold">Library</span>
+          </button>
+        </nav>
+      )}
     </div>
   );
 }

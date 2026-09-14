@@ -34,6 +34,25 @@ export default {
           'taupe-light': '#b8ada5',
           groove: '#e6e1d8',
           'groove-dark': '#d8d2c6',
+        },
+        ui: {
+          page: '#eef0ec',
+          gradA: '#dff3ea',
+          gradB: '#e9e6f7',
+          card: '#ffffff',
+          cardSoft: '#f6f5f1',
+          ink: '#1c1b19',
+          inkSoft: '#6b6660',
+          inkFaint: '#9a948c',
+          brand: '#c4956a',
+          brandInk: '#2e221b',
+          line: 'rgba(28,27,25,0.08)',
+        },
+        ui2: {
+          ink: '#1c1b1f',
+          inkSoft: '#6f6d76',
+          inkFaint: '#9a97a1',
+          accentInk: '#231f1c',
         }
       },
       backdropBlur: {
@@ -53,6 +72,14 @@ export default {
         'neu-button-pressed': 'inset 3px 3px 6px rgba(165, 150, 135, 0.35), inset -3px -3px 6px rgba(255, 255, 255, 0.8)',
         'neu-button-play': '8px 12px 24px rgba(46, 34, 27, 0.38), -4px -4px 12px rgba(255, 255, 255, 0.85)',
         'neu-groove': 'inset 2px 2px 5px rgba(165, 150, 135, 0.35), inset -2px -2px 5px rgba(255, 255, 255, 0.85)',
+        'ui-card': '0 12px 30px rgba(60,50,40,0.10)',
+        'ui-soft': '0 4px 14px rgba(60,50,40,0.08)',
+        'ui2-float': '0 18px 40px rgba(60,50,90,0.14)',
+        'ui2-soft': '0 6px 18px rgba(60,50,90,0.10)',
+      },
+      backgroundImage: {
+        'ui2-gradient': 'linear-gradient(135deg, #bdeee0, #cfe0f5 35%, #e3d3f2 65%, #f2d9e6)',
+        'ui2-gradient-dark': 'linear-gradient(135deg, #0a0d17 0%, #111827 30%, #1c1535 65%, #0d1222 100%)',
       },
       animation: {
         'fluid-slow': 'fluid 18s ease-in-out infinite alternate',

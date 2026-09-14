@@ -30,16 +30,15 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  background-color: #f3f2ee;
   color: #2e221b;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 body.dark, .dark body {
-  background-color: #131417;
+  background-color: #0a0d17;
   color: #f3efe8;
 }
 

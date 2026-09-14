@@ -48,7 +48,6 @@ export default function MobileNowPlayingModal({
   onRemoveFromQueue,
   theme = 'light'
 }) {
-  const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState('player'); // 'player' | 'lyrics' | 'queue'
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
@@ -133,99 +132,51 @@ export default function MobileNowPlayingModal({
   if (!isOpen || !track) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col justify-between pt-safe pb-safe px-4 sm:px-6 animate-in slide-in-from-bottom duration-300 select-none overflow-hidden transition-colors ${
-      isDark ? 'neu-canvas-bg neu-dark text-[#f3efe8]' : 'neu-canvas-bg text-[#2e221b]'
-    }`}>
+    <div className="fixed inset-0 z-50 flex flex-col justify-between pt-safe pb-safe px-4 sm:px-6 animate-in slide-in-from-bottom duration-300 select-none overflow-hidden bg-white/90 dark:bg-[#0d0e16]/95 backdrop-blur-2xl text-ui2-ink dark:text-white">
       
-      {/* Top Header Row */}
+      {/* Top Row: chevron-down/back icon left, "Now playing" label centered in uppercase small text, small circular avatar right */}
       <div className="flex items-center justify-between pt-2 pb-2">
         <button 
           onClick={onClose}
-          className={`p-2 -ml-1 rounded-2xl transition-colors cursor-pointer ${
-            isDark 
-              ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#f3efe8]' 
-              : 'bg-[#faf9f6] neu-btn-shadow text-[#2e221b]'
-          }`}
+          className="p-2 -ml-1 rounded-full text-ui2-ink dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all cursor-pointer"
           title="Minimize"
         >
           <ChevronDown size={22} />
         </button>
 
-        <div className="text-center flex flex-col items-center">
-          <span className={`text-[10px] font-bold uppercase tracking-widest ${
-            isDark ? 'text-[#828694]' : 'text-[#8f8075]'
-          }`}>
-            Playing From
-          </span>
-          <span className={`text-xs font-extrabold truncate max-w-[200px] ${
-            isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'
-          }`}>
-            {activeTab === 'lyrics' ? 'Real-Time Lyrics' : activeTab === 'queue' ? `Up Next Queue (${queue.length})` : 'Now Playing Studio'}
-          </span>
-        </div>
+        <span className="text-[11px] font-black uppercase tracking-widest text-ui2-inkFaint dark:text-white/40">
+          NOW PLAYING
+        </span>
 
-        {/* Tab Switcher Pills */}
-        <div className={`flex items-center gap-1 p-1 rounded-2xl ${
-          isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
-        }`}>
-          <button
-            onClick={() => setActiveTab(activeTab === 'lyrics' ? 'player' : 'lyrics')}
-            className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-              activeTab === 'lyrics' 
-                ? isDark ? 'bg-[#1b1d23] text-[#c4956a] neu-btn-shadow neu-dark' : 'bg-[#faf9f6] text-[#3c2b20] neu-btn-shadow' 
-                : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-            }`}
-            title="Lyrics"
-          >
-            <Mic2 size={15} />
-          </button>
-          <button
-            onClick={() => setActiveTab(activeTab === 'queue' ? 'player' : 'queue')}
-            className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-              activeTab === 'queue' 
-                ? isDark ? 'bg-[#1b1d23] text-[#c4956a] neu-btn-shadow neu-dark' : 'bg-[#faf9f6] text-[#3c2b20] neu-btn-shadow' 
-                : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-            }`}
-            title="Queue"
-          >
-            <ListMusic size={15} />
-          </button>
+        <div className="w-[32px] h-[32px] rounded-full bg-gradient-to-br from-[#bdeee0] via-[#cfe0f5] to-[#f2d9e6] p-0.5 shadow-xs flex items-center justify-center flex-shrink-0">
+          <div className="w-full h-full rounded-full bg-white/60 dark:bg-[#1b1d28] flex items-center justify-center text-[10px] font-bold text-ui2-ink dark:text-white">
+            LM
+          </div>
         </div>
       </div>
 
       {/* Main Body Content based on Active Tab */}
       <div className="flex-1 flex flex-col justify-center my-auto min-h-0 py-2">
         
-        {/* VIEW 1: Main Artwork & Player View */}
+        {/* VIEW 1: Main Artwork View */}
         {activeTab === 'player' && (
-          <div className="flex flex-col items-center justify-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            {/* Big Teardrop Artwork */}
-            <div className="relative w-64 h-64 sm:w-72 sm:h-72 max-w-[70vw] max-h-[70vw]">
-              <div className={`absolute inset-0 rounded-[50%_14%_50%_50%] transition-colors ${
-                isDark 
-                  ? 'bg-[#1b1d23] shadow-[12px_16px_32px_rgba(0,0,0,0.8),-6px_-6px_18px_rgba(255,255,255,0.03)]' 
-                  : 'bg-[#faf9f6] shadow-[12px_16px_32px_rgba(165,150,135,0.3),-8px_-8px_20px_rgba(255,255,255,0.95)]'
-              }`} />
-              <div className={`absolute inset-1.5 rounded-[50%_14%_50%_50%] p-1 shadow-inner ${
-                isDark 
-                  ? 'bg-gradient-to-tr from-[#252830] via-[#333845] to-[#1c1d24]' 
-                  : 'bg-gradient-to-tr from-[#d6cfc5] via-[#f7f5f2] to-[#b8aca0]'
-              }`}>
-                <div className="w-full h-full rounded-[50%_12%_50%_50%] overflow-hidden relative">
-                  <img 
-                    src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800'} 
-                    alt={track.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-black/15 via-transparent to-white/20 pointer-events-none" />
-                </div>
-              </div>
+          <div className="flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            {/* Large square album art, rounded-2xl, shadow-ui2-float, gradient placeholder background */}
+            <div className="relative w-64 h-64 sm:w-72 sm:h-72 max-w-[72vw] max-h-[72vw] aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-[#bdeee0] via-[#cfe0f5] to-[#e3d3f2] shadow-ui2-float dark:shadow-none border border-black/5 dark:border-white/10 flex items-center justify-center">
+              {track.thumbnail ? (
+                <img 
+                  src={track.thumbnail} 
+                  alt={track.title}
+                  className="w-full h-full object-cover select-none pointer-events-none"
+                />
+              ) : (
+                <Music size={52} className="text-ui2-inkFaint/40 dark:text-white/30" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/15 pointer-events-none" />
             </div>
 
             {/* Quality Pill */}
-            <div className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[10px] font-bold ${
-              isDark ? 'bg-[#111215] neu-groove-inset neu-dark text-[#828694]' : 'bg-[#e8e2d8] neu-groove-inset text-[#8f8075]'
-            }`}>
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[10px] font-bold bg-white/70 dark:bg-white/10 backdrop-blur-sm border border-black/5 dark:border-white/10 shadow-ui2-soft dark:shadow-none text-ui2-inkSoft dark:text-white/60">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>LOSSLESS • 320KBPS</span>
             </div>
@@ -234,21 +185,17 @@ export default function MobileNowPlayingModal({
 
         {/* VIEW 2: Real-time Synchronized Lyrics */}
         {activeTab === 'lyrics' && (
-          <div className={`h-full max-h-[50vh] flex flex-col justify-between overflow-hidden rounded-3xl p-4 animate-in fade-in duration-200 ${
-            isDark ? 'bg-[#1b1d23] neu-card-shadow neu-dark' : 'bg-[#faf9f6] neu-card-shadow'
-          }`}>
+          <div className="h-full max-h-[50vh] flex flex-col justify-between overflow-hidden rounded-2xl p-4 animate-in fade-in duration-200 bg-white/80 dark:bg-[#141622]/85 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-ui2-float dark:shadow-none">
             {isLoadingLyrics ? (
-              <div className="flex-1 flex flex-col items-center justify-center space-y-2 text-slate-400">
-                <div className={`w-6 h-6 border-2 border-t-transparent rounded-full animate-spin ${
-                  isDark ? 'border-[#c4956a]' : 'border-[#3c2b20]'
-                }`} />
-                <p className={`text-xs ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>Loading lyrics...</p>
+              <div className="flex-1 flex flex-col items-center justify-center space-y-2 text-ui2-inkSoft dark:text-white/50">
+                <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin border-ui2-accentInk dark:border-white" />
+                <p className="text-xs text-ui2-inkSoft dark:text-white/50">Loading lyrics...</p>
               </div>
             ) : lyrics.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center space-y-2">
-                <Mic2 size={30} className={`mx-auto opacity-30 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`} />
-                <p className={`text-sm font-semibold ${isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'}`}>No Lyrics Available</p>
-                <p className={`text-xs ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>Enjoy the audio track</p>
+                <Mic2 size={30} className="mx-auto opacity-30 text-ui2-inkFaint dark:text-white/30" />
+                <p className="text-sm font-semibold text-ui2-ink dark:text-white">No Lyrics Available</p>
+                <p className="text-xs text-ui2-inkSoft dark:text-white/50">Enjoy the audio track</p>
               </div>
             ) : (
               <div 
@@ -263,8 +210,8 @@ export default function MobileNowPlayingModal({
                       onClick={() => onSeek(line.time)}
                       className={`cursor-pointer transition-all duration-300 ${
                         isActive 
-                          ? isDark ? 'text-[#c4956a] text-lg font-extrabold scale-105' : 'text-[#3c2b20] text-lg font-extrabold scale-105'
-                          : isDark ? 'text-[#828694] hover:text-[#f3efe8] text-sm font-medium' : 'text-[#8f8075] hover:text-[#2e221b] text-sm font-medium'
+                          ? 'text-ui2-accentInk dark:text-white text-lg font-extrabold scale-105' 
+                          : 'text-ui2-inkSoft dark:text-white/50 hover:text-ui2-ink dark:hover:text-white text-sm font-medium'
                       }`}
                     >
                       {line.text}
@@ -278,13 +225,11 @@ export default function MobileNowPlayingModal({
 
         {/* VIEW 3: Up Next Queue */}
         {activeTab === 'queue' && (
-          <div className={`h-full max-h-[50vh] flex flex-col justify-between overflow-hidden rounded-3xl p-3 animate-in fade-in duration-200 ${
-            isDark ? 'bg-[#1b1d23] neu-card-shadow neu-dark' : 'bg-[#faf9f6] neu-card-shadow'
-          }`}>
+          <div className="h-full max-h-[50vh] flex flex-col justify-between overflow-hidden rounded-2xl p-3 animate-in fade-in duration-200 bg-white/80 dark:bg-[#141622]/85 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-ui2-float dark:shadow-none">
             {queue.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-                <ListMusic size={26} className={`mb-2 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`} />
-                <p className={`text-xs font-semibold ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>Queue is empty</p>
+                <ListMusic size={26} className="mb-2 text-ui2-inkFaint dark:text-white/40" />
+                <p className="text-xs font-semibold text-ui2-inkSoft dark:text-white/50">Queue is empty</p>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto space-y-2 py-2 scrollbar-thin">
@@ -296,8 +241,8 @@ export default function MobileNowPlayingModal({
                       onClick={() => onPlayTrack && onPlayTrack(idx)}
                       className={`flex items-center justify-between p-2 rounded-2xl cursor-pointer transition-all ${
                         isCurrent
-                          ? isDark ? 'bg-[#382417] text-white shadow-md' : 'bg-[#3c2b20] text-white shadow-md'
-                          : isDark ? 'hover:bg-[#232630] text-[#f3efe8]' : 'hover:bg-[#ece6dc] text-[#2e221b]'
+                          ? 'bg-ui2-accentInk dark:bg-white/20 text-white shadow-md'
+                          : 'hover:bg-black/5 dark:hover:bg-white/10 text-ui2-ink dark:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 pr-2">
@@ -308,12 +253,12 @@ export default function MobileNowPlayingModal({
                         />
                         <div className="min-w-0">
                           <p className="text-xs font-bold truncate">{t.title}</p>
-                          <p className={`text-[10px] truncate ${isCurrent ? 'text-white/80' : isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>{t.artist}</p>
+                          <p className={`text-[10px] truncate ${isCurrent ? 'text-white/80' : 'text-ui2-inkSoft dark:text-white/50'}`}>{t.artist}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[10px] font-mono ${isCurrent ? 'text-white/80' : isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+                        <span className={`text-[10px] font-mono ${isCurrent ? 'text-white/80' : 'text-ui2-inkSoft dark:text-white/50'}`}>
                           {formatTime(t.duration)}
                         </span>
                         {onRemoveFromQueue && !isCurrent && (
@@ -322,7 +267,7 @@ export default function MobileNowPlayingModal({
                               e.stopPropagation();
                               onRemoveFromQueue(idx);
                             }}
-                            className={`p-1 ${isDark ? 'text-[#828694] hover:text-rose-400' : 'text-[#8f8075] hover:text-rose-500'}`}
+                            className="p-1 text-ui2-inkFaint dark:text-white/40 hover:text-rose-500 transition-colors"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -338,48 +283,24 @@ export default function MobileNowPlayingModal({
 
       </div>
 
-      {/* Bottom Track Info, Scrubber & Full Controls */}
-      <div className={`space-y-4 pt-3 p-4 rounded-[32px] ${
-        isDark ? 'bg-[#1b1d23] neu-card-shadow neu-dark' : 'bg-[#faf9f6] neu-card-shadow'
-      }`}>
-        {/* Track Title, Artist & Favorite Button */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h2 className={`text-base sm:text-lg font-extrabold truncate ${
-              isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'
-            }`}>
-              {track.title}
-            </h2>
-            <p className={`text-xs font-semibold flex items-center gap-1.5 mt-0.5 truncate ${
-              isDark ? 'text-[#828694]' : 'text-[#8f8075]'
-            }`}>
-              <span>{track.artist}</span>
-              <CheckCircle2 size={13} className="text-blue-500 flex-shrink-0" />
-            </p>
-          </div>
-
-          <button
-            onClick={onToggleFavorite}
-            className={`p-2.5 rounded-2xl transition-all cursor-pointer flex-shrink-0 ${
-              isFavorite
-                ? 'text-rose-500 scale-105'
-                : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-            }`}
-          >
-            <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
-          </button>
+      {/* Bottom Track Info, Scrubber & Full Controls Card */}
+      <div className="space-y-3 p-5 sm:p-6 rounded-3xl bg-white/85 dark:bg-[#141622]/85 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-ui2-float dark:shadow-none">
+        {/* Title bold, artist muted below it */}
+        <div className="text-center px-2">
+          <h2 className="text-xl sm:text-2xl font-black text-ui2-ink dark:text-white truncate tracking-tight">
+            {track.title}
+          </h2>
+          <p className="text-xs sm:text-sm font-semibold text-ui2-inkSoft dark:text-white/50 truncate mt-0.5">
+            {track.artist}
+          </p>
         </div>
 
-        {/* Interactive Scrub Slider */}
+        {/* Thin progress bar (5px, rounded, gradient fill) with time labels below */}
         <div className="space-y-1">
           <div className="relative flex items-center h-4">
-            <div className={`w-full h-2 rounded-full overflow-hidden ${
-              isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
-            }`}>
+            <div className="w-full h-[5px] rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
               <div 
-                className={`h-full rounded-full ${
-                  isDark ? 'bg-[#c4956a]' : 'bg-[#3d2b20]'
-                }`}
+                className="h-full rounded-full bg-gradient-to-r from-[#bdeee0] via-[#93c5fd] to-[#c084fc] transition-[width] duration-100"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -392,26 +313,63 @@ export default function MobileNowPlayingModal({
               onChange={handleSeekChange}
               onMouseUp={handleSeekCommit}
               onTouchEnd={handleSeekCommit}
-              className="absolute inset-0 w-full opacity-0 cursor-pointer h-4"
+              className="absolute inset-0 w-full opacity-0 cursor-pointer h-4 z-20"
             />
           </div>
 
-          <div className={`flex items-center justify-between text-[11px] font-mono ${
-            isDark ? 'text-[#828694]' : 'text-[#8f8075]'
-          }`}>
+          <div className="flex items-center justify-between text-xs font-mono text-ui2-inkFaint dark:text-white/40">
             <span>{formatDuration(displayTime)}</span>
             <span>{formatDuration(duration)}</span>
           </div>
         </div>
 
-        {/* Playback Controls Row (Shuffle, Prev, Play/Pause, Next, Repeat) */}
-        <div className="flex items-center justify-between px-2 pt-1">
+        {/* Centered playback controls: prev icon, large white circular play/pause button (shadow-ui2-soft, dark icon) center, next icon */}
+        <div className="flex items-center justify-center gap-6 sm:gap-8 my-1">
+          <button
+            onClick={onPrev}
+            className="p-3 rounded-full text-ui2-ink dark:text-white hover:text-ui2-accentInk dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-95 cursor-pointer"
+            title="Previous"
+          >
+            <SkipBack size={22} className="fill-current" />
+          </button>
+
+          <button
+            onClick={onTogglePlay}
+            className="w-16 h-16 sm:w-18 sm:h-18 rounded-full flex items-center justify-center bg-white dark:bg-white text-ui2-accentInk dark:text-black shadow-ui2-soft hover:scale-105 active:scale-95 transition-all cursor-pointer border border-black/5 dark:border-transparent"
+            title={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? (
+              <Pause size={24} className="fill-current" />
+            ) : (
+              <Play size={24} className="fill-current ml-0.5" />
+            )}
+          </button>
+
+          <button
+            onClick={onNext}
+            className="p-3 rounded-full text-ui2-ink dark:text-white hover:text-ui2-accentInk dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-95 cursor-pointer"
+            title="Next"
+          >
+            <SkipForward size={22} className="fill-current" />
+          </button>
+        </div>
+
+        {/* Row of secondary icons (like, shuffle, lyrics) below controls, evenly spaced, ui2-inkFaint color */}
+        <div className="flex items-center justify-between w-full px-3 pt-1 text-ui2-inkFaint dark:text-white/40 border-t border-black/5 dark:border-white/10">
+          <button
+            onClick={onToggleFavorite}
+            className={`p-2 rounded-xl transition-all cursor-pointer ${
+              isFavorite ? 'text-rose-500 scale-110' : 'hover:text-ui2-ink dark:hover:text-white'
+            }`}
+            title="Favorite"
+          >
+            <Heart size={19} className={isFavorite ? "fill-rose-500 text-rose-500" : ""} />
+          </button>
+
           <button
             onClick={onToggleShuffle}
             className={`p-2 rounded-xl transition-all cursor-pointer ${
-              isShuffle 
-                ? isDark ? 'text-[#c4956a]' : 'text-[#3c2b20]' 
-                : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
+              isShuffle ? 'text-ui2-accentInk dark:text-white font-bold' : 'hover:text-ui2-ink dark:hover:text-white'
             }`}
             title="Shuffle"
           >
@@ -419,69 +377,49 @@ export default function MobileNowPlayingModal({
           </button>
 
           <button
-            onClick={onPrev}
-            className={`p-2 transition-colors cursor-pointer ${
-              isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
+            onClick={() => setActiveTab(activeTab === 'lyrics' ? 'player' : 'lyrics')}
+            className={`p-2 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'lyrics' ? 'text-ui2-accentInk dark:text-white font-bold' : 'hover:text-ui2-ink dark:hover:text-white'
             }`}
-            title="Previous"
+            title="Lyrics"
           >
-            <SkipBack size={24} />
-          </button>
-
-          <button
-            onClick={onTogglePlay}
-            className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${
-              isDark ? 'bg-[#382417] neu-play-shadow neu-dark' : 'bg-[#3c2b20] neu-play-shadow'
-            }`}
-            title={isPlaying ? 'Pause' : 'Play'}
-          >
-            {isPlaying ? (
-              <Pause size={22} className="fill-white" />
-            ) : (
-              <Play size={22} className="fill-white ml-0.5" />
-            )}
-          </button>
-
-          <button
-            onClick={onNext}
-            className={`p-2 transition-colors cursor-pointer ${
-              isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-            }`}
-            title="Next"
-          >
-            <SkipForward size={24} />
+            <Mic2 size={18} />
           </button>
 
           <button
             onClick={onToggleRepeat}
             className={`p-2 rounded-xl transition-all cursor-pointer ${
-              repeatMode !== 'off' 
-                ? isDark ? 'text-[#c4956a]' : 'text-[#3c2b20]' 
-                : isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
+              repeatMode !== 'off' ? 'text-ui2-accentInk dark:text-white font-bold' : 'hover:text-ui2-ink dark:hover:text-white'
             }`}
             title={`Repeat: ${repeatMode}`}
           >
             {repeatMode === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}
           </button>
+
+          <button
+            onClick={() => setActiveTab(activeTab === 'queue' ? 'player' : 'queue')}
+            className={`p-2 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'queue' ? 'text-ui2-accentInk dark:text-white font-bold' : 'hover:text-ui2-ink dark:hover:text-white'
+            }`}
+            title="Queue"
+          >
+            <ListMusic size={19} />
+          </button>
         </div>
 
         {/* Volume Slider Row */}
-        <div className="flex items-center gap-3 px-2 pt-1">
+        <div className="flex items-center gap-3 px-2 pt-1 border-t border-black/5">
           <button 
             onClick={onToggleMute}
-            className={`transition-colors flex-shrink-0 cursor-pointer ${
-              isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-            }`}
+            className="transition-colors flex-shrink-0 cursor-pointer text-ui2-inkFaint hover:text-ui2-ink"
           >
-            {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {isMuted || volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
           </button>
 
           <div className="relative flex-1 flex items-center h-3">
-            <div className={`absolute inset-x-0 h-[4px] rounded-full overflow-hidden ${
-              isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
-            }`}>
+            <div className="absolute inset-x-0 h-[4px] rounded-full overflow-hidden bg-black/5">
               <div 
-                className={`h-full rounded-full ${isDark ? 'bg-[#c4956a]' : 'bg-[#3d2b20]'}`}
+                className="h-full rounded-full bg-ui2-accentInk"
                 style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
               />
             </div>
