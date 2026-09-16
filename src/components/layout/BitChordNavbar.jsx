@@ -188,7 +188,7 @@ function BitChordNavbar({
             {/* Desktop Window Controls */}
             <div 
               className={`${
-                isElectron ? 'flex' : 'hidden md:flex'
+                isElectron ? 'flex' : 'hidden'
               } items-center gap-1 ml-1 pl-2 border-l border-black/10 dark:border-white/15 app-no-drag`}
             >
               <button
