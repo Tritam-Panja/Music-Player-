@@ -1,6 +1,7 @@
 const STORAGE_KEYS = {
   PLAYLISTS: 'liquid_music_playlists',
   FAVORITES: 'liquid_music_favorites',
+  LIKED_SONGS: 'liked_songs',
   HISTORY: 'liquid_music_history',
   SETTINGS: 'liquid_music_settings',
   QUEUE: 'liquid_music_queue',
@@ -54,31 +55,64 @@ export const storageService = {
     return playlists;
   },
 
-  getFavorites() {
+  getLikedSongs() {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.FAVORITES);
-      return data ? JSON.parse(data) : [];
-    } catch {
+      const data = localStorage.getItem(STORAGE_KEYS.LIKED_SONGS);
+      if (!data) {
+        // Fallback / migration from legacy favorites if exists
+        const legacy = localStorage.getItem(STORAGE_KEYS.FAVORITES);
+        if (legacy) {
+          const parsedLegacy = JSON.parse(legacy);
+          if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+            localStorage.setItem(STORAGE_KEYS.LIKED_SONGS, JSON.stringify(parsedLegacy));
+            return parsedLegacy;
+          }
+        }
+        return [];
+      }
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error('Failed to load liked songs:', e);
       return [];
     }
   },
 
-  toggleFavorite(track) {
-    const favorites = this.getFavorites();
-    const index = favorites.findIndex(t => t.id === track.id);
+  isLiked(trackId) {
+    if (!trackId) return false;
+    const liked = this.getLikedSongs();
+    return liked.some(t => t.id === trackId || String(t.id) === String(trackId));
+  },
+
+  toggleLike(track) {
+    if (!track || !track.id) return this.getLikedSongs();
+    const liked = this.getLikedSongs();
+    const index = liked.findIndex(t => t.id === track.id || String(t.id) === String(track.id));
     let updated;
     if (index >= 0) {
-      updated = favorites.filter(t => t.id !== track.id);
+      updated = liked.filter(t => !(t.id === track.id || String(t.id) === String(track.id)));
     } else {
-      updated = [track, ...favorites];
+      updated = [track, ...liked];
     }
-    localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updated));
+    try {
+      localStorage.setItem(STORAGE_KEYS.LIKED_SONGS, JSON.stringify(updated));
+      localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save liked songs:', e);
+    }
     return updated;
   },
 
+  getFavorites() {
+    return this.getLikedSongs();
+  },
+
+  toggleFavorite(track) {
+    return this.toggleLike(track);
+  },
+
   isFavorite(trackId) {
-    const favorites = this.getFavorites();
-    return favorites.some(t => t.id === trackId);
+    return this.isLiked(trackId);
   },
 
   getHistory() {
@@ -100,13 +134,39 @@ export const storageService = {
   getSettings() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-      return data ? JSON.parse(data) : { volume: 0.8, isMuted: false, repeatMode: 'off', isShuffle: false };
+      const parsed = data ? JSON.parse(data) : {};
+      return {
+        volume: 0.8,
+        isMuted: false,
+        repeatMode: 'off',
+        isShuffle: false,
+        autoplay: true,
+        crossfade: true,
+        ...parsed
+      };
     } catch {
-      return { volume: 0.8, isMuted: false, repeatMode: 'off', isShuffle: false };
+      return { volume: 0.8, isMuted: false, repeatMode: 'off', isShuffle: false, autoplay: true, crossfade: true };
     }
   },
 
   saveSettings(settings) {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    try {
+      const current = this.getSettings();
+      const updated = { ...current, ...settings };
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+      return updated;
+    } catch (e) {
+      console.error('Failed to save settings:', e);
+    }
   }
 };
+
+export const getLikedSongs = () => storageService.getLikedSongs();
+export const isLiked = (trackId) => storageService.isLiked(trackId);
+export const toggleLike = (track) => storageService.toggleLike(track);
+export const getFavorites = () => storageService.getFavorites();
+export const toggleFavorite = (track) => storageService.toggleFavorite(track);
+export const isFavorite = (trackId) => storageService.isFavorite(trackId);
+
+export default storageService;
+

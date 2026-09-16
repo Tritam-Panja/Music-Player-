@@ -39,7 +39,7 @@ class YouTubeResolver {
     try {
       const proxyUrl = apiUrl(`/api/stream-proxy?videoId=${encodeURIComponent(videoId)}`);
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
+      const timeout = setTimeout(() => controller.abort(), 6000);
       const res = await fetch(proxyUrl, { signal: controller.signal });
       clearTimeout(timeout);
       if (res.ok) {
@@ -56,24 +56,27 @@ class YouTubeResolver {
       }
     } catch {}
 
-    // 3. Iterate through resolver instances with strict validation
-    const activeInstances = [...RESOLVER_INSTANCES].sort((a, b) => a.failures - b.failures);
+    // 3. Iterate through resolver instances on native shells (Electron / Android)
+    const isWebBrowser = typeof window !== 'undefined' && !window.electronAPI && !window.Capacitor?.isNativePlatform?.();
+    if (!isWebBrowser) {
+      const activeInstances = [...RESOLVER_INSTANCES].sort((a, b) => a.failures - b.failures);
 
-    for (const inst of activeInstances) {
-      try {
-        const streamInfo = await this.fetchStreamFromInstance(inst.baseUrl, videoId);
-        if (streamInfo && streamInfo.streamUrl) {
-          const isValid = await this.validateStreamUrl(streamInfo.streamUrl);
-          if (isValid) {
-            inst.failures = Math.max(0, inst.failures - 1);
-            this.streamCache.set(videoId, streamInfo);
-            return streamInfo;
-          } else {
-            inst.failures++;
+      for (const inst of activeInstances) {
+        try {
+          const streamInfo = await this.fetchStreamFromInstance(inst.baseUrl, videoId);
+          if (streamInfo && streamInfo.streamUrl) {
+            const isValid = await this.validateStreamUrl(streamInfo.streamUrl);
+            if (isValid) {
+              inst.failures = Math.max(0, inst.failures - 1);
+              this.streamCache.set(videoId, streamInfo);
+              return streamInfo;
+            } else {
+              inst.failures++;
+            }
           }
+        } catch {
+          inst.failures++;
         }
-      } catch {
-        inst.failures++;
       }
     }
 

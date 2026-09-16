@@ -62,6 +62,7 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(() => queueService.getState().currentIndex);
   const [isShuffle, setIsShuffle] = useState(() => queueService.getState().isShuffle);
   const [repeatMode, setRepeatMode] = useState(() => queueService.getState().repeatMode);
+  const [autoplay, setAutoplay] = useState(() => queueService.getState().autoplay);
 
   // Player State (synced from headless PlayerService)
   const [currentTrack, setCurrentTrack] = useState(() => playerService.getState().currentTrack);
@@ -74,7 +75,7 @@ export default function App() {
   // Initialize data & subscribe to headless services
   useEffect(() => {
     setPlaylists(storageService.getPlaylists());
-    setFavorites(storageService.getFavorites());
+    setFavorites(storageService.getLikedSongs());
     setHistory(storageService.getHistory());
     setYtUser(ytAuthService.getUser());
 
@@ -110,6 +111,9 @@ export default function App() {
       setCurrentIndex(qState.currentIndex);
       setIsShuffle(qState.isShuffle);
       setRepeatMode(qState.repeatMode);
+      if (typeof qState.autoplay === 'boolean') {
+        setAutoplay(qState.autoplay);
+      }
     });
 
     return () => {
@@ -179,14 +183,25 @@ export default function App() {
     queueService.removeTrack(index);
   }, []);
 
-  // Toggle favorite
+  // Storage event listener for cross-tab sync of liked songs
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (!e || e.key === 'liked_songs' || e.key === 'liquid_music_favorites') {
+        setFavorites(storageService.getLikedSongs());
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Toggle favorite / like
   const handleToggleFavorite = useCallback((track) => {
-    const updated = storageService.toggleFavorite(track);
+    const updated = storageService.toggleLike(track);
     setFavorites(updated);
   }, []);
 
   const isFavorite = (trackId) => {
-    return favorites.some((t) => t.id === trackId);
+    return storageService.isLiked(trackId);
   };
 
   // Shuffle & Repeat
@@ -196,6 +211,10 @@ export default function App() {
 
   const handleToggleRepeat = () => {
     queueService.cycleRepeatMode();
+  };
+
+  const handleToggleAutoplay = () => {
+    queueService.toggleAutoplay();
   };
 
   // Handle imported playlist
@@ -296,11 +315,13 @@ export default function App() {
           />
         )}
 
-        {currentView === 'library' && (
+        {(currentView === 'library' || currentView === 'favorites' || currentView === 'liked' || currentView === 'liked-songs') && (
           <BitChordLibraryView
             playlists={playlists}
             favorites={favorites}
+            likedSongs={favorites}
             history={history}
+            initialSubTab={(currentView === 'favorites' || currentView === 'liked' || currentView === 'liked-songs') ? 'favorites' : 'playlists'}
             onPlayPlaylist={handlePlayPlaylist}
             onPlayTrack={handlePlayTrack}
             onSelectPlaylist={(id) => {
@@ -352,6 +373,7 @@ export default function App() {
           isMuted={isMuted}
           isShuffle={isShuffle}
           repeatMode={repeatMode}
+          autoplay={autoplay}
           isFavorite={currentTrack ? isFavorite(currentTrack.id) : false}
           isQueueOpen={currentView === 'player'}
           isLyricsOpen={currentView === 'player'}
@@ -367,6 +389,7 @@ export default function App() {
           onToggleMute={() => playerService.toggleMute()}
           onToggleShuffle={handleToggleShuffle}
           onToggleRepeat={handleToggleRepeat}
+          onToggleAutoplay={handleToggleAutoplay}
           onToggleFavorite={() => currentTrack && handleToggleFavorite(currentTrack)}
           onToggleQueue={() => setCurrentView('player')}
           onToggleLyrics={() => setCurrentView('player')}

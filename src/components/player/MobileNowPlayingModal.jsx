@@ -44,6 +44,8 @@ export default function MobileNowPlayingModal({
   onToggleShuffle,
   onToggleRepeat,
   onToggleFavorite,
+  autoplay = true,
+  onToggleAutoplay,
   onPlayTrack,
   onRemoveFromQueue,
   theme = 'light'
@@ -394,6 +396,16 @@ export default function MobileNowPlayingModal({
             title={`Repeat: ${repeatMode}`}
           >
             {repeatMode === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}
+          </button>
+
+          <button
+            onClick={onToggleAutoplay}
+            className={`p-2 rounded-xl transition-all cursor-pointer ${
+              autoplay ? 'text-ui2-accentInk dark:text-white font-bold' : 'hover:text-ui2-ink dark:hover:text-white'
+            }`}
+            title={`Autoplay / Radio: ${autoplay ? 'On' : 'Off'}`}
+          >
+            <Radio size={18} />
           </button>
 
           <button

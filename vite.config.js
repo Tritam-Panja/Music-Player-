@@ -1,10 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { YouTube } from 'youtube-sr';
 
-// Vite plugin to provide zero-CORS local YouTube search and suggestions in dev mode
+// Vite plugin to provide zero-CORS local YouTube search, streaming and suggestions in dev mode
 function youtubeSearchPlugin() {
-  let YouTube;
-
   const searchYouTube = async (q, type = 'video') => {
     if (YouTube) {
       try {
@@ -26,7 +25,7 @@ function youtubeSearchPlugin() {
           }));
         }
       } catch (err) {
-        // Fallback to Innertube if youtube-sr encounters parsing errors (e.g. browseId on channel/shorts)
+        // Fallback to Innertube if youtube-sr encounters parsing errors
       }
     }
 
@@ -77,12 +76,6 @@ function youtubeSearchPlugin() {
 
   const handleApiRequest = async (req, res, next) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
-
-    // Lazy load youtube-sr on first search request
-    if (!YouTube && (url.pathname === '/api/search' || url.pathname === '/api/trending')) {
-      const mod = await import('youtube-sr');
-      YouTube = mod.YouTube || mod.default;
-    }
 
     // 1. Search endpoint: /api/search?q=...&type=...
     if (url.pathname === '/api/search') {
@@ -143,6 +136,114 @@ function youtubeSearchPlugin() {
         res.statusCode = 500;
         return res.end(JSON.stringify({ error: err.message, results: [] }));
       }
+    }
+
+    // 4. Stream proxy endpoint: /api/stream-proxy?videoId=...
+    if (url.pathname === '/api/stream-proxy') {
+      const videoId = url.searchParams.get('videoId');
+      if (!videoId) {
+        res.statusCode = 400;
+        return res.end(JSON.stringify({ error: 'videoId required' }));
+      }
+
+      const pipedInstances = [
+        'https://pipedapi.kavin.rocks',
+        'https://api.piped.privacydev.net',
+        'https://piped-api.lunar.icu'
+      ];
+
+      for (const instance of pipedInstances) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3500);
+          const response = await fetch(`${instance}/streams/${videoId}`, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (response.ok) {
+            const data = await response.json();
+            const audioStreams = data.audioStreams || [];
+            audioStreams.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+            if (audioStreams.length > 0) {
+              res.setHeader('Content-Type', 'application/json');
+              return res.end(JSON.stringify({
+                success: true,
+                streamUrl: audioStreams[0].url,
+                format: audioStreams[0].format,
+                bitrate: audioStreams[0].bitrate,
+                title: data.title,
+                uploader: data.uploader,
+                duration: data.duration
+              }));
+            }
+          }
+        } catch (err) {}
+      }
+
+      // Invidious fallback without browser CORS restrictions
+      const invidiousInstances = [
+        'https://inv.nadeko.net',
+        'https://invidious.nerdvpn.de',
+        'https://inv.tux.pizza'
+      ];
+      for (const baseUrl of invidiousInstances) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3500);
+          const response = await fetch(`${baseUrl}/api/v1/videos/${videoId}`, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (response.ok) {
+            const data = await response.json();
+            const adaptiveFormats = data.adaptiveFormats || [];
+            const audioFormats = adaptiveFormats.filter(f => f.type && f.type.startsWith('audio/'));
+            audioFormats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+            if (audioFormats.length > 0 && audioFormats[0].url) {
+              res.setHeader('Content-Type', 'application/json');
+              return res.end(JSON.stringify({
+                success: true,
+                streamUrl: audioFormats[0].url,
+                format: audioFormats[0].type || 'audio/mp4',
+                bitrate: audioFormats[0].bitrate,
+                title: data.title,
+                uploader: data.author,
+                duration: data.lengthSeconds
+              }));
+            }
+          }
+        } catch (err) {}
+      }
+
+      res.statusCode = 404;
+      return res.end(JSON.stringify({ error: 'Stream not found' }));
+    }
+
+    // 5. InnerTube proxy endpoint: /api/innertube/*
+    if (url.pathname.startsWith('/api/innertube')) {
+      const subpath = url.pathname.replace(/^\/api\/innertube\/?/, '') || 'search';
+      const clientType = url.searchParams.get('client') || 'WEB_REMIX';
+      const targetHost = clientType === 'WEB_REMIX' ? 'music.youtube.com' : 'www.youtube.com';
+      const targetUrl = `https://${targetHost}/youtubei/v1/${subpath}`;
+
+      let bodyData = '';
+      req.on('data', chunk => { bodyData += chunk; });
+      req.on('end', async () => {
+        try {
+          const ytRes = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
+            body: bodyData || JSON.stringify({ context: { client: { clientName: 'WEB', clientVersion: '2.20240101.00.00' } } })
+          });
+          const text = await ytRes.text();
+          res.setHeader('Content-Type', 'application/json');
+          res.statusCode = ytRes.status;
+          return res.end(text);
+        } catch (err) {
+          res.statusCode = 500;
+          return res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+      return;
     }
 
     next();

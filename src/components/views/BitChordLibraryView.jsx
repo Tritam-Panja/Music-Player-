@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Play, 
   Heart, 
@@ -26,7 +26,9 @@ const ROW_GRADIENTS = [
 function BitChordLibraryView({
   playlists = [],
   favorites = [],
+  likedSongs,
   history = [],
+  initialSubTab = 'playlists',
   onPlayPlaylist,
   onPlayTrack,
   onSelectPlaylist,
@@ -35,7 +37,14 @@ function BitChordLibraryView({
   ytUser,
   theme = 'light'
 }) {
-  const [subTab, setSubTab] = useState('playlists'); // 'playlists' | 'favorites' | 'history'
+  const effectiveLiked = Array.isArray(likedSongs) ? likedSongs : favorites;
+  const [subTab, setSubTab] = useState(initialSubTab); // 'playlists' | 'favorites' | 'history'
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 space-y-6 select-none scrollbar-none text-ui2-ink dark:text-white pb-36 animate-in fade-in duration-300">
@@ -87,13 +96,13 @@ function BitChordLibraryView({
         <button
           onClick={() => setSubTab('favorites')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-            subTab === 'favorites'
+            subTab === 'favorites' || subTab === 'liked'
               ? 'bg-white/80 dark:bg-white/20 text-ui2-ink dark:text-white border border-black/5 dark:border-white/15 shadow-ui2-soft dark:shadow-none'
               : 'text-ui2-inkSoft dark:text-white/60 hover:text-ui2-ink dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/10'
           }`}
         >
-          <Heart size={14} fill={subTab === 'favorites' ? 'currentColor' : 'none'} className={subTab === 'favorites' ? 'text-rose-500' : ''} />
-          <span>Favorites ({favorites.length})</span>
+          <Heart size={14} fill={(subTab === 'favorites' || subTab === 'liked') ? 'currentColor' : 'none'} className={(subTab === 'favorites' || subTab === 'liked') ? 'text-rose-500' : ''} />
+          <span>Liked Songs ({effectiveLiked.length})</span>
         </button>
 
         <button
@@ -152,18 +161,18 @@ function BitChordLibraryView({
         </div>
       )}
 
-      {/* 2. Favorites Tab Content */}
-      {subTab === 'favorites' && (
+      {/* 2. Liked Songs Tab Content */}
+      {(subTab === 'favorites' || subTab === 'liked') && (
         <div>
-          {favorites.length === 0 ? (
+          {effectiveLiked.length === 0 ? (
             <div className="py-16 text-center space-y-2 text-ui2-inkSoft dark:text-white/50 bg-white/40 dark:bg-white/[0.04] rounded-3xl border border-black/5 dark:border-white/10">
               <Heart size={32} className="mx-auto opacity-40 text-rose-500" />
-              <p className="text-sm font-semibold text-ui2-ink dark:text-white">No favorites yet</p>
+              <p className="text-sm font-semibold text-ui2-ink dark:text-white">No liked songs yet</p>
               <p className="text-xs opacity-75">Click the heart icon on any playing song to add it here</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {favorites.map((track, i) => (
+              {effectiveLiked.map((track, i) => (
                 <div
                   key={track.id}
                   onClick={() => onPlayTrack(track)}

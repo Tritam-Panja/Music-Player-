@@ -258,7 +258,7 @@ function BitChordNavbar({
             <button
               onClick={() => onViewChange('library')}
               className={`px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                currentView === 'library'
+                currentView === 'library' || currentView === 'favorites' || currentView === 'liked'
                   ? 'bg-white/80 text-ui2-ink border border-black/5 shadow-ui2-soft dark:bg-white/20 dark:text-white dark:border-white/15 dark:shadow-none'
                   : 'text-ui2-inkSoft hover:text-ui2-ink hover:bg-white/40 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/10'
               }`}

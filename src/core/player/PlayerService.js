@@ -1,4 +1,5 @@
 import { searchEngine } from '../../services/searchEngine';
+import { ytSearchService } from '../../services/youtube/YouTubeSearchService';
 /**
  * PlayerService
  * Persistent, headless audio engine for Liquid Music.
@@ -11,6 +12,8 @@ import { queueService } from '../queue/QueueService';
 import { ytPlayerService } from '../../services/youtube/YouTubePlayerService';
 import { ytResolver } from '../../services/youtube/YouTubeResolver';
 import { storageService } from '../../services/storageService';
+import { historyService } from '../../services/historyService';
+import { audioEngine } from '../../services/audioEngine';
 import { MusicError, ErrorCodes } from '../errors/MusicError';
 
 class PlayerService {
@@ -25,9 +28,22 @@ class PlayerService {
     this.error = null;
     this.activeEngine = 'iframe'; // 'iframe' | 'audio'
 
+    this.sessionHistory = new Set();
     this.htmlAudio = null;
     this.progressTimer = null;
     this.listeners = new Set();
+
+    // Sleep Timer
+    this.sleepTimerTimeout = null;
+    this.sleepTimerMode = null; // null | number (minutes) | 'endOfTrack'
+    this.sleepTimerEndTime = null;
+
+    // Crossfade (direct-stream / <audio> path only)
+    this.crossfade = true;
+    this.isCrossfading = false;
+    this.crossfadeTimer = null;
+    this.nextAudio = null;
+    this.pendingCrossfadeNextTrack = null;
 
     this.initHtmlAudio();
     this.initYouTubePlayerListener();
@@ -47,7 +63,14 @@ class PlayerService {
       isMuted: this.isMuted,
       isLoading: this.isLoading,
       error: this.error,
-      activeEngine: this.activeEngine
+      activeEngine: this.activeEngine,
+      autoplay: queueService.isAutoplayEnabled(),
+      crossfade: this.crossfade,
+      sleepTimer: {
+        mode: this.sleepTimerMode,
+        endTime: this.sleepTimerEndTime,
+        isActive: Boolean(this.sleepTimerMode)
+      }
     };
   }
 
@@ -73,32 +96,58 @@ class PlayerService {
 
     this.htmlAudio = new Audio();
     this.consecutiveErrors = 0;
-    this.htmlAudio.preload = 'auto';
+    this.attachAudioListeners(this.htmlAudio);
+  }
 
-    this.htmlAudio.addEventListener('playing', () => {
+  attachAudioListeners(audio) {
+    audio.preload = 'auto';
+
+    audio.addEventListener('playing', () => {
+      if (this.htmlAudio !== audio) return;
       this.isPlaying = true;
       this.isLoading = false;
       this.consecutiveErrors = 0;
       this.error = null;
+      if (this.currentTrack) {
+        historyService.addToHistory(this.currentTrack);
+        if (this.currentTrack.id) this.sessionHistory.add(String(this.currentTrack.id));
+      }
       this.startTimer();
       this.updateMediaSessionState('playing');
       this.notify();
     });
 
-    this.htmlAudio.addEventListener('pause', () => {
+    audio.addEventListener('pause', () => {
+      if (this.htmlAudio !== audio || this.isCrossfading) return;
       this.isPlaying = false;
       this.stopTimer();
       this.updateMediaSessionState('paused');
       this.notify();
     });
 
-    this.htmlAudio.addEventListener('ended', () => {
+    audio.addEventListener('ended', () => {
+      if (this.htmlAudio !== audio) return;
+      if (this.isCrossfading) {
+        if (this.pendingCrossfadeNextTrack && this.nextAudio) {
+          this.completeCrossfade(this.pendingCrossfadeNextTrack, this.nextAudio, audio);
+        }
+        return;
+      }
       this.onEnded();
     });
 
-    this.htmlAudio.addEventListener('error', (e) => {
+    audio.addEventListener('timeupdate', () => {
+      if (this.htmlAudio !== audio) return;
+      if (this.activeEngine === 'audio') {
+        this.currentTime = audio.currentTime || 0;
+        this.checkCrossfade();
+      }
+    });
+
+    audio.addEventListener('error', (e) => {
+      if (this.htmlAudio !== audio) return;
       // Guard: only handle errors if actively using the HTML5 audio engine with a valid src
-      if (this.activeEngine !== 'audio' || !this.htmlAudio?.src || this.htmlAudio.src === window.location.href) {
+      if (this.activeEngine !== 'audio' || !audio.src || audio.src === window.location.href) {
         return;
       }
       console.warn('HTML5 Audio stream error:', e);
@@ -108,9 +157,10 @@ class PlayerService {
       this.handlePlaybackFailure('Stream decode failed');
     });
 
-    this.htmlAudio.addEventListener('loadedmetadata', () => {
-      if (this.htmlAudio.duration && !isNaN(this.htmlAudio.duration)) {
-        this.duration = this.htmlAudio.duration;
+    audio.addEventListener('loadedmetadata', () => {
+      if (this.htmlAudio !== audio) return;
+      if (audio.duration && !isNaN(audio.duration)) {
+        this.duration = audio.duration;
         this.notify();
       }
     });
@@ -125,6 +175,10 @@ class PlayerService {
         this.isLoading = false;
         this.consecutiveErrors = 0;
         this.error = null;
+        if (this.currentTrack) {
+          historyService.addToHistory(this.currentTrack);
+          if (this.currentTrack.id) this.sessionHistory.add(String(this.currentTrack.id));
+        }
         if (data?.duration && data.duration > 0) {
           this.duration = data.duration;
         }
@@ -199,6 +253,7 @@ class PlayerService {
    */
   async play(track) {
     if (!track || !track.id) return;
+    this.cancelCrossfade();
 
     this.currentTrack = track;
     this.currentTime = 0;
@@ -218,6 +273,9 @@ class PlayerService {
 
     // Record listening history
     storageService.addToHistory(track);
+    if (track?.id) {
+      this.sessionHistory.add(String(track.id));
+    }
 
     // Stop and cleanly reset html audio without firing error events
     if (this.htmlAudio) {
@@ -243,6 +301,7 @@ class PlayerService {
   }
 
   pause() {
+    this.cancelCrossfade();
     if (this.activeEngine === 'audio' && this.htmlAudio) {
       this.htmlAudio.pause();
     } else {
@@ -275,6 +334,7 @@ class PlayerService {
   }
 
   seek(seconds) {
+    this.cancelCrossfade();
     const clamped = Math.max(0, Math.min(seconds, this.duration || 9999));
     this.currentTime = clamped;
 
@@ -316,22 +376,79 @@ class PlayerService {
   }
 
   async next() {
+    this.cancelCrossfade();
     let nextTrack = queueService.getNextTrack();
-    if (!nextTrack || queueService.tracks.length <= 1) {
+
+    // If the queue has no next track (empty or exhausted)
+    if (!nextTrack) {
+      const isAutoplay = queueService.isAutoplayEnabled();
+      if (!isAutoplay) {
+        // Autoplay toggle is off: stop playback cleanly
+        this.stop();
+        return;
+      }
+
+      // Autoplay / Radio mode:
+      // When the queue becomes empty after a track finishes, instead of stopping,
+      // call the existing YouTube search/related-videos function using the last-played track's title/artist as the query,
+      // take the top few results excluding tracks already in playback_history for this session,
+      // and push them into the queue automatically.
+      const lastTrack = this.currentTrack;
+      if (!lastTrack) {
+        this.stop();
+        return;
+      }
+
+      this.isLoading = true;
+      this.notify();
+
       try {
-        
-        const trending = await searchEngine.getTrendingCharts();
-        if (Array.isArray(trending) && trending.length > 0) {
-          const fresh = trending.filter(t => t.id !== this.currentTrack?.id);
-          if (fresh.length > 0) {
-            const combined = [this.currentTrack, ...fresh].filter(Boolean);
-            queueService.setQueue(combined, 1);
-            nextTrack = fresh[0];
+        const artist = lastTrack.artist && lastTrack.artist !== 'Unknown Artist' ? lastTrack.artist : '';
+        const title = lastTrack.title || '';
+        const query = artist ? `${artist} ${title}` : (title || lastTrack.ytQuery || 'Top Global Hits 2026');
+
+        const results = await ytSearchService.search(query, 'video');
+
+        // Gather all tracks in playback_history for this session and current track
+        const historyList = historyService.getHistory();
+        const historyIds = new Set(historyList.map(t => String(t.id)));
+        if (this.sessionHistory) {
+          for (const id of this.sessionHistory) {
+            historyIds.add(String(id));
+          }
+        }
+        if (lastTrack.id) {
+          historyIds.add(String(lastTrack.id));
+        }
+
+        let candidates = Array.isArray(results)
+          ? results.filter(t => t && t.id && !historyIds.has(String(t.id)))
+          : [];
+
+        // If all candidates were already in history, fall back to results excluding just the current track
+        if (candidates.length === 0 && Array.isArray(results)) {
+          candidates = results.filter(t => t && t.id && String(t.id) !== String(lastTrack.id));
+        }
+
+        // Take the top few results (e.g. 5 tracks)
+        const topFew = candidates.slice(0, 5);
+
+        if (topFew.length > 0) {
+          // Push them into the queue automatically
+          queueService.pushTracks(topFew);
+          const autoNext = queueService.getNextTrack();
+          if (autoNext) {
+            this.play(autoNext);
+            return;
           }
         }
       } catch (err) {
-        console.warn('Auto-next fallback error:', err);
+        console.warn('Autoplay radio resolution error:', err);
       }
+
+      // If autoplay search failed completely, stop
+      this.stop();
+      return;
     }
 
     if (nextTrack) {
@@ -343,6 +460,7 @@ class PlayerService {
   }
 
   previous() {
+    this.cancelCrossfade();
     const prevTrack = queueService.getPreviousTrack(this.currentTime);
     if (prevTrack) {
       this.play(prevTrack);
@@ -358,8 +476,53 @@ class PlayerService {
     this.notify();
   }
 
+  setSleepTimer(duration) {
+    this.cancelSleepTimer();
+
+    if (duration === 'endOfTrack') {
+      this.sleepTimerMode = 'endOfTrack';
+      this.sleepTimerEndTime = null;
+      this.notify();
+      return;
+    }
+
+    const minutes = typeof duration === 'string' ? parseFloat(duration) : duration;
+    if (typeof minutes === 'number' && !isNaN(minutes) && minutes > 0) {
+      this.sleepTimerMode = minutes;
+      this.sleepTimerEndTime = Date.now() + minutes * 60 * 1000;
+      this.sleepTimerTimeout = setTimeout(() => {
+        this.pause();
+        this.cancelSleepTimer();
+      }, minutes * 60 * 1000);
+      this.notify();
+    }
+  }
+
+  cancelSleepTimer() {
+    if (this.sleepTimerTimeout) {
+      clearTimeout(this.sleepTimerTimeout);
+      this.sleepTimerTimeout = null;
+    }
+    this.sleepTimerMode = null;
+    this.sleepTimerEndTime = null;
+    this.notify();
+  }
+
+  getSleepTimer() {
+    return {
+      mode: this.sleepTimerMode,
+      endTime: this.sleepTimerEndTime,
+      isActive: Boolean(this.sleepTimerMode)
+    };
+  }
+
   onEnded() {
     this.stopTimer();
+    if (this.sleepTimerMode === 'endOfTrack') {
+      this.cancelSleepTimer();
+      this.pause();
+      return;
+    }
     this.next();
   }
 
@@ -372,6 +535,7 @@ class PlayerService {
           this.duration = this.htmlAudio.duration;
         }
         this.notify();
+        this.checkCrossfade();
       } else if (this.activeEngine === 'iframe') {
         this.currentTime = ytPlayerService.getCurrentTime() || 0;
         const dur = ytPlayerService.getDuration();
@@ -379,6 +543,163 @@ class PlayerService {
         this.notify();
       }
     }, 250);
+  }
+
+  // Crossfade Methods (Direct-Stream / <audio> Only)
+  checkCrossfade() {
+    if (!this.crossfade) return;
+    if (this.activeEngine !== 'audio') return;
+    if (!this.isPlaying || !this.htmlAudio || this.htmlAudio.paused) return;
+    if (this.isCrossfading) return;
+    if (!this.duration || this.duration <= 3) return;
+    if (this.sleepTimerMode === 'endOfTrack') return;
+
+    const remaining = this.duration - this.currentTime;
+
+    // Background prefetch direct audio stream for next track when approaching end
+    if (remaining <= 10 && remaining > 1.5) {
+      audioEngine.checkPreload(this.getState());
+    }
+
+    if (remaining <= 1.5 && remaining > 0) {
+      this.startCrossfade();
+    }
+  }
+
+  async startCrossfade() {
+    if (this.isCrossfading) return;
+
+    const nextTrack = queueService.getNextTrack();
+    if (!nextTrack) return;
+
+    this.isCrossfading = true;
+    this.pendingCrossfadeNextTrack = nextTrack;
+    const currentAudio = this.htmlAudio;
+    const baseVolume = this.isMuted ? 0 : this.volume;
+    const crossfadeMs = 1500; // 1.5s
+    const startTime = Date.now();
+
+    // Create next audio element starting at volume 0
+    const nextAudio = new Audio();
+    nextAudio.preload = 'auto';
+    nextAudio.volume = 0;
+    this.nextAudio = nextAudio;
+
+    if (this.crossfadeTimer) {
+      clearInterval(this.crossfadeTimer);
+    }
+
+    this.crossfadeTimer = setInterval(() => {
+      if (!this.isCrossfading || this.htmlAudio !== currentAudio) {
+        clearInterval(this.crossfadeTimer);
+        this.crossfadeTimer = null;
+        return;
+      }
+
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(1, elapsed / crossfadeMs);
+
+      // Simultaneously ramp current track down to 0
+      currentAudio.volume = Math.max(0, baseVolume * (1 - progress));
+
+      // Ramp next track up from 0 to baseVolume
+      if (this.nextAudio && !this.nextAudio.paused) {
+        this.nextAudio.volume = Math.min(baseVolume, baseVolume * progress);
+      }
+
+      if (progress >= 1) {
+        clearInterval(this.crossfadeTimer);
+        this.crossfadeTimer = null;
+        this.completeCrossfade(nextTrack, nextAudio, currentAudio);
+      }
+    }, 50);
+
+    try {
+      const stream = await ytResolver.resolveAudioStream(nextTrack.id);
+      if (!this.isCrossfading || this.nextAudio !== nextAudio) {
+        return;
+      }
+
+      nextAudio.src = stream.streamUrl;
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(1, elapsed / crossfadeMs);
+      nextAudio.volume = Math.min(baseVolume, baseVolume * progress);
+      await nextAudio.play();
+    } catch (err) {
+      console.warn('Crossfade failed to load direct stream for next track:', err);
+      this.cancelCrossfade();
+    }
+  }
+
+  completeCrossfade(nextTrack, nextAudio, currentAudio) {
+    if (this.crossfadeTimer) {
+      clearInterval(this.crossfadeTimer);
+      this.crossfadeTimer = null;
+    }
+
+    this.isCrossfading = false;
+    this.pendingCrossfadeNextTrack = null;
+
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.removeAttribute('src');
+        currentAudio.load();
+      } catch {}
+    }
+
+    const baseVolume = this.isMuted ? 0 : this.volume;
+    this.htmlAudio = nextAudio;
+    this.nextAudio = null;
+    this.attachAudioListeners(this.htmlAudio);
+    this.htmlAudio.volume = baseVolume;
+
+    this.currentTrack = nextTrack;
+    this.currentTime = this.htmlAudio.currentTime || 0;
+    this.duration = this.htmlAudio.duration || nextTrack.duration || 210;
+    this.isPlaying = true;
+    this.isLoading = false;
+    this.activeEngine = 'audio';
+
+    // Synchronize queue
+    const trackIndex = queueService.tracks.findIndex(t => t.id === nextTrack.id);
+    if (trackIndex >= 0) {
+      queueService.setIndex(trackIndex);
+    } else {
+      queueService.addTrack(nextTrack);
+    }
+
+    historyService.addToHistory(nextTrack);
+    storageService.addToHistory(nextTrack);
+    if (nextTrack.id) this.sessionHistory.add(String(nextTrack.id));
+
+    this.updateMediaSessionMetadata(nextTrack);
+    this.updateMediaSessionState('playing');
+    this.notify();
+  }
+
+  cancelCrossfade() {
+    if (!this.isCrossfading) return;
+    this.isCrossfading = false;
+    this.pendingCrossfadeNextTrack = null;
+
+    if (this.crossfadeTimer) {
+      clearInterval(this.crossfadeTimer);
+      this.crossfadeTimer = null;
+    }
+
+    if (this.nextAudio) {
+      try {
+        this.nextAudio.pause();
+        this.nextAudio.removeAttribute('src');
+        this.nextAudio.load();
+      } catch {}
+      this.nextAudio = null;
+    }
+
+    if (this.htmlAudio) {
+      this.htmlAudio.volume = this.isMuted ? 0 : this.volume;
+    }
   }
 
   stopTimer() {
@@ -455,7 +776,44 @@ class PlayerService {
     if (settings) {
       if (typeof settings.volume === 'number') this.volume = settings.volume;
       if (typeof settings.isMuted === 'boolean') this.isMuted = settings.isMuted;
+      if (typeof settings.autoplay === 'boolean') {
+        queueService.setAutoplay(settings.autoplay);
+      }
+      if (typeof settings.crossfade === 'boolean') {
+        this.crossfade = settings.crossfade;
+      }
     }
+  }
+
+  isAutoplayEnabled() {
+    return queueService.isAutoplayEnabled();
+  }
+
+  setAutoplay(enabled) {
+    const val = queueService.setAutoplay(enabled);
+    this.notify();
+    return val;
+  }
+
+  toggleAutoplay() {
+    const val = queueService.toggleAutoplay();
+    this.notify();
+    return val;
+  }
+
+  isCrossfadeEnabled() {
+    return this.crossfade;
+  }
+
+  setCrossfade(enabled) {
+    this.crossfade = Boolean(enabled);
+    storageService.saveSettings({ crossfade: this.crossfade });
+    this.notify();
+    return this.crossfade;
+  }
+
+  toggleCrossfade() {
+    return this.setCrossfade(!this.crossfade);
   }
 }
 

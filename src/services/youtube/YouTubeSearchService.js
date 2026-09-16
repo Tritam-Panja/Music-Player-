@@ -8,6 +8,7 @@
 import { MusicError, ErrorCodes } from '../../core/errors/MusicError';
 import { ytSessionService, CLIENT_STRATEGIES } from './YouTubeSessionService';
 import { cleanTrackTitle } from '../../utils/formatters';
+import { apiUrl } from '../apiConfig';
 
 // Health-scored public fallback instances with health tracking
 const PUBLIC_INSTANCES = [
@@ -115,17 +116,17 @@ class YouTubeSearchService {
       }
     }
 
-    // PROVIDER 2: Local Vite dev plugin or intentionally configured backend (/api/search)
-    // Only attempt if not running inside Android APK with no backend configured
+    // PROVIDER 2: Local Vite dev plugin or configured backend (/api/search)
     try {
       const isApk = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
       const hasBackendConfigured = Boolean(import.meta.env?.VITE_API_URL);
 
       if (!isApk || hasBackendConfigured) {
         const timeoutCtrl = new AbortController();
-        const timeoutId = setTimeout(() => timeoutCtrl.abort(), 3500);
+        const timeoutId = setTimeout(() => timeoutCtrl.abort(), 8000);
 
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${type}`, {
+        const searchUrl = apiUrl(`/api/search?q=${encodeURIComponent(query)}&type=${type}`);
+        const res = await fetch(searchUrl, {
           signal: timeoutCtrl.signal
         });
         clearTimeout(timeoutId);
@@ -141,22 +142,27 @@ class YouTubeSearchService {
       }
     } catch {}
 
-    // PROVIDER 3: Direct InnerTube / YouTube Music Client API
+    // PROVIDER 3: InnerTube / YouTube Music Client API
     try {
       const strategy = ytSessionService.getActiveStrategy();
       const context = ytSessionService.getContext(strategy);
       const headers = ytSessionService.getHeaders(strategy);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-      const endpoint = strategy.id === 'WEB_REMIX' 
-        ? 'https://music.youtube.com/youtubei/v1/search'
-        : 'https://www.youtube.com/youtubei/v1/search';
+      const isWebBrowser = typeof window !== 'undefined' && !window.electronAPI && !window.Capacitor?.isNativePlatform?.();
+
+      // In web browser, proxy through local server to avoid CORS rejection
+      const endpoint = isWebBrowser
+        ? apiUrl(`/api/innertube/search?client=${strategy.id}`)
+        : (strategy.id === 'WEB_REMIX' 
+            ? 'https://music.youtube.com/youtubei/v1/search'
+            : 'https://www.youtube.com/youtubei/v1/search');
 
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers,
+        headers: isWebBrowser ? { 'Content-Type': 'application/json' } : headers,
         body: JSON.stringify({
           context,
           query
@@ -183,43 +189,47 @@ class YouTubeSearchService {
     }
 
     // PROVIDER 4: Healthy Invidious / Piped Instance Rotation with health metrics
-    const sortedInstances = [...PUBLIC_INSTANCES].sort((a, b) => a.failures - b.failures);
+    // Skip in web browser without native shell to avoid browser CORS policy blocking
+    const isWebBrowser = typeof window !== 'undefined' && !window.electronAPI && !window.Capacitor?.isNativePlatform?.();
+    if (!isWebBrowser) {
+      const sortedInstances = [...PUBLIC_INSTANCES].sort((a, b) => a.failures - b.failures);
 
-    for (const inst of sortedInstances.slice(0, 2)) {
-      if (signal.aborted) break;
+      for (const inst of sortedInstances.slice(0, 2)) {
+        if (signal.aborted) break;
 
-      try {
-        const instCtrl = new AbortController();
-        const instTimeout = setTimeout(() => instCtrl.abort(), 3500);
+        try {
+          const instCtrl = new AbortController();
+          const instTimeout = setTimeout(() => instCtrl.abort(), 3500);
 
-        const typeParam = type === 'playlist' ? 'playlist' : 'video';
-        const res = await fetch(`${inst.url}/api/v1/search?q=${encodeURIComponent(query)}&type=${typeParam}`, {
-          signal: instCtrl.signal
-        });
-        clearTimeout(instTimeout);
+          const typeParam = type === 'playlist' ? 'playlist' : 'video';
+          const res = await fetch(`${inst.url}/api/v1/search?q=${encodeURIComponent(query)}&type=${typeParam}`, {
+            signal: instCtrl.signal
+          });
+          clearTimeout(instTimeout);
 
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            inst.failures = Math.max(0, inst.failures - 1);
-            results = data.map(item => this.normalizeTrack({
-              id: item.videoId || item.playlistId,
-              title: item.title,
-              artist: item.author,
-              duration: item.lengthSeconds,
-              thumbnail: `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`,
-              views: item.viewCount,
-              uploaded: item.publishedText
-            })).filter(Boolean);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              inst.failures = Math.max(0, inst.failures - 1);
+              results = data.map(item => this.normalizeTrack({
+                id: item.videoId || item.playlistId,
+                title: item.title,
+                artist: item.author,
+                duration: item.lengthSeconds,
+                thumbnail: `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`,
+                views: item.viewCount,
+                uploaded: item.publishedText
+              })).filter(Boolean);
 
-            this.setCache(cacheKey, results);
-            return results;
+              this.setCache(cacheKey, results);
+              return results;
+            }
+          } else {
+            inst.failures++;
           }
-        } else {
+        } catch {
           inst.failures++;
         }
-      } catch (e) {
-        inst.failures++;
       }
     }
 

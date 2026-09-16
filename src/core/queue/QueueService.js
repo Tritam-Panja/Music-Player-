@@ -15,6 +15,7 @@ class QueueService {
     this.currentIndex = 0;
     this.isShuffle = false;
     this.repeatMode = 'off'; // 'off' | 'all' | 'one'
+    this.autoplay = true; // autoplay / radio mode (default on)
     this.listeners = new Set();
 
     this.restoreState();
@@ -28,6 +29,7 @@ class QueueService {
       currentTrack,
       isShuffle: this.isShuffle,
       repeatMode: this.repeatMode,
+      autoplay: this.autoplay,
       hasTracks: this.tracks.length > 0,
       hasNext: this.hasNext(),
       hasPrevious: this.hasPrevious()
@@ -81,6 +83,25 @@ class QueueService {
       this.currentIndex = this.tracks.length - 1;
     }
     this.notify();
+  }
+
+  pushTracks(newTracks) {
+    if (!Array.isArray(newTracks) || newTracks.length === 0) return [];
+
+    const existingIds = new Set(this.tracks.map(t => String(t.id)));
+    const unique = [];
+    for (const t of newTracks) {
+      if (t && t.id && !existingIds.has(String(t.id))) {
+        existingIds.add(String(t.id));
+        unique.push(t);
+      }
+    }
+
+    if (unique.length > 0) {
+      this.tracks.push(...unique);
+      this.notify();
+    }
+    return unique;
   }
 
   removeTrack(index) {
@@ -143,8 +164,12 @@ class QueueService {
         nextIdx = 0;
       }
     } else if (nextIdx >= this.tracks.length) {
-      // Loop smoothly through queue
-      nextIdx = 0;
+      if (this.repeatMode === 'all') {
+        nextIdx = 0;
+      } else {
+        // Queue is exhausted (no repeat loop)
+        return null;
+      }
     }
 
     this.currentIndex = nextIdx;
@@ -184,19 +209,39 @@ class QueueService {
     return this.repeatMode;
   }
 
+  isAutoplayEnabled() {
+    return this.autoplay;
+  }
+
+  setAutoplay(enabled) {
+    this.autoplay = Boolean(enabled);
+    storageService.saveSettings({ autoplay: this.autoplay });
+    this.saveState();
+    this.notify();
+    return this.autoplay;
+  }
+
+  toggleAutoplay() {
+    return this.setAutoplay(!this.autoplay);
+  }
+
   saveState() {
     try {
       localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify({
         tracks: this.tracks,
         currentIndex: this.currentIndex,
         isShuffle: this.isShuffle,
-        repeatMode: this.repeatMode
+        repeatMode: this.repeatMode,
+        autoplay: this.autoplay
       }));
     } catch {}
   }
 
   restoreState() {
     try {
+      const settings = storageService.getSettings();
+      this.autoplay = typeof settings?.autoplay === 'boolean' ? settings.autoplay : true;
+
       const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -205,6 +250,9 @@ class QueueService {
           this.currentIndex = typeof parsed.currentIndex === 'number' ? parsed.currentIndex : 0;
           this.isShuffle = Boolean(parsed.isShuffle);
           this.repeatMode = parsed.repeatMode || 'off';
+          if (typeof parsed.autoplay === 'boolean') {
+            this.autoplay = parsed.autoplay;
+          }
         }
       }
     } catch {}
