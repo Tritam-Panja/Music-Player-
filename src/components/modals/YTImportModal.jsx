@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, CheckCircle2, AlertCircle, Sparkles, Music2 } from 'lucide-react';
+import { X, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import YoutubeIcon from '../ui/YoutubeIcon';
 import { ytService } from '../../services/ytService';
 
@@ -14,8 +14,7 @@ const SAMPLE_PLAYLISTS = [
   }
 ];
 
-export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme = 'light' }) {
-  const isDark = theme === 'dark';
+export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme = 'dark' }) {
   const [urlInput, setUrlInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -55,27 +54,19 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
-      <div className={`relative w-full max-w-xl rounded-[32px] overflow-hidden transition-colors ${
-        isDark 
-          ? 'bg-[#1b1d23] neu-card-shadow neu-dark text-[#f3efe8] border border-[#262933]' 
-          : 'bg-[#faf9f6] neu-card-shadow text-[#2e221b] border border-[#e8e2d8]'
-      }`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 select-none">
+      <div className="relative w-full max-w-xl rounded-3xl overflow-hidden bg-im-card border border-im-line shadow-im-float text-white">
         {/* Modal Header */}
-        <div className={`flex items-center justify-between px-6 py-5 border-b ${
-          isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'
-        }`}>
-          <div className="flex items-center gap-2.5">
-            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
-              isDark ? 'bg-[#111215] neu-groove-inset neu-dark text-red-400' : 'bg-[#e8e2d8] neu-groove-inset text-red-500'
-            }`}>
-              <YoutubeIcon size={18} />
+        <div className="flex items-center justify-between px-6 py-5 border-b border-im-line">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-im-card2 border border-im-line flex items-center justify-center text-red-400 shadow-sm">
+              <YoutubeIcon size={20} />
             </div>
             <div>
-              <h3 className={`text-base font-bold ${isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'}`}>
+              <h3 className="text-base font-bold text-white">
                 Import YouTube Playlist
               </h3>
-              <p className={`text-xs ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+              <p className="text-xs text-im-inkFaint">
                 Zero ads, completely free, instant sync
               </p>
             </div>
@@ -83,9 +74,7 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
 
           <button
             onClick={onClose}
-            className={`p-2 rounded-xl transition-colors cursor-pointer ${
-              isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-            }`}
+            className="p-1.5 rounded-lg text-im-inkFaint hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -95,9 +84,7 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
         <div className="p-6 space-y-5">
           {/* Input field */}
           <div className="space-y-2">
-            <label className={`text-xs font-bold uppercase tracking-wider ${
-              isDark ? 'text-[#828694]' : 'text-[#8f8075]'
-            }`}>
+            <label className="text-xs font-bold uppercase tracking-wider text-im-inkFaint block">
               YouTube or YouTube Music Playlist URL
             </label>
             <div className="flex gap-2.5">
@@ -107,19 +94,15 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFetchPreview()}
-                className={`flex-1 text-sm px-4 py-3 rounded-2xl outline-none font-medium transition-all ${
-                  isDark 
-                    ? 'bg-[#111215] neu-groove-inset neu-dark text-[#f3efe8] placeholder-[#828694]' 
-                    : 'bg-[#e8e2d8] neu-groove-inset text-[#2e221b] placeholder-[#8f8075]'
-                }`}
+                className="flex-1 text-sm px-4 py-3 rounded-2xl outline-none font-medium transition-all bg-im-card2 border border-im-line text-white placeholder:text-im-inkFaint focus:border-white/30"
               />
               <button
                 onClick={handleFetchPreview}
                 disabled={isLoading || !urlInput.trim()}
-                className="px-6 py-3 rounded-2xl bg-[#3c2b20] hover:bg-[#4d3729] disabled:opacity-40 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+                className="px-6 py-3 rounded-2xl bg-white text-black hover:bg-white/90 disabled:opacity-40 font-bold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
               >
                 {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <span>Fetch</span>
                 )}
@@ -129,7 +112,7 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
 
           {/* Quick sample buttons */}
           <div className="space-y-1.5">
-            <span className={`text-[11px] block font-medium ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+            <span className="text-[11px] block font-medium text-im-inkFaint">
               Or try one of these:
             </span>
             <div className="flex flex-wrap gap-2">
@@ -139,11 +122,7 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
                   onClick={() => {
                     setUrlInput(sp.url);
                   }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-                    isDark 
-                      ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#f3efe8] hover:text-[#c4956a]' 
-                      : 'bg-[#faf9f6] neu-btn-shadow text-[#2e221b] hover:text-[#3c2b20]'
-                  }`}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-all bg-im-card2 hover:bg-white/10 border border-im-line text-im-inkSoft hover:text-white"
                 >
                   {sp.name}
                 </button>
@@ -153,33 +132,29 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
 
           {/* Error Message */}
           {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/25 text-rose-500 text-xs flex items-center gap-2.5">
-              <AlertCircle size={16} className="flex-shrink-0 text-rose-500" />
+            <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/25 text-rose-400 text-xs flex items-center gap-2.5">
+              <AlertCircle size={16} className="flex-shrink-0 text-rose-400" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Preview Card */}
           {preview && (
-            <div className={`p-4 rounded-2xl space-y-4 animate-in fade-in duration-300 ${
-              isDark 
-                ? 'bg-[#111215] neu-groove-inset neu-dark' 
-                : 'bg-[#f0ebe3] neu-groove-inset'
-            }`}>
+            <div className="p-4 rounded-2xl space-y-4 animate-in fade-in duration-300 bg-im-card2 border border-im-line">
               <div className="flex items-center gap-4">
                 <img
                   src={preview.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'}
                   alt={preview.title}
-                  className="w-16 h-16 rounded-xl object-cover shadow-md"
+                  className="w-16 h-16 rounded-xl object-cover shadow-md border border-im-line"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-semibold mb-0.5">
+                  <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold mb-0.5">
                     <CheckCircle2 size={14} /> Ready to import
                   </div>
-                  <h4 className={`font-bold text-sm truncate ${isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'}`}>
+                  <h4 className="font-bold text-sm truncate text-white">
                     {preview.title}
                   </h4>
-                  <p className={`text-xs truncate ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+                  <p className="text-xs truncate text-im-inkFaint">
                     {preview.author} • {preview.tracks.length} tracks
                   </p>
                 </div>
@@ -187,7 +162,7 @@ export default function YTImportModal({ isOpen, onClose, onImportSuccess, theme 
 
               <button
                 onClick={handleSavePlaylist}
-                className="w-full py-3.5 rounded-2xl bg-[#3c2b20] hover:bg-[#4d3729] text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                className="w-full py-3.5 rounded-2xl bg-white text-black hover:bg-white/90 font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
               >
                 <Download size={16} />
                 <span>Save to Library & Start Listening</span>

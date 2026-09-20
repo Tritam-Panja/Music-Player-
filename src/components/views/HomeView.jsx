@@ -194,9 +194,7 @@ function HomeView({
   onOpenImportModal,
   onOpenSearch,
   onViewChange,
-  theme = 'light'
 }) {
-  const isDark = theme === 'dark';
   const [activeCategory, setActiveCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [trendingTracks, setTrendingTracks] = useState([]);
@@ -380,251 +378,154 @@ function HomeView({
   const album1 = FEATURED_CURATED_MIXES[0] || displayTrending[0];
   const album2 = FEATURED_CURATED_MIXES[1] || displayTrending[1];
   const recentHistory = historyService.getRecentlyPlayed(10);
+  const heroTrack = (recentHistory && recentHistory.length > 0) ? recentHistory[0] : (displayTrending[0] || null);
+  const quickPick1 = album1 || displayTrending[1] || null;
+  const quickPick2 = album2 || displayTrending[2] || null;
 
   const ROW_GRADIENTS = [
-    'from-[#bdeee0] via-[#cfe0f5] to-[#e3d3f2]',
-    'from-[#cfe0f5] via-[#e3d3f2] to-[#f2d9e6]',
-    'from-[#f2d9e6] via-[#bdeee0] to-[#cfe0f5]',
-    'from-[#dff3ea] via-[#e9e6f7] to-[#bdeee0]',
-    'from-[#fed6e3] via-[#a8edea] to-[#cfe0f5]',
+    'from-[#d98a3a] to-[#8a4a1e]',
+    'from-[#8a6fd6] to-[#4a3a8f]',
+    'from-[#4a3ad6] to-[#2a1a6f]',
+    'from-[#c43a7a] to-[#6f1a4a]',
+    'from-[#c4552e] to-[#7a2a12]',
+    'from-[#3a7ac4] to-[#1a3a7a]',
+    'from-[#c76b8a] to-[#5b3a63]',
   ];
 
   return (
-    <div className="w-full flex-1 overflow-y-auto overflow-x-hidden select-none px-4 sm:px-6 md:px-8 py-4 space-y-6 max-w-4xl mx-auto scrollbar-none">
-      {/* =========================================================================
-          1. TOP BAR
-          Hamburger icon left, brand mark center, circular avatar (36px, gradient placeholder bg) right
-         ========================================================================= */}
-      <div className="w-full flex items-center justify-between py-1">
-        {/* Hamburger icon left */}
-        <button
-          type="button"
-          onClick={() => onViewChange && onViewChange('library')}
-          className="p-2 -ml-2 text-ui2-ink dark:text-white hover:text-ui2-accentInk dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/10 rounded-full transition-all cursor-pointer"
-          title="Menu / Library"
-        >
-          <Menu size={22} />
-        </button>
-
-        {/* Brand mark center */}
-        <div className="flex items-center gap-2 font-black text-base tracking-tight text-ui2-ink dark:text-white select-none">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#bdeee0] via-[#cfe0f5] to-[#e3d3f2] shadow-xs flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-ui2-accentInk dark:bg-white" />
-          </div>
-          <span>Liquid Music</span>
-        </div>
-
-        {/* Circular avatar (36px, gradient placeholder bg) right */}
-        <div
-          onClick={() => onViewChange && onViewChange('library')}
-          className="w-[36px] h-[36px] rounded-full bg-gradient-to-br from-[#bdeee0] via-[#cfe0f5] to-[#f2d9e6] p-0.5 shadow-sm flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 transition-transform"
-          title="Profile / Library"
-        >
-          <div className="w-full h-full rounded-full bg-white/60 dark:bg-[#161822] backdrop-blur-xs flex items-center justify-center text-xs font-bold text-ui2-ink dark:text-white">
-            LM
-          </div>
-        </div>
+    <div className="w-full flex-1 overflow-y-auto overflow-x-hidden select-none px-4 sm:px-6 md:px-8 py-5 space-y-7 max-w-5xl mx-auto scrollbar-none text-white">
+      {/* 1. Large Bold "Listen Now" Page Heading */}
+      <div className="pt-1">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          Listen Now
+        </h1>
       </div>
 
-      {/* =========================================================================
-          2. SEARCH BAR
-          Pill shape, bg-white/75 with backdrop-blur, magnifying glass left, small circular gradient mic button right, shadow-ui2-soft
-         ========================================================================= */}
-      <div className="w-full">
+      {/* 2. "Recents" Hero Card */}
+      {heroTrack && (
         <div
-          onClick={onOpenSearch}
-          className="w-full flex items-center justify-between px-4 py-2.5 rounded-full bg-white/75 dark:bg-white/[0.07] backdrop-blur-md shadow-ui2-soft dark:shadow-none border border-black/5 dark:border-white/10 hover:border-black/10 dark:hover:border-white/20 transition-all cursor-pointer group"
+          onClick={() => handlePlayTrending(heroTrack)}
+          className="group relative w-full aspect-[21/9] sm:aspect-[2.4/1] min-h-[190px] sm:min-h-[220px] rounded-2xl overflow-hidden p-5 sm:p-7 flex flex-col justify-between cursor-pointer transition-transform duration-300 hover:scale-[1.01] shadow-im-float bg-im-hero border border-im-line"
         >
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Search size={18} className="text-ui2-inkFaint group-hover:text-ui2-ink dark:text-white/40 dark:group-hover:text-white transition-colors flex-shrink-0" />
-            <input
-              type="text"
-              readOnly
-              placeholder="Search songs, albums, artists..."
-              onClick={onOpenSearch}
-              onFocus={onOpenSearch}
-              className="w-full bg-transparent text-xs sm:text-sm text-ui2-ink dark:text-white placeholder:text-ui2-inkFaint dark:placeholder:text-white/40 focus:outline-none cursor-pointer border-none p-0"
+          {heroTrack.thumbnail && (
+            <img
+              loading="lazy"
+              decoding="async"
+              src={heroTrack.thumbnail}
+              alt={heroTrack.title}
+              className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-35 transition-transform duration-500 group-hover:scale-105"
             />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+
+          <div className="relative z-10 flex items-center justify-between">
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10">
+              Recents
+            </span>
+            <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/10">
+              <Sparkles size={15} />
+            </div>
           </div>
 
-          {/* Small circular gradient mic button on the right inside the pill */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenSearch && onOpenSearch();
-            }}
-            className="w-7 h-7 rounded-full bg-gradient-to-br from-[#cfe0f5] via-[#e3d3f2] to-[#f2d9e6] dark:from-[#353a50] dark:to-[#222538] flex items-center justify-center text-ui2-ink dark:text-white shadow-sm hover:scale-105 active:scale-95 transition-transform flex-shrink-0 ml-2 cursor-pointer"
-            title="Voice Search"
-          >
-            <Mic size={13} className="text-ui2-ink dark:text-white" />
-          </button>
+          <div className="relative z-10 flex items-end justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white truncate [text-shadow:_0_2px_12px_rgba(0,0,0,0.8)] group-hover:underline">
+                {heroTrack.title}
+              </h2>
+              <p className="text-xs sm:text-sm md:text-base font-medium text-white/80 truncate mt-1 [text-shadow:_0_1px_8px_rgba(0,0,0,0.8)]">
+                {heroTrack.artist}
+              </p>
+            </div>
+
+            <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white text-black flex items-center justify-center shadow-xl flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+              <Play size={18} className="fill-current ml-0.5 text-black" />
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* =========================================================================
-          RECENTLY PLAYED SECTION (historyService)
-          Reads from historyService.getRecentlyPlayed(10)
-         ========================================================================= */}
-      {recentHistory && recentHistory.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-bold tracking-tight text-ui2-ink dark:text-white">
-              Recently Played
-            </h2>
-            <button
-              onClick={() => onViewChange && onViewChange('library')}
-              className="text-xs font-semibold text-ui2-inkSoft hover:text-ui2-ink dark:text-white/50 dark:hover:text-white transition-colors cursor-pointer hover:underline"
-            >
-              See all
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {recentHistory.map((track, idx) => (
-              <div
-                key={`recent-history-${track.id || idx}-${idx}`}
-                onClick={() => handlePlayTrending(track)}
-                className="group flex items-center justify-between p-2.5 rounded-2xl bg-white/70 hover:bg-white/90 dark:bg-white/[0.05] dark:hover:bg-white/[0.10] backdrop-blur-sm border border-black/5 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-ui2-soft transition-all duration-200 cursor-pointer"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {/* 46px rounded-xl thumbnail (gradient placeholder, vary the gradient per row) */}
-                  <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} shadow-xs border border-black/5 dark:border-white/10`}>
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'}
-                      alt={track.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Play size={14} className="fill-white text-white ml-0.5" />
-                    </div>
-                  </div>
-
-                  {/* Title bold + artist muted */}
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-xs sm:text-sm text-ui2-ink dark:text-white truncate group-hover:text-ui2-accentInk dark:group-hover:text-white group-hover:underline">
-                      {track.title}
-                    </h4>
-                    <p className="text-[11px] font-medium text-ui2-inkSoft dark:text-white/50 truncate mt-0.5">
-                      {track.artist}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Kebab icon right */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  className="ml-2 p-1.5 text-ui2-inkFaint hover:text-ui2-ink dark:text-white/40 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer flex-shrink-0"
-                  title="More options"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
       )}
 
-      {/* =========================================================================
-          3. "ALBUMS" SECTION
-          Two side-by-side cards (rounded-2xl, distinct gradient backgrounds, small circular play button bottom-right, label bottom-left in white text), with "See all" link, shadow-ui2-float
-         ========================================================================= */}
+      {/* 3. "Quick Picks" Section: Two side-by-side smaller rounded cards */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold tracking-tight text-ui2-ink dark:text-white">
-            Albums
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+            Quick picks
           </h2>
-          <button
-            onClick={() => onOpenSearch && onOpenSearch()}
-            className="text-xs font-semibold text-ui2-inkSoft hover:text-ui2-ink dark:text-white/50 dark:hover:text-white transition-colors cursor-pointer hover:underline"
-          >
-            See all
-          </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {/* Album Card 1 */}
-          {album1 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {quickPick1 && (
             <div
-              onClick={() => onPlayPlaylist ? onPlayPlaylist(album1) : handlePlayTrending(album1)}
-              className="group relative aspect-[4/3] sm:aspect-[16/10] rounded-2xl p-3 sm:p-4 flex flex-col justify-between overflow-hidden shadow-ui2-float cursor-pointer transition-transform duration-300 hover:scale-[1.02] bg-gradient-to-br from-[#3b82f6] via-[#8b5cf6] to-[#ec4899]"
+              onClick={() => onPlayPlaylist ? onPlayPlaylist(quickPick1) : handlePlayTrending(quickPick1)}
+              className="group relative aspect-[16/9] sm:aspect-[2/1] min-h-[135px] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden shadow-im-float cursor-pointer transition-transform duration-300 hover:scale-[1.02] border border-im-line bg-im-mood-chill"
             >
-              {album1.thumbnail && (
+              {quickPick1.thumbnail && (
                 <img
                   loading="lazy"
                   decoding="async"
-                  src={album1.thumbnail}
-                  alt={album1.title}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60 transition-transform duration-500 group-hover:scale-105"
+                  src={quickPick1.thumbnail}
+                  alt={quickPick1.title}
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-35 transition-transform duration-500 group-hover:scale-105"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
               <div className="relative z-10">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white">
-                  Album
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10">
+                  Quick Pick
                 </span>
               </div>
 
-              {/* Bottom Content: Label bottom-left in white text, small circular play button bottom-right */}
-              <div className="relative z-10 flex items-end justify-between gap-2">
+              <div className="relative z-10 flex items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-xs sm:text-sm font-bold text-white truncate drop-shadow-sm group-hover:underline">
-                    {album1.title}
+                  <h3 className="text-xs sm:text-sm font-bold text-white truncate [text-shadow:_0_1px_6px_rgba(0,0,0,0.8)] group-hover:underline">
+                    {quickPick1.title}
                   </h3>
-                  <p className="text-[10px] sm:text-[11px] font-medium text-white/80 truncate mt-0.5">
-                    {album1.author || 'Curated Mix'}
+                  <p className="text-[10px] sm:text-[11px] font-medium text-white/80 truncate mt-0.5 [text-shadow:_0_1px_4px_rgba(0,0,0,0.8)]">
+                    {quickPick1.author || quickPick1.artist || 'Curated Mix'}
                   </p>
                 </div>
 
-                <div className="w-8 h-8 rounded-full bg-white text-ui2-accentInk flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
-                  <Play size={14} className="fill-current ml-0.5" />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                  <Play size={13} className="fill-current ml-0.5 text-black" />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Album Card 2 */}
-          {album2 && (
+          {quickPick2 && (
             <div
-              onClick={() => onPlayPlaylist ? onPlayPlaylist(album2) : handlePlayTrending(album2)}
-              className="group relative aspect-[4/3] sm:aspect-[16/10] rounded-2xl p-3 sm:p-4 flex flex-col justify-between overflow-hidden shadow-ui2-float cursor-pointer transition-transform duration-300 hover:scale-[1.02] bg-gradient-to-br from-[#06b6d4] via-[#3b82f6] to-[#6366f1]"
+              onClick={() => onPlayPlaylist ? onPlayPlaylist(quickPick2) : handlePlayTrending(quickPick2)}
+              className="group relative aspect-[16/9] sm:aspect-[2/1] min-h-[135px] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden shadow-im-float cursor-pointer transition-transform duration-300 hover:scale-[1.02] border border-im-line bg-im-mood-commute"
             >
-              {album2.thumbnail && (
+              {quickPick2.thumbnail && (
                 <img
                   loading="lazy"
                   decoding="async"
-                  src={album2.thumbnail}
-                  alt={album2.title}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60 transition-transform duration-500 group-hover:scale-105"
+                  src={quickPick2.thumbnail}
+                  alt={quickPick2.title}
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-35 transition-transform duration-500 group-hover:scale-105"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
               <div className="relative z-10">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white">
-                  Album
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10">
+                  Quick Pick
                 </span>
               </div>
 
-              {/* Bottom Content: Label bottom-left in white text, small circular play button bottom-right */}
-              <div className="relative z-10 flex items-end justify-between gap-2">
+              <div className="relative z-10 flex items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-xs sm:text-sm font-bold text-white truncate drop-shadow-sm group-hover:underline">
-                    {album2.title}
+                  <h3 className="text-xs sm:text-sm font-bold text-white truncate [text-shadow:_0_1px_6px_rgba(0,0,0,0.8)] group-hover:underline">
+                    {quickPick2.title}
                   </h3>
-                  <p className="text-[10px] sm:text-[11px] font-medium text-white/80 truncate mt-0.5">
-                    {album2.author || 'Curated Mix'}
+                  <p className="text-[10px] sm:text-[11px] font-medium text-white/80 truncate mt-0.5 [text-shadow:_0_1px_4px_rgba(0,0,0,0.8)]">
+                    {quickPick2.author || quickPick2.artist || 'Curated Mix'}
                   </p>
                 </div>
 
-                <div className="w-8 h-8 rounded-full bg-white text-ui2-accentInk flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
-                  <Play size={14} className="fill-current ml-0.5" />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                  <Play size={13} className="fill-current ml-0.5 text-black" />
                 </div>
               </div>
             </div>
@@ -632,17 +533,171 @@ function HomeView({
         </div>
       </section>
 
-      {/* =========================================================================
-          POPULAR ARTISTS SECTION
-         ========================================================================= */}
+      {/* 4. "Because you played X" Section */}
+      {relatedSourceTrack && (relatedTracks.length > 0 || isRelatedLoading) && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-white truncate">
+              Because you played <span className="text-im-inkSoft">"{relatedSourceTrack.title}"</span>
+            </h2>
+            <button
+              onClick={() => onOpenSearch && onOpenSearch()}
+              className="text-xs font-semibold text-im-inkSoft hover:text-white transition-colors cursor-pointer hover:underline flex-shrink-0 ml-2"
+            >
+              See all
+            </button>
+          </div>
+
+          {isRelatedLoading ? (
+            <div className="flex flex-col gap-2">
+              {[...Array(4)].map((_, idx) => (
+                <div
+                  key={`related-skeleton-${idx}`}
+                  className="flex items-center justify-between p-2.5 rounded-2xl bg-im-card border border-im-line animate-pulse"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-[46px] h-[46px] rounded-xl bg-white/5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-3 w-40 bg-white/10 rounded-full mb-1.5" />
+                      <div className="h-2.5 w-24 bg-white/5 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {relatedTracks.map((item, idx) => (
+                <div
+                  key={`because-played-${item.id}-${idx}`}
+                  onClick={() => onPlayTrack ? onPlayTrack(item, relatedTracks) : handlePlayTrending(item)}
+                  className="group flex items-center justify-between p-2.5 rounded-2xl bg-im-card hover:bg-im-card2 border border-im-line transition-all duration-200 cursor-pointer shadow-sm hover:shadow-im-float"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} border border-im-line shadow-xs`}>
+                      <img
+                        loading="lazy"
+                        decoding="async"
+                        src={item.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <Play size={14} className="fill-white text-white ml-0.5" />
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-xs sm:text-sm text-white truncate group-hover:underline">
+                        {item.title}
+                      </h4>
+                      <p className="text-[11px] font-medium text-im-inkFaint truncate mt-0.5">
+                        {item.artist || item.author || 'Related'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="ml-2 p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                    title="More options"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* 5. Trending Section */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold tracking-tight text-ui2-ink dark:text-white">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+            Trending Now
+          </h2>
+          <button
+            onClick={() => onOpenSearch && onOpenSearch()}
+            className="text-xs font-semibold text-im-inkSoft hover:text-white transition-colors cursor-pointer hover:underline"
+          >
+            See all
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="flex flex-col gap-2">
+            {[...Array(4)].map((_, idx) => (
+              <div
+                key={`trending-row-skeleton-${idx}`}
+                className="flex items-center justify-between p-2.5 rounded-2xl bg-im-card border border-im-line animate-pulse"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-[46px] h-[46px] rounded-xl bg-white/5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-3 w-40 bg-white/10 rounded-full mb-1.5" />
+                    <div className="h-2.5 w-24 bg-white/5 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {displayTrending.slice(0, 6).map((track, idx) => (
+              <div
+                key={`${track.id}-${idx}`}
+                onClick={() => handlePlayTrending(track)}
+                className="group flex items-center justify-between p-2.5 rounded-2xl bg-im-card hover:bg-im-card2 border border-im-line transition-all duration-200 cursor-pointer shadow-sm hover:shadow-im-float"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[(idx + 2) % ROW_GRADIENTS.length]} border border-im-line shadow-xs`}>
+                    <img
+                      loading="lazy"
+                      decoding="async"
+                      src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'}
+                      alt={track.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Play size={14} className="fill-white text-white ml-0.5" />
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-xs sm:text-sm text-white truncate group-hover:underline">
+                      {track.title}
+                    </h4>
+                    <p className="text-[11px] font-medium text-im-inkFaint truncate mt-0.5">
+                      {track.artist}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="ml-2 p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                  title="More options"
+                >
+                  <MoreVertical size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 6. Popular Artists Section */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
             Popular artists
           </h2>
           <button
             onClick={() => onOpenSearch && onOpenSearch()}
-            className="text-xs font-semibold text-ui2-inkSoft hover:text-ui2-ink dark:text-white/50 dark:hover:text-white transition-colors cursor-pointer hover:underline"
+            className="text-xs font-semibold text-im-inkSoft hover:text-white transition-colors cursor-pointer hover:underline"
           >
             See all
           </button>
@@ -652,9 +707,9 @@ function HomeView({
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
             {[...Array(6)].map((_, i) => (
               <div key={`artist-skeleton-${i}`} className="flex flex-col items-center flex-shrink-0 min-w-[90px] sm:min-w-[105px] animate-pulse">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-black/10 dark:bg-white/10 mb-2 border border-black/5 dark:border-white/10" />
-                <div className="h-3 w-16 bg-black/10 dark:bg-white/10 rounded-full mb-1" />
-                <div className="h-2 w-10 bg-black/5 dark:bg-white/5 rounded-full" />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/5 mb-2 border border-im-line" />
+                <div className="h-3 w-16 bg-white/10 rounded-full mb-1" />
+                <div className="h-2 w-10 bg-white/5 rounded-full" />
               </div>
             ))}
           </div>
@@ -666,7 +721,7 @@ function HomeView({
                 onClick={() => handleArtistClick(artist)}
                 className="group flex flex-col items-center text-center cursor-pointer flex-shrink-0 min-w-[90px] sm:min-w-[105px]"
               >
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-2 shadow-xs border border-black/5 dark:border-white/10 bg-white/40 dark:bg-white/5">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-2 shadow-xs border border-im-line bg-im-card">
                   <img
                     loading="lazy"
                     decoding="async"
@@ -674,18 +729,18 @@ function HomeView({
                     alt={artist.name}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className={`absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity ${
+                  <div className={`absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity ${
                     isPlayingId === artist.id ? 'opacity-100' : ''
                   }`}>
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-ui2-accentInk dark:bg-white text-white dark:text-black flex items-center justify-center shadow-md">
-                      <Play size={12} className="fill-current ml-0.5" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-black flex items-center justify-center shadow-md">
+                      <Play size={12} className="fill-current ml-0.5 text-black" />
                     </div>
                   </div>
                 </div>
-                <h4 className="font-bold text-xs text-ui2-ink dark:text-white truncate max-w-[90px] sm:max-w-[105px] group-hover:underline">
+                <h4 className="font-bold text-xs text-white truncate max-w-[90px] sm:max-w-[105px] group-hover:underline">
                   {artist.name}
                 </h4>
-                <p className="text-[10px] font-medium text-ui2-inkSoft dark:text-white/50 truncate mt-0.5">
+                <p className="text-[10px] font-medium text-im-inkFaint truncate mt-0.5">
                   {artist.role || 'Artist'}
                 </p>
               </div>
@@ -694,223 +749,77 @@ function HomeView({
         )}
       </section>
 
-      {/* =========================================================================
-          4. "RECENTLY PLAYED" SECTION
-          Track rows with a 46px rounded-xl thumbnail (gradient placeholder, vary gradient per row), title bold + artist muted, kebab icon right, "See all" link
-         ========================================================================= */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold tracking-tight text-ui2-ink dark:text-white">
-            Recently played
-          </h2>
-          <button
-            onClick={() => onViewChange && onViewChange('library')}
-            className="text-xs font-semibold text-ui2-inkSoft hover:text-ui2-ink dark:text-white/50 dark:hover:text-white transition-colors cursor-pointer hover:underline"
-          >
-            See all
-          </button>
-        </div>
-
-        {isLoading && (!history || history.length === 0) ? (
-          <div className="flex flex-col gap-2">
-            {[...Array(4)].map((_, idx) => (
-              <div
-                key={`trending-row-skeleton-${idx}`}
-                className="flex items-center justify-between p-2.5 rounded-2xl bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border border-black/5 dark:border-white/10 animate-pulse"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-[46px] h-[46px] rounded-xl bg-black/10 dark:bg-white/10 flex-shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="h-3 w-40 bg-black/10 dark:bg-white/10 rounded-full mb-1.5" />
-                    <div className="h-2.5 w-24 bg-black/5 dark:bg-white/5 rounded-full" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {recentTracks.map((track, idx) => (
-              <div
-                key={`${track.id}-${idx}`}
-                onClick={() => handlePlayTrending(track)}
-                className="group flex items-center justify-between p-2.5 rounded-2xl bg-white/70 hover:bg-white/90 dark:bg-white/[0.05] dark:hover:bg-white/[0.10] backdrop-blur-sm border border-black/5 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-ui2-soft transition-all duration-200 cursor-pointer"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {/* 46px rounded-xl thumbnail (gradient placeholder, vary the gradient per row) */}
-                  <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} shadow-xs border border-black/5 dark:border-white/10`}>
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'}
-                      alt={track.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Play size={14} className="fill-white text-white ml-0.5" />
-                    </div>
-                  </div>
-
-                  {/* Title bold + artist muted */}
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-xs sm:text-sm text-ui2-ink dark:text-white truncate group-hover:text-ui2-accentInk dark:group-hover:text-white group-hover:underline">
-                      {track.title}
-                    </h4>
-                    <p className="text-[11px] font-medium text-ui2-inkSoft dark:text-white/50 truncate mt-0.5">
-                      {track.artist}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Kebab icon right */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  className="ml-2 p-1.5 text-ui2-inkFaint hover:text-ui2-ink dark:text-white/40 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer flex-shrink-0"
-                  title="More options"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* =========================================================================
-          "BECAUSE YOU PLAYED [TRACK NAME]" SECTION
-         ========================================================================= */}
-      {relatedSourceTrack && (relatedTracks.length > 0 || isRelatedLoading) && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-bold tracking-tight text-ui2-ink dark:text-white truncate">
-              Because you played <span className="text-ui2-accentInk dark:text-white/90">"{relatedSourceTrack.title}"</span>
-            </h2>
-            <button
-              onClick={() => onOpenSearch && onOpenSearch()}
-              className="text-xs font-semibold text-ui2-inkSoft hover:text-ui2-ink dark:text-white/50 dark:hover:text-white transition-colors cursor-pointer hover:underline flex-shrink-0 ml-2"
-            >
-              See all
-            </button>
-          </div>
-
-          {isRelatedLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              {[...Array(6)].map((_, idx) => (
-                <div
-                  key={`related-skeleton-${idx}`}
-                  className="p-3 rounded-2xl bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border border-black/5 dark:border-white/10 shadow-xs animate-pulse flex flex-col justify-between"
-                >
-                  <div className="aspect-square w-full rounded-xl bg-black/10 dark:bg-white/10 mb-2.5" />
-                  <div className="h-3 w-3/4 bg-black/10 dark:bg-white/10 rounded-full mb-1.5" />
-                  <div className="h-2.5 w-1/2 bg-black/5 dark:bg-white/5 rounded-full" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              {relatedTracks.map((item, idx) => (
-                <div
-                  key={`because-played-${item.id}-${idx}`}
-                  onClick={() => onPlayTrack ? onPlayTrack(item, relatedTracks) : handlePlayTrending(item)}
-                  className="group relative p-3 rounded-2xl bg-white/70 hover:bg-white/90 dark:bg-white/[0.05] dark:hover:bg-white/[0.10] backdrop-blur-sm border border-black/5 dark:border-white/10 shadow-ui2-soft dark:shadow-none hover:shadow-ui2-float transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden"
-                >
-                  <div className={`relative aspect-square w-full rounded-xl overflow-hidden bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} mb-2.5 shadow-xs border border-black/5 dark:border-white/10`}>
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      src={item.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className={`absolute bottom-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${
-                      isPlayingId === item.id
-                        ? 'opacity-100 scale-100 bg-ui2-accentInk dark:bg-white text-white dark:text-black'
-                        : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 bg-ui2-ink dark:bg-white text-white dark:text-black'
-                    }`}>
-                      <Play size={12} className="fill-current ml-0.5" />
-                    </div>
-                  </div>
-
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-bold text-ui2-ink dark:text-white truncate group-hover:underline">
-                      {item.title}
-                    </h3>
-                    <p className="text-[11px] font-medium text-ui2-inkSoft dark:text-white/50 truncate mt-0.5">
-                      {item.artist || item.author || 'Related'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* =========================================================================
-          5. "RECOMMENDED" SECTION
-         ========================================================================= */}
+      {/* 7. "Made For You" Section */}
       <section className="space-y-3 pb-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold tracking-tight text-ui2-ink dark:text-white">
-            Recommended
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+            Made for you
           </h2>
           <button
             onClick={() => onOpenSearch && onOpenSearch()}
-            className="text-xs font-semibold text-ui2-inkSoft hover:text-ui2-ink dark:text-white/50 dark:hover:text-white transition-colors cursor-pointer hover:underline"
+            className="text-xs font-semibold text-im-inkSoft hover:text-white transition-colors cursor-pointer hover:underline"
           >
             See all
           </button>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="flex flex-col gap-2">
             {[...Array(4)].map((_, idx) => (
               <div
                 key={`recommended-skeleton-${idx}`}
-                className="p-3 rounded-2xl bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border border-black/5 dark:border-white/10 shadow-xs animate-pulse flex flex-col justify-between"
+                className="flex items-center justify-between p-2.5 rounded-2xl bg-im-card border border-im-line animate-pulse"
               >
-                <div className="aspect-square w-full rounded-xl bg-black/10 dark:bg-white/10 mb-2.5" />
-                <div className="h-3 w-3/4 bg-black/10 dark:bg-white/10 rounded-full mb-1.5" />
-                <div className="h-2.5 w-1/2 bg-black/5 dark:bg-white/5 rounded-full" />
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-[46px] h-[46px] rounded-xl bg-white/5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-3 w-40 bg-white/10 rounded-full mb-1.5" />
+                    <div className="h-2.5 w-24 bg-white/5 rounded-full" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="flex flex-col gap-2">
             {recommendedList.map((item, idx) => (
               <div
-                key={`${item.id}-${idx}`}
+                key={`made-for-you-${item.id}-${idx}`}
                 onClick={() => handlePlayTrending(item)}
-                className="group relative p-3 rounded-2xl bg-white/70 hover:bg-white/90 dark:bg-white/[0.05] dark:hover:bg-white/[0.10] backdrop-blur-sm border border-black/5 dark:border-white/10 shadow-ui2-soft dark:shadow-none hover:shadow-ui2-float transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden"
+                className="group flex items-center justify-between p-2.5 rounded-2xl bg-im-card hover:bg-im-card2 border border-im-line transition-all duration-200 cursor-pointer shadow-sm hover:shadow-im-float"
               >
-                <div className={`relative aspect-square w-full rounded-xl overflow-hidden bg-gradient-to-br ${ROW_GRADIENTS[(idx + 2) % ROW_GRADIENTS.length]} mb-2.5 shadow-xs border border-black/5 dark:border-white/10`}>
-                  <img
-                    loading="lazy"
-                    decoding="async"
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className={`absolute bottom-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${
-                    isPlayingId === item.id
-                      ? 'opacity-100 scale-100 bg-ui2-accentInk dark:bg-white text-white dark:text-black'
-                      : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 bg-ui2-ink dark:bg-white text-white dark:text-black'
-                  }`}>
-                    <Play size={12} className="fill-current ml-0.5" />
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[(idx + 4) % ROW_GRADIENTS.length]} border border-im-line shadow-xs`}>
+                    <img
+                      loading="lazy"
+                      decoding="async"
+                      src={item.thumbnail}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Play size={14} className="fill-white text-white ml-0.5" />
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-xs sm:text-sm text-white truncate group-hover:underline">
+                      {item.title}
+                    </h4>
+                    <p className="text-[11px] font-medium text-im-inkFaint truncate mt-0.5">
+                      {item.artist || item.author || 'Recommended'}
+                    </p>
                   </div>
                 </div>
 
-                <div className="min-w-0">
-                  <h3 className="text-xs font-bold text-ui2-ink dark:text-white truncate group-hover:underline">
-                    {item.title}
-                  </h3>
-                  <p className="text-[11px] font-medium text-ui2-inkSoft dark:text-white/50 truncate mt-0.5">
-                    {item.artist || item.author || 'Recommended'}
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="ml-2 p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                  title="More options"
+                >
+                  <MoreVertical size={16} />
+                </button>
               </div>
             ))}
           </div>

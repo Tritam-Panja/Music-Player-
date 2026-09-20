@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Disc3, Search, Music, Library, AlertCircle, X } from 'lucide-react';
+import { Disc3, Search, Music, Library, AlertCircle, X, Compass } from 'lucide-react';
 import BitChordNavbar from './components/layout/BitChordNavbar';
 import HomeView from './components/views/HomeView';
+import ExploreView from './components/views/ExploreView';
 import NeuphorismPlayerScreen from './components/player/NeuphorismPlayerScreen';
 import BitChordLibraryView from './components/views/BitChordLibraryView';
 import PlaylistView from './components/views/PlaylistView';
@@ -16,30 +17,11 @@ import { storageService } from './services/storageService';
 import { ytAuthService } from './services/ytAuthService';
 
 export default function App() {
-  // Theme: 'light' (Warm Soft Clay) | 'dark' (Alternate Dark Soft Clay / Obsidian)
-  const [theme, setTheme] = useState(() => {
-    try {
-      const saved = localStorage.getItem('liquid_theme');
-      if (saved === 'dark' || saved === 'light') return saved;
-      return 'light';
-    } catch {
-      return 'light';
-    }
-  });
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
-    try {
-      localStorage.setItem('liquid_theme', nextTheme);
-    } catch {}
-  };
-
+  // Always render in dark mode
   useEffect(() => {
-    const isDark = theme === 'dark';
-    document.documentElement.classList.toggle('dark', isDark);
-    document.body.classList.toggle('dark', isDark);
-  }, [theme]);
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark');
+  }, []);
 
   // Navigation: 'home' (default Spotify-like feed) | 'player' | 'library' | 'playlist'
   const [currentView, setCurrentView] = useState('home');
@@ -245,18 +227,14 @@ export default function App() {
   const activePlaylist = playlists.find((p) => p.id === selectedPlaylistId);
 
   return (
-    <div className={`relative w-screen h-screen overflow-hidden flex flex-col font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-500 bg-ui2-gradient dark:bg-ui2-gradient-dark ${
-      theme === 'dark' ? 'text-[#f3efe8]' : 'text-[#2e221b]'
-    }`}>
-      {/* 1. Top Floating Navbar with Theme Toggle & Window Controls */}
+    <div className="relative w-screen h-screen overflow-hidden flex flex-col font-['Plus_Jakarta_Sans',sans-serif] bg-im-bg text-white">
+      {/* 1. Top Floating Navbar & Window Controls */}
       <BitChordNavbar
         currentView={currentView}
         onViewChange={(view) => setCurrentView(view)}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenLogin={() => setIsLoginModalOpen(true)}
         ytUser={ytUser}
-        theme={theme}
-        onToggleTheme={toggleTheme}
       />
 
       {/* Playback Alert Toast */}
@@ -285,7 +263,26 @@ export default function App() {
             onOpenImportModal={() => setIsImportModalOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
             onViewChange={(view) => setCurrentView(view)}
-            theme={theme}
+          />
+        )}
+
+        {currentView === 'explore' && (
+          <ExploreView
+            playlists={playlists}
+            history={history}
+            onPlayTrack={handlePlayTrack}
+            onPlayPlaylist={handlePlayPlaylist}
+            onAddToQueue={handleAddToQueue}
+            onSelectPlaylist={(id) => {
+              setSelectedPlaylistId(id);
+              setCurrentView('playlist');
+            }}
+            onOpenImportModal={() => setIsImportModalOpen(true)}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            onViewChange={(view) => setCurrentView(view)}
+            onNavigate={(view) => setCurrentView(view)}
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
           />
         )}
 
@@ -311,7 +308,6 @@ export default function App() {
             onRemoveFromQueue={handleRemoveFromQueue}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenLibrary={() => setCurrentView('library')}
-            theme={theme}
           />
         )}
 
@@ -331,7 +327,6 @@ export default function App() {
             onOpenImportModal={() => setIsImportModalOpen(true)}
             onOpenLoginModal={() => setIsLoginModalOpen(true)}
             ytUser={ytUser}
-            theme={theme}
           />
         )}
 
@@ -339,9 +334,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-6 py-6">
             <button
               onClick={() => setCurrentView('library')}
-              className={`mb-4 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                theme === 'dark' ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-              }`}
+              className="mb-4 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer text-[#828694] hover:text-[#f3efe8]"
             >
               ← Back to Library
             </button>
@@ -356,7 +349,6 @@ export default function App() {
               onToggleFavorite={handleToggleFavorite}
               onAddToQueue={handleAddToQueue}
               onDeletePlaylist={handleDeletePlaylist}
-              theme={theme}
             />
           </div>
         )}
@@ -393,7 +385,6 @@ export default function App() {
           onToggleFavorite={() => currentTrack && handleToggleFavorite(currentTrack)}
           onToggleQueue={() => setCurrentView('player')}
           onToggleLyrics={() => setCurrentView('player')}
-          theme={theme}
         />
       )}
 
@@ -406,7 +397,6 @@ export default function App() {
           setCurrentView('player');
         }}
         onAddToQueue={handleAddToQueue}
-        theme={theme}
       />
 
       {/* 5. YouTube Playlist Importer Modal */}
@@ -414,7 +404,6 @@ export default function App() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportSuccess={handleImportSuccess}
-        theme={theme}
       />
 
       {/* 6. YouTube Account Login & Sync Modal */}
@@ -424,22 +413,17 @@ export default function App() {
         user={ytUser}
         onUserChange={setYtUser}
         onSyncComplete={handleSyncComplete}
-        theme={theme}
       />
 
       {/* 7. Mobile Bottom Navigation Bar (only when no track is playing) */}
       {!currentTrack && (
-        <nav className={`md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 pt-2 pb-safe flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 ${
-          theme === 'dark'
-            ? 'bg-[#131417]/95 border-[#23262f] text-[#828694]'
-            : 'bg-[#f3f2ee]/95 border-[#e6dfd3] text-[#8f8075]'
-        }`}>
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 pt-2 pb-safe flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 bg-[#131417]/95 border-[#23262f] text-[#828694]">
           <button
             onClick={() => setCurrentView('home')}
             aria-label="Home"
             className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
               currentView === 'home'
-                ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
+                ? 'text-[#f3efe8] scale-105'
                 : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
             }`}
           >
@@ -457,11 +441,24 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setCurrentView('explore')}
+            aria-label="Explore"
+            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
+              currentView === 'explore'
+                ? 'text-[#f3efe8] scale-105'
+                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
+            }`}
+          >
+            <Compass size={20} className={currentView === 'explore' ? 'stroke-[2.5]' : ''} />
+            <span className="text-[10px] font-bold">Explore</span>
+          </button>
+
+          <button
             onClick={() => setCurrentView('player')}
             aria-label="Player"
             className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
               currentView === 'player'
-                ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
+                ? 'text-[#f3efe8] scale-105'
                 : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
             }`}
           >
@@ -474,7 +471,7 @@ export default function App() {
             aria-label="Your Library"
             className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
               currentView === 'library' || currentView === 'playlist'
-                ? theme === 'dark' ? 'text-[#f3efe8] scale-105' : 'text-[#2e221b] scale-105'
+                ? 'text-[#f3efe8] scale-105'
                 : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
             }`}
           >

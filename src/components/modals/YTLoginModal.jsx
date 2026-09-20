@@ -21,9 +21,8 @@ export default function YTLoginModal({
   user, 
   onUserChange, 
   onSyncComplete,
-  theme = 'light'
+  theme = 'dark'
 }) {
-  const isDark = theme === 'dark';
   const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI?.isElectron);
   const [activeTab, setActiveTab] = useState(isElectron ? 'desktop' : 'handle'); // 'handle' | 'desktop'
   const [handleInput, setHandleInput] = useState('');
@@ -98,37 +97,27 @@ export default function YTLoginModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-md animate-in fade-in duration-200 select-none">
-      <div className={`relative w-full max-w-md rounded-[32px] overflow-hidden transition-colors ${
-        isDark 
-          ? 'bg-[#1b1d23] neu-card-shadow neu-dark text-[#f3efe8] border border-[#262933]' 
-          : 'bg-[#faf9f6] neu-card-shadow text-[#2e221b] border border-[#e8e2d8]'
-      }`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 select-none">
+      <div className="relative w-full max-w-md rounded-3xl overflow-hidden bg-im-card border border-im-line shadow-im-float text-white">
         {/* Modal Header */}
-        <div className={`flex items-center justify-between px-6 py-5 border-b ${
-          isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'
-        }`}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-im-line">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-              isDark ? 'bg-[#111215] neu-groove-inset neu-dark text-red-400' : 'bg-[#e8e2d8] neu-groove-inset text-red-500'
-            }`}>
+            <div className="w-10 h-10 rounded-xl bg-im-card2 border border-im-line flex items-center justify-center text-red-400 shadow-sm">
               <YoutubeIcon size={20} />
             </div>
             <div>
-              <h3 className={`text-sm font-bold tracking-tight ${isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'}`}>
+              <h3 className="text-sm font-bold tracking-tight text-white">
                 YouTube Music Connection
               </h3>
-              <p className={`text-[11px] ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
-                Optional account sync • Guest Mode is always active
+              <p className="text-[11px] text-im-inkFaint">
+                Optional account sync • Guest Mode is active
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-              isDark ? 'text-[#828694] hover:text-[#f3efe8]' : 'text-[#8f8075] hover:text-[#2e221b]'
-            }`}
+            className="p-1.5 rounded-lg text-im-inkFaint hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -137,27 +126,25 @@ export default function YTLoginModal({
         {/* Modal Body */}
         <div className="p-6 space-y-4">
           {/* Guest Mode Assurance Banner */}
-          <div className={`p-3.5 rounded-2xl flex items-start gap-2.5 ${
-            isDark ? 'bg-[#111215] border border-[#262933]' : 'bg-[#f4efe8] border border-[#e8dfd2]'
-          }`}>
-            <Sparkles size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-            <div className="text-[11px] leading-relaxed">
-              <span className="font-bold">Guest Mode is active by default.</span> You can search, explore, and play any song without signing into Google.
+          <div className="p-3.5 rounded-2xl flex items-start gap-2.5 bg-im-card2 border border-im-line">
+            <Sparkles size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="text-[11px] text-im-inkSoft leading-relaxed">
+              <span className="font-bold text-white">Guest Mode is active by default.</span> You can search, explore, and play any song without signing into Google.
             </div>
           </div>
 
           {/* Connection Error Alert */}
           {connState.error && (
-            <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/25 text-rose-500 text-xs flex items-center gap-2.5">
-              <AlertCircle size={16} className="flex-shrink-0 text-rose-500" />
+            <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/25 text-rose-400 text-xs flex items-center gap-2.5">
+              <AlertCircle size={16} className="flex-shrink-0 text-rose-400" />
               <span>{connState.error.userMessage || connState.error.message}</span>
             </div>
           )}
 
           {/* Success Alert */}
           {successMsg && (
-            <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2.5">
-              <CheckCircle2 size={16} className="flex-shrink-0 text-emerald-500" />
+            <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-xs flex items-center gap-2.5">
+              <CheckCircle2 size={16} className="flex-shrink-0 text-emerald-400" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -165,24 +152,22 @@ export default function YTLoginModal({
           {/* Connected View */}
           {connState.isConnected && connState.user ? (
             <div className="space-y-4">
-              <div className={`flex items-center gap-3.5 p-3.5 rounded-2xl ${
-                isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
-              }`}>
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-im-card2 border border-im-line">
                 <img
                   src={connState.user.picture}
                   alt={connState.user.name}
-                  className="w-12 h-12 rounded-xl object-cover border border-emerald-500"
+                  className="w-12 h-12 rounded-xl object-cover border border-emerald-400"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h4 className={`text-xs font-bold truncate ${isDark ? 'text-[#f3efe8]' : 'text-[#2e221b]'}`}>
+                    <h4 className="text-xs font-bold truncate text-white">
                       {connState.user.name}
                     </h4>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500 font-bold">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
                       VERIFIED
                     </span>
                   </div>
-                  <p className={`text-[10px] truncate mt-0.5 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+                  <p className="text-[10px] text-im-inkFaint truncate mt-0.5">
                     {connState.user.email || connState.user.handle || 'Connected Session'}
                   </p>
                 </div>
@@ -191,22 +176,14 @@ export default function YTLoginModal({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleDisconnect}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    isDark 
-                      ? 'bg-rose-500/15 text-rose-400 hover:bg-rose-500/25' 
-                      : 'bg-rose-100 text-rose-600 hover:bg-rose-200'
-                  }`}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 border border-rose-500/20"
                 >
                   <LogOut size={14} />
                   <span>Disconnect</span>
                 </button>
                 <button
                   onClick={onClose}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    isDark 
-                      ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#f3efe8]' 
-                      : 'bg-[#faf9f6] neu-btn-shadow text-[#2e221b]'
-                  }`}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white text-black hover:bg-white/90"
                 >
                   Done
                 </button>
@@ -215,17 +192,15 @@ export default function YTLoginModal({
           ) : (
             /* Connection Options */
             <div className="space-y-4">
-              {/* Primary Google OAuth Button */}
+              {/* Primary Google OAuth Button (white primary) */}
               <button
                 type="button"
                 onClick={handleConnectGoogle}
                 disabled={isConnecting}
-                className={`w-full py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2.5 cursor-pointer transition-all disabled:opacity-50 ${
-                  isDark ? 'bg-[#c4956a] text-[#131417] neu-play-shadow hover:brightness-105' : 'bg-[#2e221b] text-[#faf9f6] neu-play-shadow hover:brightness-110'
-                }`}
+                className="w-full py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2.5 cursor-pointer transition-all disabled:opacity-50 bg-white text-black hover:bg-white/90 shadow-md active:scale-95"
               >
                 {isConnecting ? (
-                  <RefreshCw size={15} className="animate-spin" />
+                  <RefreshCw size={15} className="animate-spin text-black" />
                 ) : (
                   <YoutubeIcon size={16} />
                 )}
@@ -234,25 +209,23 @@ export default function YTLoginModal({
 
               {/* Alternative Options Divider */}
               <div className="relative flex py-1 items-center">
-                <div className={`flex-grow border-t ${isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'}`} />
-                <span className={`flex-shrink mx-3 text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+                <div className="flex-grow border-t border-im-line" />
+                <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-wider text-im-inkFaint">
                   or
                 </span>
-                <div className={`flex-grow border-t ${isDark ? 'border-[#262933]' : 'border-[#e8e2d8]'}`} />
+                <div className="flex-grow border-t border-im-line" />
               </div>
 
               {/* Strategy Tabs */}
-              <div className={`flex items-center p-1 rounded-xl ${
-                isDark ? 'bg-[#111215] neu-groove-inset neu-dark' : 'bg-[#e8e2d8] neu-groove-inset'
-              }`}>
+              <div className="flex items-center p-1 rounded-xl bg-im-card2 border border-im-line">
                 {isElectron && (
                   <button
                     type="button"
                     onClick={() => setActiveTab('desktop')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       activeTab === 'desktop'
-                        ? isDark ? 'bg-[#1b1d23] text-[#f3efe8] neu-btn-shadow neu-dark' : 'bg-[#faf9f6] text-[#2e221b] neu-btn-shadow'
-                        : isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                        ? 'bg-white text-black shadow-xs'
+                        : 'text-im-inkFaint hover:text-white'
                     }`}
                   >
                     Desktop Sign-In
@@ -261,10 +234,10 @@ export default function YTLoginModal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('handle')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     activeTab === 'handle'
-                      ? isDark ? 'bg-[#1b1d23] text-[#f3efe8] neu-btn-shadow neu-dark' : 'bg-[#faf9f6] text-[#2e221b] neu-btn-shadow'
-                      : isDark ? 'text-[#828694]' : 'text-[#8f8075]'
+                      ? 'bg-white text-black shadow-xs'
+                      : 'text-im-inkFaint hover:text-white'
                   }`}
                 >
                   Channel Handle
@@ -274,18 +247,16 @@ export default function YTLoginModal({
               {/* In-App Desktop Sign-In */}
               {isElectron && activeTab === 'desktop' && (
                 <div className="space-y-3">
-                  <p className={`text-xs ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+                  <p className="text-xs text-im-inkFaint">
                     Opens a secure Google login window to verify your real YouTube Music account.
                   </p>
                   <button
                     onClick={handleConnectElectron}
                     disabled={isConnecting}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                      isDark ? 'bg-[#c4956a] text-[#131417] neu-play-shadow' : 'bg-[#2e221b] text-[#faf9f6] neu-play-shadow'
-                    }`}
+                    className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all bg-white text-black hover:bg-white/90 shadow-sm"
                   >
                     {isConnecting ? (
-                      <RefreshCw size={14} className="animate-spin" />
+                      <RefreshCw size={14} className="animate-spin text-black" />
                     ) : (
                       <Monitor size={14} />
                     )}
@@ -298,33 +269,27 @@ export default function YTLoginModal({
               {activeTab === 'handle' && (
                 <form onSubmit={handleConnectHandle} className="space-y-3">
                   <div>
-                    <label className={`block text-[11px] font-bold mb-1 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`}>
+                    <label className="block text-[11px] font-bold mb-1 text-im-inkFaint">
                       YouTube Channel Handle
                     </label>
                     <div className="relative">
-                      <AtSign size={14} className={`absolute left-3 top-3 ${isDark ? 'text-[#828694]' : 'text-[#8f8075]'}`} />
+                      <AtSign size={14} className="absolute left-3 top-3 text-im-inkFaint" />
                       <input
                         type="text"
                         value={handleInput}
                         onChange={(e) => setHandleInput(e.target.value)}
                         placeholder="username or channel name"
-                        className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs outline-none transition-all ${
-                          isDark 
-                            ? 'bg-[#111215] border border-[#262933] text-[#f3efe8] focus:border-[#c4956a]' 
-                            : 'bg-[#faf9f6] border border-[#e8e2d8] text-[#2e221b] focus:border-[#2e221b]'
-                        }`}
+                        className="w-full pl-9 pr-3 py-2 rounded-xl text-xs outline-none transition-all bg-im-card2 border border-im-line text-white placeholder:text-im-inkFaint focus:border-white/30"
                       />
                     </div>
                   </div>
                   <button
                     type="submit"
                     disabled={isConnecting || !handleInput.trim()}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 ${
-                      isDark ? 'bg-[#c4956a] text-[#131417] neu-play-shadow' : 'bg-[#2e221b] text-[#faf9f6] neu-play-shadow'
-                    }`}
+                    className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 bg-white text-black hover:bg-white/90 shadow-sm"
                   >
                     {isConnecting ? (
-                      <RefreshCw size={14} className="animate-spin" />
+                      <RefreshCw size={14} className="animate-spin text-black" />
                     ) : (
                       <UserCheck size={14} />
                     )}
@@ -338,11 +303,7 @@ export default function YTLoginModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    isDark
-                      ? 'bg-[#1b1d23] neu-btn-shadow neu-dark text-[#828694] hover:text-[#f3efe8]'
-                      : 'bg-[#faf9f6] neu-btn-shadow text-[#8f8075] hover:text-[#2e221b]'
-                  }`}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 bg-im-card2 hover:bg-white/10 border border-im-line text-im-inkSoft hover:text-white"
                 >
                   <span>Continue as Guest</span>
                   <ArrowRight size={13} />

@@ -4,13 +4,10 @@ import {
   Pause, 
   Shuffle, 
   Heart, 
-  Clock, 
   Music, 
   Search, 
   Trash2, 
-  Share2, 
-  ListPlus,
-  MoreVertical
+  MoreVertical 
 } from 'lucide-react';
 import { formatDuration } from '../../utils/formatters';
 
@@ -24,8 +21,7 @@ function PlaylistView({
   onTogglePlay,
   onToggleFavorite,
   onAddToQueue,
-  onDeletePlaylist,
-  theme = 'light'
+  onDeletePlaylist
 }) {
   const [filterText, setFilterText] = useState('');
 
@@ -45,45 +41,60 @@ function PlaylistView({
   const isCurrentPlaylistPlaying = isPlaying && tracks.some(t => t.id === currentTrack?.id);
 
   const ROW_GRADIENTS = [
-    'from-[#bdeee0] via-[#cfe0f5] to-[#e3d3f2]',
-    'from-[#cfe0f5] via-[#e3d3f2] to-[#f2d9e6]',
-    'from-[#f2d9e6] via-[#bdeee0] to-[#cfe0f5]',
-    'from-[#dff3ea] via-[#e9e6f7] to-[#bdeee0]',
-    'from-[#fed6e3] via-[#a8edea] to-[#cfe0f5]',
+    'from-rose-500/30 to-purple-600/30',
+    'from-amber-500/30 to-orange-600/30',
+    'from-emerald-500/30 to-teal-600/30',
+    'from-blue-500/30 to-indigo-600/30',
+    'from-violet-500/30 to-fuchsia-600/30',
+    'from-cyan-500/30 to-blue-600/30',
   ];
 
   return (
-    <div className="w-full flex-1 overflow-y-auto overflow-x-hidden select-none px-4 sm:px-6 md:px-8 py-4 space-y-6 max-w-4xl mx-auto scrollbar-none pb-36 text-ui2-ink dark:text-white">
+    <div className="w-full flex-1 overflow-y-auto overflow-x-hidden select-none px-4 sm:px-6 md:px-8 py-4 space-y-6 max-w-4xl mx-auto scrollbar-none pb-36 text-white">
       {/* =========================================================================
           HERO HEADER CARD
-          Rounded-2xl card containing:
-          - White caption band on top: "THIS IS" (small uppercase in ui2-inkFaint) + artist/playlist name (large bold heading)
-          - Gradient photo placeholder band below caption (rounded corners only on bottom of card)
+          Rounded-2xl hero card with gradient background, playlist/artist name in bold white
          ========================================================================= */}
-      <div className="rounded-2xl bg-white/80 dark:bg-[#12141f]/80 backdrop-blur-md shadow-ui2-float dark:shadow-none border border-black/5 dark:border-white/10 overflow-hidden flex flex-col transition-all">
-        {/* White Caption Band on top */}
-        <div className="p-5 sm:p-6 bg-white/95 dark:bg-[#151724]/90 flex flex-col justify-between border-b border-black/5 dark:border-white/10">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase tracking-widest font-black text-ui2-inkFaint dark:text-white/40">
-              THIS IS
+      <div className="relative rounded-2xl p-6 sm:p-8 overflow-hidden shadow-im-float border border-im-line bg-gradient-to-br from-[#c76b8a]/40 via-[#5b3a63]/50 to-im-card transition-all group">
+        {/* Background photo placeholder / overlay */}
+        {playlist.thumbnail ? (
+          <img 
+            loading="lazy"
+            decoding="async"
+            src={playlist.thumbnail} 
+            alt={playlist.title} 
+            className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 transition-transform duration-700 group-hover:scale-105 pointer-events-none"
+          />
+        ) : null}
+        
+        {/* Darkening bottom-to-top and radial gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-im-bg via-im-bg/60 to-transparent pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col justify-between min-h-[160px] sm:min-h-[180px] gap-4">
+          {/* Top metadata badge */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] uppercase tracking-widest font-extrabold px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white border border-white/10">
+              {playlist.author || 'Playlist'}
             </span>
-            <span className="text-xs font-semibold text-ui2-inkSoft dark:text-white/50">
+            <span className="text-xs font-medium text-im-inkFaint">
               {tracks.length} {tracks.length === 1 ? 'song' : 'songs'} • {totalMinutes} min
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-ui2-ink dark:text-white mt-1.5 truncate">
-            {playlist.title}
-          </h1>
+          {/* Playlist Title & Description */}
+          <div>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white truncate [text-shadow:_0_2px_14px_rgba(0,0,0,0.8)]">
+              {playlist.title}
+            </h1>
+            {playlist.description && (
+              <p className="text-xs sm:text-sm font-medium text-white/70 mt-1.5 line-clamp-2 max-w-2xl [text-shadow:_0_1px_8px_rgba(0,0,0,0.8)]">
+                {playlist.description}
+              </p>
+            )}
+          </div>
 
-          {playlist.description && (
-            <p className="text-xs font-medium text-ui2-inkSoft dark:text-white/50 mt-1 line-clamp-1">
-              {playlist.description}
-            </p>
-          )}
-
-          {/* Controls & Search row within caption */}
-          <div className="mt-4 pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-black/5 dark:border-white/10">
+          {/* Controls & Search row */}
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-white/10">
             <div className="flex items-center gap-2.5">
               <button
                 onClick={() => {
@@ -93,19 +104,19 @@ function PlaylistView({
                     onPlayPlaylist(playlist);
                   }
                 }}
-                className="w-10 h-10 rounded-full bg-ui2-accentInk dark:bg-white text-white dark:text-black flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 title={isCurrentPlaylistPlaying ? 'Pause' : 'Play All'}
               >
                 {isCurrentPlaylistPlaying ? (
-                  <Pause size={18} className="fill-current" />
+                  <Pause size={18} className="fill-current text-black" />
                 ) : (
-                  <Play size={18} className="fill-current ml-0.5" />
+                  <Play size={18} className="fill-current text-black ml-0.5" />
                 )}
               </button>
 
               <button
                 onClick={() => onPlayPlaylist(playlist, true)}
-                className="p-2.5 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15 text-ui2-ink dark:text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
+                className="p-2.5 rounded-xl bg-im-card hover:bg-im-card2 border border-im-line text-white transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
                 title="Shuffle Play"
               >
                 <Shuffle size={16} />
@@ -114,7 +125,7 @@ function PlaylistView({
               {onDeletePlaylist && (
                 <button
                   onClick={() => onDeletePlaylist(playlist.id)}
-                  className="p-2.5 rounded-xl bg-black/5 hover:bg-rose-50 hover:text-rose-500 dark:bg-white/10 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 text-ui2-inkFaint dark:text-white/40 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                  className="p-2.5 rounded-xl bg-im-card hover:bg-rose-500/20 hover:text-rose-400 border border-im-line text-im-inkFaint transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
                   title="Delete Playlist"
                 >
                   <Trash2 size={16} />
@@ -122,39 +133,17 @@ function PlaylistView({
               )}
             </div>
 
-            {/* Filter in playlist */}
-            <div className="relative w-40 sm:w-56">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-ui2-inkFaint dark:text-white/40" />
+            {/* Filter search input */}
+            <div className="relative w-44 sm:w-56">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-im-inkFaint pointer-events-none" />
               <input 
                 type="text"
                 placeholder="Filter tracks..."
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className="w-full text-xs pl-8 pr-3 py-1.5 rounded-full outline-none transition-all bg-black/5 dark:bg-white/10 border border-transparent focus:border-black/10 dark:focus:border-white/20 focus:bg-white dark:focus:bg-[#1b1d2a] text-ui2-ink dark:text-white placeholder:text-ui2-inkFaint dark:placeholder:text-white/40"
+                className="w-full text-xs pl-8 pr-3 py-1.5 rounded-full outline-none transition-all bg-im-card/80 border border-im-line focus:border-white/20 focus:bg-im-card text-white placeholder:text-im-inkFaint"
               />
             </div>
-          </div>
-        </div>
-
-        {/* Gradient photo placeholder band below caption (rounded corners only on bottom of card) */}
-        <div className="relative w-full h-44 sm:h-56 md:h-64 rounded-b-2xl overflow-hidden bg-gradient-to-br from-[#bdeee0] via-[#cfe0f5] to-[#e3d3f2]">
-          {playlist.thumbnail ? (
-            <img 
-              src={playlist.thumbnail} 
-              alt={playlist.title} 
-              className="w-full h-full object-cover mix-blend-overlay opacity-80"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Music size={48} className="text-ui2-inkFaint/40" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          
-          <div className="absolute bottom-3 left-4 text-white">
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-black/30 backdrop-blur-md">
-              {playlist.author || 'Curated Playlist'}
-            </span>
           </div>
         </div>
       </div>
@@ -164,18 +153,18 @@ function PlaylistView({
          ========================================================================= */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-base font-bold text-ui2-ink dark:text-white">
+          <h2 className="text-base font-bold text-white">
             Tracks
           </h2>
-          <span className="text-xs font-semibold text-ui2-inkFaint dark:text-white/40">
+          <span className="text-xs font-semibold text-im-inkFaint">
             {filteredTracks.length} {filteredTracks.length === 1 ? 'song' : 'songs'}
           </span>
         </div>
 
         {filteredTracks.length === 0 ? (
-          <div className="text-center py-16 space-y-2 text-ui2-inkFaint dark:text-white/40 bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-black/5 dark:border-white/10 p-6">
-            <Music size={32} className="mx-auto opacity-40" />
-            <p className="text-sm font-semibold">No songs found in this playlist</p>
+          <div className="text-center py-16 space-y-2 text-im-inkFaint bg-im-card rounded-2xl border border-im-line p-6 shadow-sm">
+            <Music size={32} className="mx-auto opacity-40 text-im-inkFaint" />
+            <p className="text-sm font-semibold text-white">No songs found in this playlist</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
@@ -188,15 +177,15 @@ function PlaylistView({
                 <div
                   key={`${track.id}-${idx}`}
                   onClick={() => onPlayTrack(track, playlist)}
-                  className={`group flex items-center justify-between p-2.5 rounded-2xl cursor-pointer transition-all duration-200 border border-black/5 dark:border-white/10 ${
+                  className={`group flex items-center justify-between p-2.5 rounded-2xl transition-all duration-200 cursor-pointer border ${
                     isThisCurrent
-                      ? 'bg-ui2-accentInk dark:bg-white/20 text-white shadow-ui2-soft dark:shadow-none'
-                      : 'bg-white/70 hover:bg-white/90 dark:bg-white/[0.05] dark:hover:bg-white/[0.10] backdrop-blur-sm text-ui2-ink dark:text-white shadow-sm dark:shadow-none hover:shadow-ui2-soft'
+                      ? 'bg-im-card2 border-white/20 shadow-im-float'
+                      : 'bg-im-card hover:bg-im-card2 border-im-line shadow-sm hover:shadow-im-float'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {/* 46px rounded thumbnail (gradient placeholder, vary gradient per row) */}
-                    <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} shadow-xs border border-black/5 dark:border-white/10`}>
+                    {/* 46px rounded thumbnail (matching HomeView.jsx style) */}
+                    <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} border border-im-line shadow-xs`}>
                       <img
                         loading="lazy"
                         decoding="async"
@@ -204,7 +193,7 @@ function PlaylistView({
                         alt={track.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className={`absolute inset-0 bg-black/20 flex items-center justify-center transition-opacity ${
+                      <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${
                         isThisPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                       }`}>
                         {isThisPlaying ? (
@@ -219,16 +208,12 @@ function PlaylistView({
                       </div>
                     </div>
 
-                    {/* Title bold + artist muted */}
+                    {/* Title bold white + artist in im-inkFaint */}
                     <div className="min-w-0 flex-1">
-                      <h4 className={`font-bold text-xs sm:text-sm truncate group-hover:underline ${
-                        isThisCurrent ? 'text-white' : 'text-ui2-ink dark:text-white'
-                      }`}>
+                      <h4 className="font-bold text-xs sm:text-sm text-white truncate group-hover:underline">
                         {track.title}
                       </h4>
-                      <p className={`text-[11px] truncate mt-0.5 ${
-                        isThisCurrent ? 'text-white/80' : 'text-ui2-inkSoft dark:text-white/50'
-                      }`}>
+                      <p className="text-[11px] font-medium text-im-inkFaint truncate mt-0.5">
                         {track.artist}
                       </p>
                     </div>
@@ -237,9 +222,7 @@ function PlaylistView({
                   {/* Actions & Kebab icon */}
                   <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
                     {track.duration && (
-                      <span className={`text-[11px] font-mono mr-1 hidden sm:inline ${
-                        isThisCurrent ? 'text-white/80' : 'text-ui2-inkFaint dark:text-white/40'
-                      }`}>
+                      <span className="text-[11px] font-mono text-im-inkFaint mr-1 hidden sm:inline">
                         {formatDuration(track.duration)}
                       </span>
                     )}
@@ -252,10 +235,8 @@ function PlaylistView({
                       }}
                       className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                         isFav
-                          ? 'text-rose-500'
-                          : isThisCurrent
-                            ? 'text-white/70 hover:text-white'
-                            : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                          ? 'text-rose-500 hover:text-rose-400'
+                          : 'text-im-inkFaint hover:text-white hover:bg-white/5'
                       }`}
                       title={isFav ? 'Remove from favorites' : 'Add to favorites'}
                     >
@@ -267,11 +248,7 @@ function PlaylistView({
                       onClick={(e) => {
                         e.stopPropagation();
                       }}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                        isThisCurrent
-                          ? 'text-white/70 hover:text-white hover:bg-white/10'
-                          : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10'
-                      }`}
+                      className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
                       title="More options"
                     >
                       <MoreVertical size={16} />

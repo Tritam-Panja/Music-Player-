@@ -11,10 +11,10 @@ import {
   Volume2, 
   VolumeX, 
   ListMusic, 
-  Mic2,
-  Radio,
-  Clock,
-  Check
+  Mic2, 
+  Radio, 
+  Clock, 
+  Check 
 } from 'lucide-react';
 import { formatDuration } from '../../utils/formatters';
 import MobileNowPlayingModal from './MobileNowPlayingModal';
@@ -49,7 +49,7 @@ export default function PlayerBar({
   onToggleLyrics,
   onPlayTrack,
   onRemoveFromQueue,
-  theme = 'light'
+  theme = 'dark'
 }) {
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -86,12 +86,12 @@ export default function PlayerBar({
     <div
       ref={sleepMenuRef}
       onClick={(e) => e.stopPropagation()}
-      className="absolute bottom-full right-0 mb-3 w-48 rounded-2xl p-1.5 bg-white/95 dark:bg-[#12141f]/95 backdrop-blur-xl border border-black/10 dark:border-white/15 shadow-ui2-float z-50 text-xs text-ui2-ink dark:text-white animate-in fade-in slide-in-from-bottom-2 duration-150"
+      className="absolute bottom-full right-0 mb-3 w-48 rounded-2xl p-1.5 bg-im-card/95 backdrop-blur-xl border border-im-line shadow-im-float z-50 text-xs text-white animate-in fade-in slide-in-from-bottom-2 duration-150"
     >
-      <div className="px-3 py-2 font-semibold text-[11px] tracking-wider uppercase text-ui2-inkFaint dark:text-white/50 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
+      <div className="px-3 py-2 font-semibold text-[11px] tracking-wider uppercase text-im-inkFaint border-b border-im-line flex items-center justify-between">
         <span>Sleep Timer</span>
         {sleepTimer?.isActive && (
-          <span className="text-[10px] lowercase font-normal px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
+          <span className="text-[10px] lowercase font-normal px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-mono">
             {sleepTimer.mode === 'endOfTrack' ? 'end track' : `${sleepTimer.mode}m`}
           </span>
         )}
@@ -109,12 +109,12 @@ export default function PlayerBar({
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 isSelected
-                  ? 'bg-black/5 dark:bg-white/15 font-semibold text-ui2-accentInk dark:text-white'
-                  : 'hover:bg-black/5 dark:hover:bg-white/10 text-ui2-ink dark:text-white/80'
+                  ? 'bg-white/15 font-semibold text-white'
+                  : 'hover:bg-white/10 text-im-inkSoft hover:text-white'
               }`}
             >
               <span>{mins} minutes</span>
-              {isSelected && <Check size={14} className="text-emerald-500 dark:text-emerald-400" />}
+              {isSelected && <Check size={14} className="text-emerald-400" />}
             </button>
           );
         })}
@@ -126,23 +126,23 @@ export default function PlayerBar({
           }}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
             sleepTimer?.mode === 'endOfTrack'
-              ? 'bg-black/5 dark:bg-white/15 font-semibold text-ui2-accentInk dark:text-white'
-              : 'hover:bg-black/5 dark:hover:bg-white/10 text-ui2-ink dark:text-white/80'
+              ? 'bg-white/15 font-semibold text-white'
+              : 'hover:bg-white/10 text-im-inkSoft hover:text-white'
           }`}
         >
           <span>End of track</span>
-          {sleepTimer?.mode === 'endOfTrack' && <Check size={14} className="text-emerald-500 dark:text-emerald-400" />}
+          {sleepTimer?.mode === 'endOfTrack' && <Check size={14} className="text-emerald-400" />}
         </button>
       </div>
 
       {sleepTimer?.isActive && (
-        <div className="pt-1 mt-1 border-t border-black/5 dark:border-white/10">
+        <div className="pt-1 mt-1 border-t border-im-line">
           <button
             onClick={() => {
               playerService.cancelSleepTimer();
               setIsSleepMenuOpen(false);
             }}
-            className="w-full text-left px-3 py-1.5 rounded-xl text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 font-medium transition-colors cursor-pointer"
+            className="w-full text-left px-3 py-1.5 rounded-xl text-rose-400 hover:bg-rose-500/10 font-medium transition-colors cursor-pointer"
           >
             Turn off timer
           </button>
@@ -168,20 +168,25 @@ export default function PlayerBar({
 
   return (
     <>
-      {/* Bottom-docked bar */}
-      <div className="fixed bottom-0 inset-x-0 z-50 w-full bg-white/95 sm:bg-white/60 dark:bg-[#0c0e15]/95 sm:dark:bg-[#10121b]/80 backdrop-blur-xl border-t border-black/10 dark:border-white/10 shadow-ui2-float dark:shadow-none px-3 sm:px-6 py-2 sm:py-2.5 pb-safe select-none text-ui2-ink dark:text-white transition-colors">
+      {/* 
+        Bottom-docked Frosted Floating Pill on mobile / Full-width docked on desktop:
+        - Mobile: floating pill docked near bottom (bottom-3 inset-x-3 rounded-full)
+        - Desktop: full-width bottom docked (sm:bottom-0 sm:inset-x-0 sm:rounded-none)
+        - Styling: bg-im-navBg with backdrop-blur-2xl, border border-im-line
+      */}
+      <div className="fixed bottom-3 sm:bottom-0 inset-x-3 sm:inset-x-0 z-50 rounded-full sm:rounded-none bg-im-navBg backdrop-blur-2xl border border-im-line sm:border-t sm:border-x-0 sm:border-b-0 shadow-im-float px-3.5 sm:px-6 py-2 sm:py-2.5 pb-2 sm:pb-safe select-none text-white transition-all">
         
-        {/* Full-width Top Edge Progress Indicator */}
-        <div className="absolute top-0 inset-x-0 h-[2.5px] bg-black/5 dark:bg-white/10 overflow-hidden">
+        {/* Full-width Top Edge Progress Indicator (desktop) */}
+        <div className="hidden sm:block absolute top-0 inset-x-0 h-[2.5px] bg-white/10 overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-[#bdeee0] via-[#cfe0f5] to-[#e3d3f2] transition-all"
+            className="h-full bg-white transition-all"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
 
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Left: Small track thumbnail + title/artist (Clickable on mobile to open full screen) */}
+          {/* Left: Small track thumbnail + title/artist */}
           <div 
             onClick={() => {
               if (window.innerWidth < 768) {
@@ -201,7 +206,7 @@ export default function PlayerBar({
               <img 
                 src={track.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'} 
                 alt={track.title} 
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover shadow-ui2-soft dark:shadow-none border border-black/10 dark:border-white/10 group-hover:scale-105 transition-transform"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full sm:rounded-xl object-cover border border-im-line group-hover:scale-105 transition-transform"
               />
             </div>
 
@@ -211,17 +216,17 @@ export default function PlayerBar({
                   e.stopPropagation();
                   setIsMobileModalOpen(true);
                 }}
-                className="text-xs sm:text-sm font-bold text-ui2-ink dark:text-white truncate hover:underline cursor-pointer leading-tight"
+                className="text-xs sm:text-sm font-bold text-white truncate hover:underline cursor-pointer leading-tight"
               >
                 {track.title}
               </h4>
-              <p className="text-[10px] sm:text-[11px] text-ui2-inkSoft dark:text-white/50 truncate mt-0.5 font-medium leading-tight">
+              <p className="text-[10px] sm:text-[11px] text-im-inkFaint truncate mt-0.5 font-medium leading-tight">
                 {track.artist}
               </p>
             </div>
           </div>
 
-          {/* Center: Desktop Centered playback controls with a thin gradient progress bar beneath them */}
+          {/* Center: Desktop Centered playback controls with a thin progress bar beneath them */}
           <div className="hidden sm:flex flex-col items-center flex-1 max-w-xl mx-2 sm:mx-4">
             {/* Playback Controls Row */}
             <div className="flex items-center gap-2 sm:gap-4 mb-1">
@@ -231,7 +236,7 @@ export default function PlayerBar({
                   onToggleShuffle && onToggleShuffle();
                 }}
                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  isShuffle ? 'text-ui2-ink dark:text-white font-bold bg-white/80 dark:bg-white/20 shadow-xs' : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                  isShuffle ? 'text-white font-bold bg-white/20 shadow-xs' : 'text-im-inkFaint hover:text-white'
                 }`}
                 title="Shuffle"
               >
@@ -243,7 +248,7 @@ export default function PlayerBar({
                   e.stopPropagation();
                   onPrev && onPrev();
                 }}
-                className="p-1 sm:p-1.5 text-ui2-ink dark:text-white hover:text-ui2-accentInk dark:hover:text-white transition-colors cursor-pointer active:scale-95"
+                className="p-1 sm:p-1.5 text-white hover:text-white/80 transition-colors cursor-pointer active:scale-95"
                 title="Previous"
               >
                 <SkipBack size={16} className="sm:w-[18px] sm:h-[18px] fill-current" />
@@ -254,13 +259,13 @@ export default function PlayerBar({
                   e.stopPropagation();
                   onTogglePlay && onTogglePlay();
                 }}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-white text-ui2-accentInk dark:text-black flex items-center justify-center shadow-ui2-soft border border-black/5 dark:border-transparent hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
               >
                 {isPlaying ? (
-                  <Pause size={16} className="fill-current sm:w-[17px] sm:h-[17px]" />
+                  <Pause size={16} className="fill-current text-black sm:w-[17px] sm:h-[17px]" />
                 ) : (
-                  <Play size={16} className="fill-current ml-0.5 sm:w-[17px] sm:h-[17px]" />
+                  <Play size={16} className="fill-current text-black ml-0.5 sm:w-[17px] sm:h-[17px]" />
                 )}
               </button>
 
@@ -269,7 +274,7 @@ export default function PlayerBar({
                   e.stopPropagation();
                   onNext && onNext();
                 }}
-                className="p-1 sm:p-1.5 text-ui2-ink dark:text-white hover:text-ui2-accentInk dark:hover:text-white transition-colors cursor-pointer active:scale-95"
+                className="p-1 sm:p-1.5 text-white hover:text-white/80 transition-colors cursor-pointer active:scale-95"
                 title="Next"
               >
                 <SkipForward size={16} className="sm:w-[18px] sm:h-[18px] fill-current" />
@@ -281,7 +286,7 @@ export default function PlayerBar({
                   onToggleRepeat && onToggleRepeat();
                 }}
                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  repeatMode !== 'off' ? 'text-ui2-ink dark:text-white font-bold bg-white/80 dark:bg-white/20 shadow-xs' : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                  repeatMode !== 'off' ? 'text-white font-bold bg-white/20 shadow-xs' : 'text-im-inkFaint hover:text-white'
                 }`}
                 title={`Repeat: ${repeatMode}`}
               >
@@ -294,24 +299,24 @@ export default function PlayerBar({
                   onToggleAutoplay && onToggleAutoplay();
                 }}
                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  autoplay ? 'text-ui2-ink dark:text-white font-bold bg-white/80 dark:bg-white/20 shadow-xs' : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                  autoplay ? 'text-white font-bold bg-white/20 shadow-xs' : 'text-im-inkFaint hover:text-white'
                 }`}
                 title={`Autoplay / Radio: ${autoplay ? 'On' : 'Off'}`}
               >
-                <Radio size={14} className={autoplay ? 'text-ui2-accentInk dark:text-white' : ''} />
+                <Radio size={14} className={autoplay ? 'text-white' : ''} />
               </button>
             </div>
 
-            {/* Thin gradient progress bar beneath them with time labels */}
+            {/* Thin progress bar beneath them with time labels */}
             <div 
               onClick={(e) => e.stopPropagation()} 
-              className="w-full flex items-center gap-2.5 text-[10px] font-mono text-ui2-inkSoft dark:text-white/50 select-none"
+              className="w-full flex items-center gap-2.5 text-[10px] font-mono text-im-inkFaint select-none"
             >
               <span className="w-8 text-right font-medium">{formatDuration(displayTime)}</span>
               <div className="relative flex-1 group flex items-center h-3">
-                <div className="absolute inset-x-0 h-[4px] rounded-full overflow-hidden bg-black/10 dark:bg-white/15">
+                <div className="absolute inset-x-0 h-[4px] rounded-full overflow-hidden bg-white/15">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-[#bdeee0] via-[#cfe0f5] to-[#e3d3f2] transition-all"
+                    className="h-full rounded-full bg-white transition-all"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -342,7 +347,7 @@ export default function PlayerBar({
               className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
                 isFavorite 
                   ? 'text-rose-500 scale-105' 
-                  : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                  : 'text-im-inkFaint hover:text-white'
               }`}
               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
@@ -358,8 +363,8 @@ export default function PlayerBar({
                 }}
                 className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
                   sleepTimer?.isActive 
-                    ? 'bg-white/80 text-ui2-accentInk dark:bg-white/20 dark:text-teal-300 shadow-xs border border-black/5 dark:border-white/10' 
-                    : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                    ? 'bg-white/20 text-teal-300 shadow-xs border border-im-line' 
+                    : 'text-im-inkFaint hover:text-white'
                 }`}
                 title={
                   sleepTimer?.isActive 
@@ -385,8 +390,8 @@ export default function PlayerBar({
               }}
               className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
                 isLyricsOpen 
-                  ? 'bg-white/80 text-ui2-ink dark:bg-white/20 dark:text-white shadow-xs border border-black/5 dark:border-white/10' 
-                  : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                  ? 'bg-white/20 text-white shadow-xs border border-im-line' 
+                  : 'text-im-inkFaint hover:text-white'
               }`}
               title="Lyrics"
             >
@@ -405,8 +410,8 @@ export default function PlayerBar({
               }}
               className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
                 isQueueOpen 
-                  ? 'bg-white/80 text-ui2-ink dark:bg-white/20 dark:text-white shadow-xs border border-black/5 dark:border-white/10' 
-                  : 'text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white'
+                  ? 'bg-white/20 text-white shadow-xs border border-im-line' 
+                  : 'text-im-inkFaint hover:text-white'
               }`}
               title="Queue"
             >
@@ -420,15 +425,15 @@ export default function PlayerBar({
             >
               <button
                 onClick={onToggleMute}
-                className="p-1 text-ui2-inkFaint dark:text-white/40 hover:text-ui2-ink dark:hover:text-white transition-colors cursor-pointer"
+                className="p-1 text-im-inkFaint hover:text-white transition-colors cursor-pointer"
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
               <div className="w-16 sm:w-20 relative flex items-center h-3">
-                <div className="absolute inset-x-0 h-[4px] rounded-full overflow-hidden bg-black/10 dark:bg-white/15">
+                <div className="absolute inset-x-0 h-[4px] rounded-full overflow-hidden bg-white/15">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-[#bdeee0] to-[#cfe0f5]"
+                    className="h-full rounded-full bg-white"
                     style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                   />
                 </div>
@@ -446,55 +451,20 @@ export default function PlayerBar({
           </div>
 
           {/* Right: Dedicated Mobile Action Buttons (< sm screens) */}
-          <div className="flex sm:hidden items-center gap-1 flex-shrink-0">
-            {/* Sleep Timer Mobile Icon */}
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsSleepMenuOpen(!isSleepMenuOpen);
-                }}
-                className={`p-2 rounded-xl transition-all cursor-pointer ${
-                  sleepTimer?.isActive 
-                    ? 'text-ui2-accentInk dark:text-teal-300' 
-                    : 'text-ui2-inkFaint dark:text-white/40 active:text-ui2-ink dark:active:text-white'
-                }`}
-                title={sleepTimer?.isActive ? `Sleep timer: ${sleepTimer.mode === 'endOfTrack' ? 'End of track' : `${sleepTimer.mode}m`}` : 'Sleep timer'}
-              >
-                <Clock size={18} />
-              </button>
-              {isSleepMenuOpen && renderSleepMenu()}
-            </div>
-
-            {/* Like Button */}
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFavorite && onToggleFavorite();
-              }}
-              className={`p-2 rounded-xl transition-all cursor-pointer ${
-                isFavorite 
-                  ? 'text-rose-500 scale-105' 
-                  : 'text-ui2-inkFaint dark:text-white/40 active:text-ui2-ink dark:active:text-white'
-              }`}
-              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
-            </button>
-
+          <div className="flex sm:hidden items-center gap-1.5 flex-shrink-0 pr-1">
             {/* Play / Pause Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onTogglePlay && onTogglePlay();
               }}
-              className="w-10 h-10 rounded-full bg-white dark:bg-white text-ui2-accentInk dark:text-black flex items-center justify-center shadow-ui2-soft border border-black/10 dark:border-transparent active:scale-95 transition-all cursor-pointer"
+              className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
-                <Pause size={17} className="fill-current" />
+                <Pause size={17} className="fill-current text-black" />
               ) : (
-                <Play size={17} className="fill-current ml-0.5" />
+                <Play size={17} className="fill-current text-black ml-0.5" />
               )}
             </button>
 
@@ -504,10 +474,10 @@ export default function PlayerBar({
                 e.stopPropagation();
                 onNext && onNext();
               }}
-              className="p-2 text-ui2-ink dark:text-white active:scale-90 transition-all cursor-pointer"
+              className="p-2 text-white hover:text-white/80 active:scale-90 transition-all cursor-pointer"
               title="Next"
             >
-              <SkipForward size={18} className="fill-current" />
+              <SkipForward size={18} className="fill-current text-white" />
             </button>
           </div>
 
