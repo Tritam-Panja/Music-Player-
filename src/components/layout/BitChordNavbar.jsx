@@ -123,6 +123,18 @@ function BitChordNavbar({
             </button>
 
             <button
+              onClick={() => onViewChange('search')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                currentView === 'search'
+                  ? 'bg-white text-black font-bold shadow-sm'
+                  : 'text-im-inkSoft hover:text-im-ink hover:bg-white/5'
+              }`}
+            >
+              <Search size={13} className={currentView === 'search' ? 'text-black' : 'text-im-inkSoft'} />
+              <span>Search</span>
+            </button>
+
+            <button
               onClick={() => onViewChange('explore')}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 currentView === 'explore'
@@ -148,19 +160,19 @@ function BitChordNavbar({
             <button
               onClick={() => onViewChange('library')}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                currentView === 'library' || currentView === 'favorites' || currentView === 'liked'
+                currentView === 'library' || currentView === 'favorites' || currentView === 'liked' || currentView === 'downloads' || currentView === 'local-music'
                   ? 'bg-white text-black font-bold shadow-sm'
                   : 'text-im-inkSoft hover:text-im-ink hover:bg-white/5'
               }`}
             >
-              <Library size={13} className={currentView === 'library' || currentView === 'favorites' || currentView === 'liked' ? 'text-black' : 'text-im-inkSoft'} />
+              <Library size={13} className={currentView === 'library' || currentView === 'favorites' || currentView === 'liked' || currentView === 'downloads' || currentView === 'local-music' ? 'text-black' : 'text-im-inkSoft'} />
               <span>Library</span>
             </button>
           </div>
 
           {/* Search Trigger for Mobile/Small Screen */}
           <button
-            onClick={onOpenSearch}
+            onClick={() => (onViewChange ? onViewChange('search') : onOpenSearch?.())}
             aria-label="Search"
             className="sm:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-im-card border border-im-line text-xs font-semibold text-im-inkSoft hover:text-im-ink cursor-pointer"
           >
@@ -172,7 +184,7 @@ function BitChordNavbar({
         {/* Search bar styled as a rounded bg-im-card input */}
         <div className="flex-1 max-w-xs lg:max-w-sm hidden sm:block app-no-drag order-3">
           <button
-            onClick={onOpenSearch}
+            onClick={() => (onViewChange ? onViewChange('search') : onOpenSearch?.())}
             aria-label="Search songs, albums and artists"
             className="w-full flex items-center justify-between px-3.5 py-1.5 sm:py-2 rounded-full transition-all cursor-pointer group bg-im-card hover:bg-im-card2 border border-im-line text-im-inkSoft hover:text-im-ink shadow-sm"
           >

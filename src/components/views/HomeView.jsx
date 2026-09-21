@@ -21,6 +21,7 @@ import {
 import { searchEngine } from '../../services/searchEngine';
 import { ytSearchService } from '../../services/youtube/YouTubeSearchService';
 import { historyService } from '../../services/historyService';
+import DownloadButton from '../ui/DownloadButton';
 
 // Handpicked reference songs matching user's Spotify trending showcase
 const SPOTIFY_TRENDING_SONGS = [
@@ -185,6 +186,76 @@ const extractArtistsFromTracks = (tracks) => {
   return artists;
 };
 
+const COMMUNITY_PLAYLIST_SEEDS = [
+  {
+    id: 'comm-romantic',
+    title: 'Bollywood Romantic Hits',
+    query: 'bollywood romantic hits playlist'
+  },
+  {
+    id: 'comm-offbeat',
+    title: 'Bollywood Offbeat Songs',
+    query: 'bollywood offbeat songs playlist'
+  },
+  {
+    id: 'comm-dance',
+    title: 'Bollywood Dance Playlist',
+    query: 'bollywood dance playlist'
+  },
+  {
+    id: 'comm-retro',
+    title: 'Retro Bollywood Classics',
+    query: 'retro bollywood classics playlist'
+  },
+  {
+    id: 'comm-indie',
+    title: 'Indie & Acoustic Hindi',
+    query: 'indie acoustic hindi songs playlist'
+  },
+  {
+    id: 'comm-lofi',
+    title: 'Bollywood Lofi Chill',
+    query: 'bollywood lofi chill beats playlist'
+  }
+];
+
+const formatViewCount = (val) => {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed || trimmed === '0') return null;
+    return trimmed.toLowerCase().includes('view') ? trimmed : `${trimmed} views`;
+  }
+  if (typeof val === 'number' && val > 0) {
+    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B views`;
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1).replace(/\.0$/, '')}M views`;
+    if (val >= 1_000) return `${(val / 1_000).toFixed(1).replace(/\.0$/, '')}K views`;
+    return `${val.toLocaleString()} views`;
+  }
+  return null;
+};
+
+const MOOD_ENERGY_CARDS = [
+  {
+    id: 'mood-fire',
+    name: 'Bollywood Fire',
+    query: 'bollywood party dance hits',
+    bgClass: 'bg-im-mood-party'
+  },
+  {
+    id: 'mood-recharger',
+    name: 'Bollywood Recharger',
+    query: 'bollywood energetic songs',
+    bgClass: 'bg-im-mood-energize'
+  },
+  {
+    id: 'mood-chill',
+    name: 'Bollywood Chill',
+    query: 'bollywood feel good chill songs',
+    bgClass: 'bg-im-mood-chill'
+  }
+];
+
 function HomeView({
   playlists = [],
   history = [],
@@ -204,6 +275,12 @@ function HomeView({
   const [relatedSourceTrack, setRelatedSourceTrack] = useState(null);
   const [isPlayingId, setIsPlayingId] = useState(null);
   const [historyTick, setHistoryTick] = useState(0);
+  const [newReleases, setNewReleases] = useState([]);
+  const [isNewReleasesLoading, setIsNewReleasesLoading] = useState(true);
+  const [communityPlaylists, setCommunityPlaylists] = useState([]);
+  const [isCommunityLoading, setIsCommunityLoading] = useState(true);
+  const [moodCards, setMoodCards] = useState([]);
+  const [isMoodLoading, setIsMoodLoading] = useState(true);
 
   useEffect(() => {
     setHistoryTick(t => t + 1);
@@ -329,6 +406,138 @@ function HomeView({
     };
 
     loadTrendingData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch New Releases
+  useEffect(() => {
+    let isMounted = true;
+    setIsNewReleasesLoading(true);
+
+    const loadNewReleases = async () => {
+      try {
+        const results = await searchEngine.search('new released songs 2026', 'video');
+        if (!isMounted) return;
+        if (Array.isArray(results) && results.length > 0) {
+          setNewReleases(results.slice(0, 10));
+        } else {
+          setNewReleases([]);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch new releases:', err);
+        if (isMounted) setNewReleases([]);
+      } finally {
+        if (isMounted) setIsNewReleasesLoading(false);
+      }
+    };
+
+    loadNewReleases();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch Trending Community Playlists sequentially (to avoid aborting in-flight requests)
+  useEffect(() => {
+    let isMounted = true;
+    setIsCommunityLoading(true);
+
+    const loadCommunityPlaylists = async () => {
+      const loaded = [];
+
+      for (const seed of COMMUNITY_PLAYLIST_SEEDS) {
+        if (!isMounted) break;
+        try {
+          const results = await searchEngine.search(seed.query, 'video');
+          if (Array.isArray(results) && results.length > 0) {
+            const topResult = results[0];
+            const curator = topResult.artist || topResult.author || topResult.channelTitle || 'Community';
+            const rawViews = topResult.metadata?.views || topResult.views || topResult.viewCount;
+            const viewsText = formatViewCount(rawViews);
+
+            const thumbnails = results
+              .map((t) => t.thumbnail)
+              .filter(Boolean)
+              .slice(0, 4);
+
+            while (thumbnails.length < 4) {
+              thumbnails.push(thumbnails[0] || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500');
+            }
+
+            loaded.push({
+              id: seed.id,
+              title: seed.title,
+              query: seed.query,
+              curator,
+              viewsText,
+              thumbnails,
+              tracks: results
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch community playlist for "${seed.query}":`, err);
+        }
+      }
+
+      if (isMounted) {
+        setCommunityPlaylists(loaded);
+        setIsCommunityLoading(false);
+      }
+    };
+
+    loadCommunityPlaylists();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch Mood Energy Cards sequentially
+  useEffect(() => {
+    let isMounted = true;
+    setIsMoodLoading(true);
+
+    const loadMoodCards = async () => {
+      const loaded = [];
+
+      for (const item of MOOD_ENERGY_CARDS) {
+        if (!isMounted) break;
+        try {
+          const results = await searchEngine.search(item.query, 'video');
+          if (Array.isArray(results) && results.length > 0) {
+            loaded.push({
+              ...item,
+              topTrack: results[0],
+              tracks: results
+            });
+          } else {
+            loaded.push({
+              ...item,
+              topTrack: null,
+              tracks: []
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch mood card for "${item.query}":`, err);
+          loaded.push({
+            ...item,
+            topTrack: null,
+            tracks: []
+          });
+        }
+      }
+
+      if (isMounted) {
+        setMoodCards(loaded);
+        setIsMoodLoading(false);
+      }
+    };
+
+    loadMoodCards();
 
     return () => {
       isMounted = false;
@@ -533,6 +742,64 @@ function HomeView({
         </div>
       </section>
 
+      {/* 4. "New releases" Section */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+            New releases
+          </h2>
+          <button
+            onClick={() => onOpenSearch && onOpenSearch()}
+            className="text-xs font-semibold text-im-inkSoft hover:text-white transition-colors cursor-pointer hover:underline"
+          >
+            See all
+          </button>
+        </div>
+
+        {isNewReleasesLoading ? (
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+            {[...Array(6)].map((_, i) => (
+              <div key={`new-release-skeleton-${i}`} className="flex flex-col flex-shrink-0 w-[140px] sm:w-[160px] animate-pulse">
+                <div className="aspect-square w-full rounded-2xl bg-white/5 mb-2 border border-im-line" />
+                <div className="h-3 w-28 bg-white/10 rounded-full mb-1" />
+                <div className="h-2 w-20 bg-white/5 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : newReleases.length > 0 ? (
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+            {newReleases.map((track, idx) => (
+              <div
+                key={`new-release-${track.id || idx}`}
+                onClick={() => onPlayTrack ? onPlayTrack(track, newReleases) : handlePlayTrending(track)}
+                className="group flex flex-col flex-shrink-0 w-[140px] sm:w-[160px] cursor-pointer"
+              >
+                <div className={`relative aspect-square w-full rounded-2xl overflow-hidden mb-2 bg-gradient-to-br ${ROW_GRADIENTS[(idx + 1) % ROW_GRADIENTS.length]} border border-im-line shadow-sm hover:shadow-im-float transition-all`}>
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    src={track.thumbnail || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500'}
+                    alt={track.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110">
+                      <Play size={15} className="fill-current ml-0.5 text-black" />
+                    </div>
+                  </div>
+                </div>
+                <h3 className="font-bold text-xs sm:text-sm text-white truncate group-hover:underline">
+                  {track.title}
+                </h3>
+                <p className="text-[11px] font-medium text-im-inkFaint truncate mt-0.5">
+                  {track.artist || track.author || track.channelTitle || 'Artist'}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
       {/* 4. "Because you played X" Section */}
       {relatedSourceTrack && (relatedTracks.length > 0 || isRelatedLoading) && (
         <section className="space-y-3">
@@ -597,14 +864,17 @@ function HomeView({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => e.stopPropagation()}
-                    className="ml-2 p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
-                    title="More options"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
+                  <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                    <DownloadButton track={item} size={15} />
+                    <button
+                      type="button"
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                      title="More options"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -675,14 +945,17 @@ function HomeView({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  className="ml-2 p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
-                  title="More options"
-                >
-                  <MoreVertical size={16} />
-                </button>
+                <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                  <DownloadButton track={track} size={15} />
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                    title="More options"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -749,6 +1022,186 @@ function HomeView({
         )}
       </section>
 
+      {/* "Trending community playlists" Section */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+            Trending community playlists
+          </h2>
+          <button
+            onClick={() => onOpenSearch && onOpenSearch()}
+            className="text-xs font-semibold text-im-inkSoft hover:text-white transition-colors cursor-pointer hover:underline"
+          >
+            See all
+          </button>
+        </div>
+
+        {isCommunityLoading && communityPlaylists.length === 0 ? (
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+            {[...Array(5)].map((_, i) => (
+              <div key={`community-skeleton-${i}`} className="flex flex-col flex-shrink-0 w-[150px] sm:w-[170px] animate-pulse">
+                <div className="aspect-square w-full rounded-2xl bg-white/5 mb-2 border border-im-line grid grid-cols-2 grid-rows-2 gap-0.5 p-0.5 overflow-hidden">
+                  <div className="bg-white/10 rounded-tl-xl" />
+                  <div className="bg-white/10 rounded-tr-xl" />
+                  <div className="bg-white/10 rounded-bl-xl" />
+                  <div className="bg-white/10 rounded-br-xl" />
+                </div>
+                <div className="h-3 w-28 bg-white/10 rounded-full mb-1" />
+                <div className="h-2 w-20 bg-white/5 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : communityPlaylists.length > 0 ? (
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+            {communityPlaylists.map((playlist) => (
+              <div
+                key={playlist.id}
+                onClick={() => {
+                  if (playlist.tracks && playlist.tracks.length > 0) {
+                    if (onPlayPlaylist) {
+                      onPlayPlaylist({
+                        id: playlist.id,
+                        title: playlist.title,
+                        tracks: playlist.tracks
+                      });
+                    } else if (onPlayTrack) {
+                      onPlayTrack(playlist.tracks[0], playlist.tracks);
+                    }
+                  }
+                }}
+                className="group flex flex-col flex-shrink-0 w-[150px] sm:w-[170px] cursor-pointer"
+              >
+                {/* 2x2 Collage rounded card */}
+                <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-2 bg-im-card border border-im-line shadow-sm hover:shadow-im-float transition-all duration-300">
+                  <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-0.5 bg-black/40">
+                    {playlist.thumbnails.map((thumb, tIdx) => (
+                      <div key={tIdx} className="relative w-full h-full overflow-hidden bg-white/5">
+                        <img
+                          loading="lazy"
+                          decoding="async"
+                          src={thumb}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Play button hover overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110">
+                      <Play size={16} className="fill-current ml-0.5 text-black" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Query's display name as title */}
+                <h3 className="font-bold text-xs sm:text-sm text-white truncate group-hover:underline">
+                  {playlist.title}
+                </h3>
+
+                {/* Top result's channel name as curator + optional view count */}
+                <p className="text-[11px] font-medium text-im-inkFaint truncate mt-0.5">
+                  <span>{playlist.curator}</span>
+                  {playlist.viewsText && <span> • {playlist.viewsText}</span>}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      {/* Mood Energy Stations Section */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+              Dance your stress away
+            </h2>
+            <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-im-inkFaint mt-0.5">
+              DANCE YOUR STRESS AWAY
+            </p>
+          </div>
+          <button
+            onClick={() => onOpenSearch && onOpenSearch()}
+            className="text-xs font-semibold text-im-inkSoft hover:text-white transition-colors cursor-pointer hover:underline self-start mt-1"
+          >
+            See all
+          </button>
+        </div>
+
+        {isMoodLoading && moodCards.length === 0 ? (
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+            {[...Array(3)].map((_, i) => (
+              <div key={`mood-skeleton-${i}`} className="flex flex-col flex-shrink-0 w-[240px] sm:w-[280px] animate-pulse">
+                <div className="aspect-[16/10] sm:aspect-[1.8/1] w-full rounded-2xl bg-white/5 mb-2 border border-im-line" />
+                <div className="h-3 w-32 bg-white/10 rounded-full mb-1" />
+                <div className="h-2 w-20 bg-white/5 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : moodCards.length > 0 ? (
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+            {moodCards.map((card) => (
+              <div
+                key={card.id}
+                onClick={() => {
+                  if (card.topTrack) {
+                    if (onPlayTrack) {
+                      onPlayTrack(card.topTrack, card.tracks);
+                    } else {
+                      handlePlayTrending(card.topTrack);
+                    }
+                  }
+                }}
+                className="group flex flex-col flex-shrink-0 w-[240px] sm:w-[280px] cursor-pointer"
+              >
+                {/* Full background image card with im-mood-* gradient overlay */}
+                <div className={`relative aspect-[16/10] sm:aspect-[1.8/1] w-full rounded-2xl overflow-hidden p-4 sm:p-5 flex flex-col justify-between shadow-im-float transition-all duration-300 group-hover:scale-[1.02] border border-im-line ${card.bgClass}`}>
+                  {card.topTrack?.thumbnail && (
+                    <img
+                      loading="lazy"
+                      decoding="async"
+                      src={card.topTrack.thumbnail}
+                      alt={card.name}
+                      className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
+
+                  {/* Card's display name in bold overlaid on the image */}
+                  <div className="relative z-10">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10 mb-1.5 inline-block">
+                      Mood Station
+                    </span>
+                    <h3 className="text-base sm:text-lg font-black text-white tracking-tight [text-shadow:_0_2px_8px_rgba(0,0,0,0.8)]">
+                      {card.name}
+                    </h3>
+                  </div>
+
+                  {/* Play button inside image */}
+                  <div className="relative z-10 flex items-center justify-end">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110">
+                      <Play size={15} className="fill-current ml-0.5 text-black" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Below the card: plain text showing top result's title + artist */}
+                <div className="mt-2 min-w-0">
+                  <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover:underline">
+                    {card.topTrack?.title || card.name}
+                  </h4>
+                  <p className="text-[11px] font-medium text-im-inkFaint truncate mt-0.5">
+                    {card.topTrack?.artist || 'Featured Mix'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
       {/* 7. "Made For You" Section */}
       <section className="space-y-3 pb-8">
         <div className="flex items-center justify-between">
@@ -812,14 +1265,17 @@ function HomeView({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  className="ml-2 p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
-                  title="More options"
-                >
-                  <MoreVertical size={16} />
-                </button>
+                <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                  <DownloadButton track={item} size={15} />
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                    title="More options"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

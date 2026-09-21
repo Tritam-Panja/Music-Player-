@@ -14,6 +14,7 @@ import { ytResolver } from '../../services/youtube/YouTubeResolver';
 import { storageService } from '../../services/storageService';
 import { historyService } from '../../services/historyService';
 import { audioEngine } from '../../services/audioEngine';
+import { downloadService } from '../../services/downloadService';
 import { MusicError, ErrorCodes } from '../errors/MusicError';
 
 class PlayerService {
@@ -30,6 +31,7 @@ class PlayerService {
 
     this.sessionHistory = new Set();
     this.htmlAudio = null;
+    this.currentObjectURL = null;
     this.progressTimer = null;
     this.listeners = new Set();
 
@@ -230,6 +232,47 @@ class PlayerService {
     if (!this.currentTrack || !this.currentTrack.id) return;
 
     try {
+      // 1. Check if track has a direct localUri
+      if (this.currentTrack.localUri) {
+        let playableSrc = this.currentTrack.localUri;
+        if (typeof window !== 'undefined' && window.Capacitor?.convertFileSrc && playableSrc.startsWith('file://')) {
+          playableSrc = window.Capacitor.convertFileSrc(playableSrc);
+        } else if (this.currentTrack.streamUrl) {
+          playableSrc = this.currentTrack.streamUrl;
+        }
+        if (this.htmlAudio) {
+          this.activeEngine = 'audio';
+          this.isLoading = true;
+          this.notify();
+          this.htmlAudio.src = playableSrc;
+          this.htmlAudio.volume = this.isMuted ? 0 : this.volume;
+          await this.htmlAudio.play();
+          return;
+        }
+      }
+
+      // 2. Check if track is downloaded locally for offline playback
+      const isOffline = await downloadService.isDownloaded(this.currentTrack.id);
+      if (isOffline) {
+        const audioBlob = await downloadService.getDownloadedAudioBlob(this.currentTrack.id);
+        if (audioBlob && this.htmlAudio) {
+          if (this.currentObjectURL) {
+            URL.revokeObjectURL(this.currentObjectURL);
+            this.currentObjectURL = null;
+          }
+          const objectUrl = URL.createObjectURL(audioBlob);
+          this.currentObjectURL = objectUrl;
+          this.activeEngine = 'audio';
+          this.isLoading = true;
+          this.notify();
+          this.htmlAudio.src = objectUrl;
+          this.htmlAudio.volume = this.isMuted ? 0 : this.volume;
+          await this.htmlAudio.play();
+          return;
+        }
+      }
+
+      // 3. Fall back to network direct audio stream resolution
       const stream = await ytResolver.resolveAudioStream(this.currentTrack.id);
       if (stream && stream.streamUrl && this.htmlAudio) {
         this.activeEngine = 'audio';
@@ -261,7 +304,6 @@ class PlayerService {
     this.isPlaying = true;
     this.isLoading = true;
     this.error = null;
-    this.activeEngine = 'iframe';
 
     // Synchronize queue
     const trackIndex = queueService.tracks.findIndex(t => t.id === track.id);
@@ -283,9 +325,58 @@ class PlayerService {
       this.htmlAudio.removeAttribute('src');
       this.htmlAudio.load();
     }
+    if (this.currentObjectURL) {
+      URL.revokeObjectURL(this.currentObjectURL);
+      this.currentObjectURL = null;
+    }
 
     this.updateMediaSessionMetadata(track);
     this.notify();
+
+    // Check if track has a localUri (e.g. from localMusicService)
+    if (track.localUri) {
+      try {
+        let playableSrc = track.localUri;
+        if (typeof window !== 'undefined' && window.Capacitor?.convertFileSrc && playableSrc.startsWith('file://')) {
+          playableSrc = window.Capacitor.convertFileSrc(playableSrc);
+        } else if (track.streamUrl) {
+          playableSrc = track.streamUrl;
+        }
+
+        if (this.htmlAudio) {
+          this.activeEngine = 'audio';
+          this.htmlAudio.src = playableSrc;
+          this.htmlAudio.volume = this.isMuted ? 0 : this.volume;
+          this.notify();
+          await this.htmlAudio.play();
+          return;
+        }
+      } catch (err) {
+        console.warn('Failed to play localUri track, falling back:', err);
+      }
+    }
+
+    // Check if track is downloaded locally for offline playback
+    try {
+      const isOffline = await downloadService.isDownloaded(track.id);
+      if (isOffline) {
+        const audioBlob = await downloadService.getDownloadedAudioBlob(track.id);
+        if (audioBlob && this.htmlAudio) {
+          const objectUrl = URL.createObjectURL(audioBlob);
+          this.currentObjectURL = objectUrl;
+          this.activeEngine = 'audio';
+          this.htmlAudio.src = objectUrl;
+          this.htmlAudio.volume = this.isMuted ? 0 : this.volume;
+          this.notify();
+          await this.htmlAudio.play();
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load downloaded track blob, falling back to online player:', err);
+    }
+
+    this.activeEngine = 'iframe';
 
     // Start YouTube IFrame playback
     ytPlayerService.setVolume((this.isMuted ? 0 : this.volume) * 100);
@@ -615,12 +706,25 @@ class PlayerService {
     }, 50);
 
     try {
-      const stream = await ytResolver.resolveAudioStream(nextTrack.id);
-      if (!this.isCrossfading || this.nextAudio !== nextAudio) {
+      let streamUrl = null;
+      const isOffline = await downloadService.isDownloaded(nextTrack.id);
+      if (isOffline) {
+        const audioBlob = await downloadService.getDownloadedAudioBlob(nextTrack.id);
+        if (audioBlob) {
+          streamUrl = URL.createObjectURL(audioBlob);
+        }
+      }
+
+      if (!streamUrl) {
+        const stream = await ytResolver.resolveAudioStream(nextTrack.id);
+        streamUrl = stream?.streamUrl;
+      }
+
+      if (!this.isCrossfading || this.nextAudio !== nextAudio || !streamUrl) {
         return;
       }
 
-      nextAudio.src = stream.streamUrl;
+      nextAudio.src = streamUrl;
       const elapsed = Date.now() - startTime;
       const progress = Math.min(1, elapsed / crossfadeMs);
       nextAudio.volume = Math.min(baseVolume, baseVolume * progress);

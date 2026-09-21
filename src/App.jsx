@@ -7,7 +7,9 @@ import NeuphorismPlayerScreen from './components/player/NeuphorismPlayerScreen';
 import BitChordLibraryView from './components/views/BitChordLibraryView';
 import PlaylistView from './components/views/PlaylistView';
 import PlayerBar from './components/player/PlayerBar';
-import SpotlightSearchModal from './components/modals/SpotlightSearchModal';
+import SearchView from './components/views/SearchView';
+import DownloadsView from './components/views/DownloadsView';
+import LocalMusicView from './components/views/LocalMusicView';
 import YTImportModal from './components/modals/YTImportModal';
 import YTLoginModal from './components/modals/YTLoginModal';
 
@@ -23,12 +25,11 @@ export default function App() {
     document.body.classList.add('dark');
   }, []);
 
-  // Navigation: 'home' (default Spotify-like feed) | 'player' | 'library' | 'playlist'
+  // Navigation: 'home' (default Spotify-like feed) | 'search' | 'explore' | 'player' | 'library' | 'playlist'
   const [currentView, setCurrentView] = useState('home');
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
 
   // Modals
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -120,7 +121,7 @@ export default function App() {
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setIsSearchOpen((prev) => !prev);
+        setCurrentView('search');
       } else if (e.code === 'Space') {
         e.preventDefault();
         playerService.togglePlay();
@@ -232,7 +233,7 @@ export default function App() {
       <BitChordNavbar
         currentView={currentView}
         onViewChange={(view) => setCurrentView(view)}
-        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenSearch={() => setCurrentView('search')}
         onOpenLogin={() => setIsLoginModalOpen(true)}
         ytUser={ytUser}
       />
@@ -248,7 +249,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 2. Main Stage: Neuphorism Home vs Player Studio vs Library vs Playlist */}
+      {/* 2. Main Stage: Neuphorism Home vs Search vs Explore vs Player Studio vs Library vs Playlist */}
       <main className="flex-1 overflow-y-auto pb-36 sm:pb-24 relative z-10 scrollbar-none flex flex-col">
         {currentView === 'home' && (
           <HomeView
@@ -261,8 +262,28 @@ export default function App() {
               setCurrentView('playlist');
             }}
             onOpenImportModal={() => setIsImportModalOpen(true)}
-            onOpenSearch={() => setIsSearchOpen(true)}
+            onOpenSearch={() => setCurrentView('search')}
             onViewChange={(view) => setCurrentView(view)}
+          />
+        )}
+
+        {currentView === 'search' && (
+          <SearchView
+            playlists={playlists}
+            history={history}
+            onPlayTrack={handlePlayTrack}
+            onPlayPlaylist={handlePlayPlaylist}
+            onAddToQueue={handleAddToQueue}
+            onSelectPlaylist={(id) => {
+              setSelectedPlaylistId(id);
+              setCurrentView('playlist');
+            }}
+            onOpenImportModal={() => setIsImportModalOpen(true)}
+            onOpenSearch={() => setCurrentView('search')}
+            onViewChange={(view) => setCurrentView(view)}
+            onNavigate={(view) => setCurrentView(view)}
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
           />
         )}
 
@@ -278,7 +299,7 @@ export default function App() {
               setCurrentView('playlist');
             }}
             onOpenImportModal={() => setIsImportModalOpen(true)}
-            onOpenSearch={() => setIsSearchOpen(true)}
+            onOpenSearch={() => setCurrentView('search')}
             onViewChange={(view) => setCurrentView(view)}
             onNavigate={(view) => setCurrentView(view)}
             currentTrack={currentTrack}
@@ -306,7 +327,7 @@ export default function App() {
               playerService.play(queue[idx]);
             }}
             onRemoveFromQueue={handleRemoveFromQueue}
-            onOpenSearch={() => setIsSearchOpen(true)}
+            onOpenSearch={() => setCurrentView('search')}
             onOpenLibrary={() => setCurrentView('library')}
           />
         )}
@@ -326,7 +347,33 @@ export default function App() {
             }}
             onOpenImportModal={() => setIsImportModalOpen(true)}
             onOpenLoginModal={() => setIsLoginModalOpen(true)}
+            onNavigate={(view) => setCurrentView(view)}
+            onViewChange={(view) => setCurrentView(view)}
             ytUser={ytUser}
+          />
+        )}
+
+        {currentView === 'downloads' && (
+          <DownloadsView
+            onPlayTrack={handlePlayTrack}
+            onPlayPlaylist={handlePlayPlaylist}
+            onAddToQueue={handleAddToQueue}
+            onNavigate={(view) => setCurrentView(view)}
+            onViewChange={(view) => setCurrentView(view)}
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+          />
+        )}
+
+        {currentView === 'local-music' && (
+          <LocalMusicView
+            onPlayTrack={handlePlayTrack}
+            onPlayPlaylist={handlePlayPlaylist}
+            onAddToQueue={handleAddToQueue}
+            onNavigate={(view) => setCurrentView(view)}
+            onViewChange={(view) => setCurrentView(view)}
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
           />
         )}
 
@@ -388,25 +435,14 @@ export default function App() {
         />
       )}
 
-      {/* 4. Spotlight Search Command Palette (Ctrl + K) */}
-      <SpotlightSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onPlayTrack={(track) => {
-          handlePlayTrack(track);
-          setCurrentView('player');
-        }}
-        onAddToQueue={handleAddToQueue}
-      />
-
-      {/* 5. YouTube Playlist Importer Modal */}
+      {/* 4. YouTube Playlist Importer Modal */}
       <YTImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportSuccess={handleImportSuccess}
       />
 
-      {/* 6. YouTube Account Login & Sync Modal */}
+      {/* 5. YouTube Account Login & Sync Modal */}
       <YTLoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
@@ -415,7 +451,7 @@ export default function App() {
         onSyncComplete={handleSyncComplete}
       />
 
-      {/* 7. Mobile Bottom Navigation Bar (only when no track is playing) */}
+      {/* 6. Mobile Bottom Navigation Bar (only when no track is playing) */}
       {!currentTrack && (
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 pt-2 pb-safe flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 bg-[#131417]/95 border-[#23262f] text-[#828694]">
           <button
@@ -432,11 +468,15 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setIsSearchOpen(true)}
+            onClick={() => setCurrentView('search')}
             aria-label="Search"
-            className="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer hover:text-[#2e221b] dark:hover:text-[#f3efe8]"
+            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
+              currentView === 'search'
+                ? 'text-[#f3efe8] scale-105'
+                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
+            }`}
           >
-            <Search size={20} />
+            <Search size={20} className={currentView === 'search' ? 'stroke-[2.5]' : ''} />
             <span className="text-[10px] font-bold">Search</span>
           </button>
 
@@ -470,12 +510,12 @@ export default function App() {
             onClick={() => setCurrentView('library')}
             aria-label="Your Library"
             className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-              currentView === 'library' || currentView === 'playlist'
+              currentView === 'library' || currentView === 'playlist' || currentView === 'downloads' || currentView === 'local-music'
                 ? 'text-[#f3efe8] scale-105'
                 : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
             }`}
           >
-            <Library size={20} className={currentView === 'library' || currentView === 'playlist' ? 'stroke-[2.5]' : ''} />
+            <Library size={20} className={currentView === 'library' || currentView === 'playlist' || currentView === 'downloads' || currentView === 'local-music' ? 'stroke-[2.5]' : ''} />
             <span className="text-[10px] font-bold">Library</span>
           </button>
         </nav>

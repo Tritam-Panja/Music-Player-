@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Music, MoreVertical, Plus, Sparkles, ChevronLeft } from 'lucide-react';
 import { searchEngine } from '../../services/searchEngine';
 import { formatDuration } from '../../utils/formatters';
@@ -45,6 +45,20 @@ const MOODS = [
     query: 'party dance hits playlist',
     bgClass: 'bg-im-mood-party',
     label: 'Dance Hits & Bangers'
+  },
+  {
+    id: 'gaming',
+    name: 'Gaming',
+    query: 'gaming hits playlist',
+    bgClass: 'bg-im-mood-gaming',
+    label: 'High Energy & Beats'
+  },
+  {
+    id: 'romance',
+    name: 'Romance',
+    query: 'romantic bollywood hits playlist',
+    bgClass: 'bg-im-mood-romance',
+    label: 'Romantic Melodies'
   }
 ];
 
@@ -70,6 +84,38 @@ export default function ExploreView({
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [moodThumbnails, setMoodThumbnails] = useState({});
+
+  // On mount, fetch one representative thumbnail per mood
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchThumbnails = async () => {
+      for (const mood of MOODS) {
+        if (!isMounted) break;
+        try {
+          const searchRes = await searchEngine.search(mood.query, 'video');
+          if (isMounted && Array.isArray(searchRes) && searchRes.length > 0) {
+            const firstThumb = searchRes[0]?.thumbnail;
+            if (firstThumb) {
+              setMoodThumbnails((prev) => ({
+                ...prev,
+                [mood.id]: firstThumb
+              }));
+            }
+          }
+        } catch (err) {
+          console.warn(`ExploreView: Failed to load thumbnail for ${mood.id}:`, err);
+        }
+      }
+    };
+
+    fetchThumbnails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleMoodClick = async (mood) => {
     setSelectedMood(mood);
@@ -128,35 +174,55 @@ export default function ExploreView({
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {MOODS.map((mood) => {
             const isSelected = selectedMood?.id === mood.id;
+            const thumbUrl = moodThumbnails[mood.id];
             return (
               <div
                 key={mood.id}
                 onClick={() => handleMoodClick(mood)}
-                className={`group relative aspect-[16/10] sm:aspect-[2/1] min-h-[110px] sm:min-h-[130px] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden shadow-im-float cursor-pointer transition-all duration-300 hover:scale-[1.02] border ${mood.bgClass} ${
+                className={`group relative aspect-[16/10] sm:aspect-[2/1] min-h-[110px] sm:min-h-[130px] rounded-2xl overflow-hidden shadow-im-float cursor-pointer transition-all duration-300 hover:scale-[1.02] border ${
                   isSelected ? 'border-white ring-2 ring-white/50 scale-[1.02]' : 'border-im-line hover:border-white/20'
                 }`}
               >
-                <div className="relative z-10">
-                  <h3 className="text-lg sm:text-xl font-black text-white tracking-tight [text-shadow:_0_2px_8px_rgba(0,0,0,0.6)]">
-                    {mood.name}
-                  </h3>
-                  <p className="text-[11px] font-medium text-white/80 [text-shadow:_0_1px_4px_rgba(0,0,0,0.6)] mt-0.5">
-                    {mood.label}
-                  </p>
-                </div>
+                {/* Background image if fetched */}
+                {thumbUrl && (
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    src={thumbUrl}
+                    alt={mood.name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
 
-                <div className="relative z-10 flex items-center justify-end">
-                  <div className={`w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all duration-200 ${
-                    isSelected ? 'opacity-100 scale-105 bg-white text-black' : 'opacity-0 group-hover:opacity-100'
-                  }`}>
-                    <Play size={13} className={`ml-0.5 ${isSelected ? 'fill-black text-black' : 'fill-white text-white'}`} />
+                {/* Mood gradient at ~75% opacity over image */}
+                <div className={`absolute inset-0 ${mood.bgClass} opacity-75 transition-opacity`} />
+
+                {/* Dark gradient scrim at bottom for text contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+
+                <div className="relative z-10 p-4 sm:p-5 h-full flex flex-col justify-between">
+                  {/* Play button top-right */}
+                  <div className="flex items-center justify-end">
+                    <div className={`w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all duration-200 ${
+                      isSelected ? 'opacity-100 scale-105 bg-white text-black' : 'opacity-0 group-hover:opacity-100'
+                    }`}>
+                      <Play size={13} className={`ml-0.5 ${isSelected ? 'fill-black text-black' : 'fill-white text-white'}`} />
+                    </div>
+                  </div>
+
+                  {/* Mood name and subtitle text in bold white, positioned bottom-left */}
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-xl font-black text-white tracking-tight [text-shadow:_0_2px_8px_rgba(0,0,0,0.8)]">
+                      {mood.name}
+                    </h3>
+                    <p className="text-[11px] font-bold text-white/90 [text-shadow:_0_1px_4px_rgba(0,0,0,0.8)] mt-0.5 truncate">
+                      {mood.label}
+                    </p>
                   </div>
                 </div>
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
               </div>
             );
           })}

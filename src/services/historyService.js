@@ -104,6 +104,45 @@ export const historyService = {
       console.error('Failed to clear playback history:', e);
       return [];
     }
+  },
+
+  getReplayStats() {
+    const currentYear = new Date().getFullYear();
+    const history = this.getHistory();
+
+    let totalDurationSec = 0;
+    let playCount = 0;
+
+    for (const entry of history) {
+      if (!entry) continue;
+
+      const playedAt = entry.playedAt ? new Date(entry.playedAt) : new Date();
+      const entryYear = isNaN(playedAt.getTime()) ? currentYear : playedAt.getFullYear();
+
+      if (entryYear === currentYear) {
+        playCount += 1;
+
+        let duration = entry.duration ?? entry.track?.duration ?? entry.lengthSeconds;
+        if (typeof duration === 'string') {
+          duration = parseFloat(duration) || 0;
+        }
+
+        if (typeof duration === 'number' && duration > 0) {
+          if (duration > 10000) {
+            duration = Math.floor(duration / 1000);
+          }
+          totalDurationSec += duration;
+        }
+      }
+    }
+
+    const minutesListened = Math.round(totalDurationSec / 60);
+
+    return {
+      minutesListened,
+      playCount,
+      year: currentYear
+    };
   }
 };
 
@@ -111,6 +150,7 @@ export const addToHistory = (track) => historyService.addToHistory(track);
 export const getRecentlyPlayed = (limit = 20) => historyService.getRecentlyPlayed(limit);
 export const clearHistory = () => historyService.clearHistory();
 export const getHistory = () => historyService.getHistory();
+export const getReplayStats = () => historyService.getReplayStats();
 
 import { storageService } from './storageService';
 

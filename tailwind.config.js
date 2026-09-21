@@ -34,6 +34,8 @@ export default {
         'im-mood-feelgood': 'linear-gradient(160deg,#c43a7a,#6f1a4a)',
         'im-mood-focus': 'linear-gradient(160deg,#c4552e,#7a2a12)',
         'im-mood-party': 'linear-gradient(160deg,#3a7ac4,#1a3a7a)',
+        'im-mood-gaming': 'linear-gradient(160deg,#0ea5e9,#1e3a8a)',
+        'im-mood-romance': 'linear-gradient(160deg,#f43f5e,#881337)',
         'im-hero': 'linear-gradient(160deg,#c76b8a,#5b3a63)',
       },
       animation: {

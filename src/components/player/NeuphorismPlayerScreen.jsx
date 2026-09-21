@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { playerService } from '../../core/player/PlayerService';
 import { queueService } from '../../core/queue/QueueService';
+import DownloadButton from '../ui/DownloadButton';
 
 export default function NeuphorismPlayerScreen({
   track,
@@ -192,16 +193,19 @@ export default function NeuphorismPlayerScreen({
             NOW PLAYING
           </span>
 
-          <button
-            type="button"
-            onClick={onToggleFavorite}
-            className={`p-2 -mr-2 rounded-full transition-all cursor-pointer ${
-              isFavorite ? 'text-rose-500 scale-110' : 'text-white/80 hover:text-white hover:bg-white/10'
-            }`}
-            title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-          >
-            <Heart size={20} className={isFavorite ? "fill-rose-500 text-rose-500" : ""} />
-          </button>
+          <div className="flex items-center gap-1 -mr-2">
+            <DownloadButton track={track} size={20} className="p-2 rounded-full" />
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              className={`p-2 rounded-full transition-all cursor-pointer ${
+                isFavorite ? 'text-rose-500 scale-110' : 'text-white/80 hover:text-white hover:bg-white/10'
+              }`}
+              title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <Heart size={20} className={isFavorite ? "fill-rose-500 text-rose-500" : ""} />
+            </button>
+          </div>
         </div>
 
         {/* Album Art Card */}
