@@ -74,7 +74,7 @@ export default function DownloadsView({
   const totalSize = downloadedTracks.reduce((acc, t) => acc + (t.size || 0), 0);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 space-y-6 select-none scrollbar-none text-white pb-36 animate-in fade-in duration-300">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 space-y-6 select-none scrollbar-none text-white pb-36 animate-in fade-in duration-300 overflow-x-hidden">
       {/* Back Navigation */}
       <button
         onClick={() => (onNavigate ? onNavigate('library') : onViewChange?.('library'))}

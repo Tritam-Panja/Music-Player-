@@ -116,3 +116,229 @@ input[type=range]:active::-webkit-slider-thumb {
 .app-no-drag {
   -webkit-app-region: no-drag;
 }
+
+/* =========================================================================
+   LIQUID GLASS DESIGN SYSTEM UTILITIES
+   Physical glassmorphism with specular rim lighting, refractive depth & caustics
+   ========================================================================= */
+
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.35),
+    0 20px 50px -15px rgba(0, 0, 0, 0.65);
+}
+
+.liquid-glass-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 16px 0 rgba(255, 255, 255, 0.02),
+    0 12px 36px -8px rgba(0, 0, 0, 0.55);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-card:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.35),
+    0 20px 45px -10px rgba(0, 0, 0, 0.7);
+  transform: translateY(-2px);
+}
+
+.liquid-glass-pill {
+  background: linear-gradient(180deg, rgba(28, 28, 36, 0.75) 0%, rgba(14, 14, 18, 0.88) 100%);
+  backdrop-filter: blur(36px) saturate(210%);
+  -webkit-backdrop-filter: blur(36px) saturate(210%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.4),
+    0 16px 40px -6px rgba(0, 0, 0, 0.75);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-pill:active {
+  transform: scale(0.98);
+}
+
+.liquid-glass-circle {
+  background: linear-gradient(180deg, rgba(28, 28, 36, 0.75) 0%, rgba(14, 14, 18, 0.88) 100%);
+  backdrop-filter: blur(36px) saturate(210%);
+  -webkit-backdrop-filter: blur(36px) saturate(210%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.4),
+    0 16px 40px -6px rgba(0, 0, 0, 0.75);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-circle:active {
+  transform: scale(0.94);
+}
+
+.liquid-glass-interactive {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass-interactive::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 15;
+}
+
+.liquid-glass-interactive:hover::after {
+  transform: translateX(240%);
+}
+
+.liquid-glass-row {
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-row:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.16),
+    0 8px 24px -4px rgba(0, 0, 0, 0.45);
+  transform: translateY(-1px);
+}
+
+.liquid-glass-badge {
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.liquid-glass-art {
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25),
+    0 10px 25px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================================================
+   FAST & SILKY-SMOOTH GPU-ACCELERATED ANIMATIONS (60fps, Zero Lag)
+   Uses translate3d and opacity with custom spring decelerations
+   ========================================================================= */
+
+@keyframes viewEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes playerSlideUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 42px, 0) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes drawerSlideUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 48px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes scaleFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-view-enter {
+  animation: viewEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-player-enter {
+  animation: playerSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-drawer-enter {
+  animation: drawerSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-scale-fade {
+  animation: scaleFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.tap-press {
+  transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.14s ease;
+  will-change: transform;
+}
+
+.tap-press:active {
+  transform: scale(0.93);
+}
+
+.tap-bounce {
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.tap-bounce:active {
+  transform: scale(0.88);
+}
+
+.smooth-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.smooth-lift:hover {
+  transform: translateY(-2px);
+}
+
+.smooth-lift:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+

@@ -174,7 +174,7 @@ export default function PlayerBar({
         - Desktop: full-width bottom docked (sm:bottom-0 sm:inset-x-0 sm:rounded-none)
         - Styling: bg-im-navBg with backdrop-blur-2xl, border border-im-line
       */}
-      <div className="fixed bottom-3 sm:bottom-0 inset-x-3 sm:inset-x-0 z-50 rounded-full sm:rounded-none bg-im-navBg backdrop-blur-2xl border border-im-line sm:border-t sm:border-x-0 sm:border-b-0 shadow-im-float px-3.5 sm:px-6 py-2 sm:py-2.5 pb-2 sm:pb-safe select-none text-white transition-all">
+      <div className="hidden md:block fixed bottom-0 inset-x-0 z-50 bg-im-navBg backdrop-blur-2xl border-t border-im-line shadow-im-float px-6 py-2.5 pb-safe select-none text-white transition-all">
         
         {/* Full-width Top Edge Progress Indicator (desktop) */}
         <div className="hidden sm:block absolute top-0 inset-x-0 h-[2.5px] bg-white/10 overflow-hidden">

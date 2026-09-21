@@ -75,9 +75,9 @@ function BitChordNavbar({
   return (
     <header 
       onDoubleClick={handleHeaderDoubleClick}
-      className="sticky top-0 z-40 w-full px-4 sm:px-6 pt-safe pb-2.5 app-drag-region select-none transition-colors duration-300 bg-im-bg border-b border-im-line text-im-ink backdrop-blur-xl"
+      className="sticky top-0 z-40 w-full px-4 sm:px-6 pt-safe pb-2.5 app-drag-region select-none transition-all duration-300 bg-[#0a0a0c]/65 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.35)] text-white"
     >
-      <div className="w-full flex flex-wrap md:flex-nowrap items-center justify-between gap-2.5 sm:gap-4 max-w-7xl mx-auto">
+      <div className="w-full flex items-center justify-between gap-2.5 sm:gap-4 max-w-7xl mx-auto">
         
         {/* Brand Mark Left */}
         <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 app-no-drag order-1">
@@ -87,16 +87,16 @@ function BitChordNavbar({
             title="Go to Home"
             aria-label="Liquid Music Home"
           >
-            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105 bg-im-card border border-im-line text-im-ink shadow-sm">
-              <Disc3 size={17} className="group-hover:rotate-180 transition-transform duration-700 text-im-ink" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-im-bg" />
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 liquid-glass-card border border-white/15 text-white shadow-sm">
+              <Disc3 size={17} className="group-hover:rotate-180 transition-transform duration-700 text-white" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-black shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xs sm:text-sm tracking-tight whitespace-nowrap text-im-ink">
+                <span className="font-extrabold text-xs sm:text-sm tracking-tight whitespace-nowrap text-white">
                   Liquid Music
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-im-ink border border-im-line">
+                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-white border border-white/15 backdrop-blur-md">
                   NEU
                 </span>
               </div>
@@ -107,8 +107,8 @@ function BitChordNavbar({
           </div>
         </div>
 
-        {/* Home/Explore/Player/Library nav items as a pill-style segmented control */}
-        <nav className="flex items-center gap-2 app-no-drag order-3 md:order-2">
+        {/* Home/Explore/Player/Library nav items as a pill-style segmented control (desktop only, mobile uses floating bottom dock) */}
+        <nav className="hidden md:flex items-center gap-2 app-no-drag order-2">
           <div className="flex items-center p-1 rounded-full bg-im-card border border-im-line shadow-inner">
             <button
               onClick={() => onViewChange('home')}

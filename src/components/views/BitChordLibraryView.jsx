@@ -121,7 +121,7 @@ function BitChordLibraryView({
   }, [initialSubTab]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 space-y-6 select-none scrollbar-none text-white pb-36 animate-in fade-in duration-300">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 space-y-6 select-none scrollbar-none text-white pb-36 animate-in fade-in duration-300 overflow-x-hidden">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-im-line">
         <div>
@@ -156,83 +156,85 @@ function BitChordLibraryView({
       {/* Your Replay Card */}
       <div
         onClick={() => setSubTab('history')}
-        className="group relative w-full p-4 sm:p-5 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.01] bg-gradient-to-r from-[#4a0d16] via-[#2c080e] to-[#1a0408] border border-rose-900/40 hover:border-rose-500/40 shadow-im-float flex items-center justify-between"
+        className="liquid-glass-card liquid-glass-interactive group relative w-full p-4 sm:p-5 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.01] bg-gradient-to-r from-[#4a0d16]/85 via-[#2c080e]/80 to-[#180408]/90 border border-rose-500/30 hover:border-rose-400/50 shadow-[0_8px_30px_rgba(225,29,72,0.15)] flex items-center justify-between"
       >
         <div className="relative z-10 flex items-center gap-3.5">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform flex-shrink-0">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-rose-500/25 border border-rose-400/40 flex items-center justify-center text-rose-300 group-hover:scale-105 transition-transform flex-shrink-0 shadow-[0_0_15px_rgba(244,63,94,0.25)]">
             <Sparkles size={20} />
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight flex items-center gap-2">
               <span>Your Replay</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/25 text-rose-200 border border-rose-400/40 shadow-xs">
                 {replayStats.year}
               </span>
             </h3>
-            <p className="text-xs sm:text-sm font-medium text-rose-200/80 mt-0.5">
+            <p className="text-xs sm:text-sm font-medium text-rose-200/90 mt-0.5">
               {replayStats.minutesListened} minutes listened · {replayStats.playCount} plays · {replayStats.year}
             </p>
           </div>
         </div>
 
-        <div className="relative z-10 w-8 h-8 rounded-full bg-white/10 group-hover:bg-white text-white group-hover:text-black flex items-center justify-center transition-colors flex-shrink-0">
+        <div className="relative z-10 w-8 h-8 rounded-full liquid-glass-circle bg-white/10 group-hover:bg-white text-white group-hover:text-black flex items-center justify-center transition-colors flex-shrink-0">
           <ChevronRight size={16} />
         </div>
       </div>
 
-      {/* Sub-tabs: Playlists | Liked Songs | History */}
-      <div className="flex items-center gap-1.5 p-1 rounded-full w-fit bg-im-card border border-im-line shadow-inner">
-        <button
-          onClick={() => setSubTab('playlists')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
-            subTab === 'playlists'
-              ? 'bg-white text-black font-bold shadow-sm'
-              : 'text-im-inkSoft hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <ListMusic size={14} className={subTab === 'playlists' ? 'text-black' : 'text-im-inkSoft'} />
-          <span>Playlists ({playlists.length})</span>
-        </button>
+      {/* Sub-tabs: Playlists | Liked Songs | History | Downloads | Local Music (horizontal touch-scroll on mobile) */}
+      <div className="w-full max-w-full overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 py-1">
+        <div className="flex items-center gap-1.5 p-1 rounded-full w-max liquid-glass-pill flex-nowrap">
+          <button
+            onClick={() => setSubTab('playlists')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+              subTab === 'playlists'
+                ? 'bg-white text-black font-bold shadow-md'
+                : 'text-im-inkSoft hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <ListMusic size={14} className={subTab === 'playlists' ? 'text-black' : 'text-im-inkSoft'} />
+            <span>Playlists ({playlists.length})</span>
+          </button>
 
-        <button
-          onClick={() => setSubTab('favorites')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
-            subTab === 'favorites' || subTab === 'liked'
-              ? 'bg-white text-black font-bold shadow-sm'
-              : 'text-im-inkSoft hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Heart size={14} fill={(subTab === 'favorites' || subTab === 'liked') ? 'currentColor' : 'none'} className={(subTab === 'favorites' || subTab === 'liked') ? 'text-rose-500' : 'text-im-inkSoft'} />
-          <span>Liked Songs ({effectiveLiked.length})</span>
-        </button>
+          <button
+            onClick={() => setSubTab('favorites')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+              subTab === 'favorites' || subTab === 'liked'
+                ? 'bg-white text-black font-bold shadow-md'
+                : 'text-im-inkSoft hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Heart size={14} fill={(subTab === 'favorites' || subTab === 'liked') ? 'currentColor' : 'none'} className={(subTab === 'favorites' || subTab === 'liked') ? 'text-rose-500' : 'text-im-inkSoft'} />
+            <span>Liked Songs ({effectiveLiked.length})</span>
+          </button>
 
-        <button
-          onClick={() => setSubTab('history')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
-            subTab === 'history'
-              ? 'bg-white text-black font-bold shadow-sm'
-              : 'text-im-inkSoft hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Clock size={14} className={subTab === 'history' ? 'text-black' : 'text-im-inkSoft'} />
-          <span>History ({history.length})</span>
-        </button>
+          <button
+            onClick={() => setSubTab('history')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+              subTab === 'history'
+                ? 'bg-white text-black font-bold shadow-md'
+                : 'text-im-inkSoft hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Clock size={14} className={subTab === 'history' ? 'text-black' : 'text-im-inkSoft'} />
+            <span>History ({history.length})</span>
+          </button>
 
-        <button
-          onClick={() => (onNavigate ? onNavigate('downloads') : onViewChange?.('downloads'))}
-          className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 text-im-inkSoft hover:text-white hover:bg-white/5"
-        >
-          <ArrowDownToLine size={14} className="text-emerald-400" />
-          <span>Downloads ({downloadCount})</span>
-        </button>
+          <button
+            onClick={() => (onNavigate ? onNavigate('downloads') : onViewChange?.('downloads'))}
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap flex-shrink-0 text-im-inkSoft hover:text-white hover:bg-white/10"
+          >
+            <ArrowDownToLine size={14} className="text-emerald-400" />
+            <span>Downloads ({downloadCount})</span>
+          </button>
 
-        <button
-          onClick={() => (onNavigate ? onNavigate('local-music') : onViewChange?.('local-music'))}
-          className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 text-im-inkSoft hover:text-white hover:bg-white/5"
-        >
-          <HardDrive size={14} className="text-blue-400" />
-          <span>Local Music {localCount > 0 ? `(${localCount})` : ''}</span>
-        </button>
+          <button
+            onClick={() => (onNavigate ? onNavigate('local-music') : onViewChange?.('local-music'))}
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap flex-shrink-0 text-im-inkSoft hover:text-white hover:bg-white/10"
+          >
+            <HardDrive size={14} className="text-blue-400" />
+            <span>Local Music {localCount > 0 ? `(${localCount})` : ''}</span>
+          </button>
+        </div>
       </div>
 
       {/* 1. Playlists Tab Content */}
@@ -243,10 +245,10 @@ function BitChordLibraryView({
             {/* Downloads Quick-Access Card / Tile */}
             <div
               onClick={() => (onNavigate ? onNavigate('downloads') : onViewChange?.('downloads'))}
-              className="group relative p-3.5 rounded-2xl transition-all cursor-pointer flex flex-col justify-between hover:scale-[1.01] bg-gradient-to-br from-emerald-950/40 via-im-card to-im-card2 border border-emerald-500/30 hover:border-emerald-400/50 shadow-sm hover:shadow-im-float"
+              className="liquid-glass-card liquid-glass-interactive group relative p-4 rounded-2xl transition-all cursor-pointer flex flex-col justify-between hover:scale-[1.01] bg-gradient-to-br from-emerald-950/50 via-[#0e1713]/80 to-[#07100b]/90 border border-emerald-500/30 hover:border-emerald-400/60 shadow-[0_8px_30px_rgba(16,185,129,0.12)]"
             >
-              <div className="relative aspect-square rounded-xl overflow-hidden mb-3 border border-emerald-500/20 shadow-xs bg-gradient-to-br from-emerald-600/30 to-teal-800/30 flex items-center justify-center">
-                <ArrowDownToLine size={38} className="text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+              <div className="relative aspect-square rounded-xl overflow-hidden mb-3 border border-emerald-500/30 shadow-xs bg-gradient-to-br from-emerald-500/20 to-teal-800/30 flex items-center justify-center">
+                <ArrowDownToLine size={38} className="text-emerald-400 group-hover:scale-110 transition-transform duration-300 filter drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
               </div>
 
               <div>
@@ -262,10 +264,10 @@ function BitChordLibraryView({
             {/* Local Music Quick-Access Card / Tile */}
             <div
               onClick={() => (onNavigate ? onNavigate('local-music') : onViewChange?.('local-music'))}
-              className="group relative p-3.5 rounded-2xl transition-all cursor-pointer flex flex-col justify-between hover:scale-[1.01] bg-gradient-to-br from-blue-950/40 via-im-card to-im-card2 border border-blue-500/30 hover:border-blue-400/50 shadow-sm hover:shadow-im-float"
+              className="liquid-glass-card liquid-glass-interactive group relative p-4 rounded-2xl transition-all cursor-pointer flex flex-col justify-between hover:scale-[1.01] bg-gradient-to-br from-blue-950/50 via-[#0b121f]/80 to-[#060a14]/90 border border-blue-500/30 hover:border-blue-400/60 shadow-[0_8px_30px_rgba(59,130,246,0.12)]"
             >
-              <div className="relative aspect-square rounded-xl overflow-hidden mb-3 border border-blue-500/20 shadow-xs bg-gradient-to-br from-blue-600/30 to-indigo-800/30 flex items-center justify-center">
-                <HardDrive size={38} className="text-blue-400 group-hover:scale-110 transition-transform duration-300" />
+              <div className="relative aspect-square rounded-xl overflow-hidden mb-3 border border-blue-500/30 shadow-xs bg-gradient-to-br from-blue-500/20 to-indigo-800/30 flex items-center justify-center">
+                <HardDrive size={38} className="text-blue-400 group-hover:scale-110 transition-transform duration-300 filter drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" />
               </div>
 
               <div>
@@ -325,7 +327,7 @@ function BitChordLibraryView({
                     onClick={() => onSelectPlaylist(pl.id)}
                     className="group flex flex-col cursor-pointer transition-transform duration-200 hover:scale-[1.01]"
                   >
-                    <div className={`relative aspect-square w-full rounded-2xl overflow-hidden mb-2.5 border border-im-line shadow-sm hover:shadow-im-float bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]}`}>
+                    <div className={`liquid-glass-card liquid-glass-interactive relative aspect-square w-full rounded-2xl overflow-hidden mb-2.5 border border-white/10 hover:border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.5)] bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]}`}>
                       <img
                         loading="lazy"
                         decoding="async"
@@ -334,6 +336,9 @@ function BitChordLibraryView({
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
 
+                      {/* Specular glass gloss overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/10 pointer-events-none" />
+
                       {/* Floating Play Button */}
                       <button
                         onClick={(e) => {
@@ -341,7 +346,7 @@ function BitChordLibraryView({
                           onPlayPlaylist(pl);
                         }}
                         aria-label="Play playlist"
-                        className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all cursor-pointer"
+                        className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-xl border border-white/30 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 transition-all cursor-pointer z-20"
                       >
                         <Play size={16} className="fill-current ml-0.5 text-black" />
                       </button>

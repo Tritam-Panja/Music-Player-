@@ -614,7 +614,7 @@ function HomeView({
       {heroTrack && (
         <div
           onClick={() => handlePlayTrending(heroTrack)}
-          className="group relative w-full aspect-[21/9] sm:aspect-[2.4/1] min-h-[190px] sm:min-h-[220px] rounded-2xl overflow-hidden p-5 sm:p-7 flex flex-col justify-between cursor-pointer transition-transform duration-300 hover:scale-[1.01] shadow-im-float bg-im-hero border border-im-line"
+          className="liquid-glass-card liquid-glass-interactive group relative w-full aspect-[21/9] sm:aspect-[2.4/1] min-h-[190px] sm:min-h-[220px] rounded-3xl overflow-hidden p-5 sm:p-7 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.01] shadow-[0_16px_40px_rgba(0,0,0,0.6)] bg-im-hero border border-white/20 backdrop-blur-2xl"
         >
           {heroTrack.thumbnail && (
             <img
@@ -622,16 +622,17 @@ function HomeView({
               decoding="async"
               src={heroTrack.thumbnail}
               alt={heroTrack.title}
-              className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-35 transition-transform duration-500 group-hover:scale-105"
+              className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 transition-transform duration-700 group-hover:scale-105"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-white/5 pointer-events-none" />
 
           <div className="relative z-10 flex items-center justify-between">
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10">
+            <span className="liquid-glass-badge px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-white">
               Recents
             </span>
-            <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/10">
+            <div className="w-8 h-8 rounded-full liquid-glass-circle flex items-center justify-center text-white">
               <Sparkles size={15} />
             </div>
           </div>
@@ -641,13 +642,13 @@ function HomeView({
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white truncate [text-shadow:_0_2px_12px_rgba(0,0,0,0.8)] group-hover:underline">
                 {heroTrack.title}
               </h2>
-              <p className="text-xs sm:text-sm md:text-base font-medium text-white/80 truncate mt-1 [text-shadow:_0_1px_8px_rgba(0,0,0,0.8)]">
+              <p className="text-xs sm:text-sm md:text-base font-medium text-white/90 truncate mt-1 [text-shadow:_0_1px_8px_rgba(0,0,0,0.8)]">
                 {heroTrack.artist}
               </p>
             </div>
 
-            <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white text-black flex items-center justify-center shadow-xl flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
-              <Play size={18} className="fill-current ml-0.5 text-black" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white text-black flex items-center justify-center shadow-2xl flex-shrink-0 transition-transform duration-200 group-hover:scale-110 active:scale-95">
+              <Play size={20} className="fill-current ml-0.5 text-black" />
             </div>
           </div>
         </div>
@@ -665,7 +666,7 @@ function HomeView({
           {quickPick1 && (
             <div
               onClick={() => onPlayPlaylist ? onPlayPlaylist(quickPick1) : handlePlayTrending(quickPick1)}
-              className="group relative aspect-[16/9] sm:aspect-[2/1] min-h-[135px] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden shadow-im-float cursor-pointer transition-transform duration-300 hover:scale-[1.02] border border-im-line bg-im-mood-chill"
+              className="liquid-glass-card liquid-glass-interactive group relative aspect-[16/9] sm:aspect-[2/1] min-h-[135px] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] cursor-pointer transition-all duration-300 hover:scale-[1.02] border border-white/15 hover:border-white/35 bg-im-mood-chill"
             >
               {quickPick1.thumbnail && (
                 <img
@@ -673,13 +674,13 @@ function HomeView({
                   decoding="async"
                   src={quickPick1.thumbnail}
                   alt={quickPick1.title}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-35 transition-transform duration-500 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 transition-transform duration-500 group-hover:scale-105"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
 
               <div className="relative z-10">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10">
+                <span className="liquid-glass-badge px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white">
                   Quick Pick
                 </span>
               </div>
@@ -694,7 +695,7 @@ function HomeView({
                   </p>
                 </div>
 
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110 active:scale-95">
                   <Play size={13} className="fill-current ml-0.5 text-black" />
                 </div>
               </div>
@@ -704,7 +705,7 @@ function HomeView({
           {quickPick2 && (
             <div
               onClick={() => onPlayPlaylist ? onPlayPlaylist(quickPick2) : handlePlayTrending(quickPick2)}
-              className="group relative aspect-[16/9] sm:aspect-[2/1] min-h-[135px] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden shadow-im-float cursor-pointer transition-transform duration-300 hover:scale-[1.02] border border-im-line bg-im-mood-commute"
+              className="liquid-glass-card liquid-glass-interactive group relative aspect-[16/9] sm:aspect-[2/1] min-h-[135px] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] cursor-pointer transition-all duration-300 hover:scale-[1.02] border border-white/15 hover:border-white/35 bg-im-mood-commute"
             >
               {quickPick2.thumbnail && (
                 <img
@@ -712,13 +713,13 @@ function HomeView({
                   decoding="async"
                   src={quickPick2.thumbnail}
                   alt={quickPick2.title}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-35 transition-transform duration-500 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 transition-transform duration-500 group-hover:scale-105"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
 
               <div className="relative z-10">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10">
+                <span className="liquid-glass-badge px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white">
                   Quick Pick
                 </span>
               </div>
@@ -733,7 +734,7 @@ function HomeView({
                   </p>
                 </div>
 
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black flex items-center justify-center shadow-md flex-shrink-0 transition-transform duration-200 group-hover:scale-110 active:scale-95">
                   <Play size={13} className="fill-current ml-0.5 text-black" />
                 </div>
               </div>
@@ -838,10 +839,10 @@ function HomeView({
                 <div
                   key={`because-played-${item.id}-${idx}`}
                   onClick={() => onPlayTrack ? onPlayTrack(item, relatedTracks) : handlePlayTrending(item)}
-                  className="group flex items-center justify-between p-2.5 rounded-2xl bg-im-card hover:bg-im-card2 border border-im-line transition-all duration-200 cursor-pointer shadow-sm hover:shadow-im-float"
+                  className="liquid-glass-row group flex items-center justify-between p-2.5 rounded-2xl transition-all duration-200 cursor-pointer shadow-sm"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} border border-im-line shadow-xs`}>
+                    <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[idx % ROW_GRADIENTS.length]} border border-white/10 shadow-xs`}>
                       <img
                         loading="lazy"
                         decoding="async"
@@ -869,7 +870,7 @@ function HomeView({
                     <button
                       type="button"
                       onClick={(e) => e.stopPropagation()}
-                      className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                      className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer flex-shrink-0"
                       title="More options"
                     >
                       <MoreVertical size={16} />
@@ -901,7 +902,7 @@ function HomeView({
             {[...Array(4)].map((_, idx) => (
               <div
                 key={`trending-row-skeleton-${idx}`}
-                className="flex items-center justify-between p-2.5 rounded-2xl bg-im-card border border-im-line animate-pulse"
+                className="flex items-center justify-between p-2.5 rounded-2xl bg-white/5 border border-white/5 animate-pulse"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-[46px] h-[46px] rounded-xl bg-white/5 flex-shrink-0" />
@@ -919,10 +920,10 @@ function HomeView({
               <div
                 key={`${track.id}-${idx}`}
                 onClick={() => handlePlayTrending(track)}
-                className="group flex items-center justify-between p-2.5 rounded-2xl bg-im-card hover:bg-im-card2 border border-im-line transition-all duration-200 cursor-pointer shadow-sm hover:shadow-im-float"
+                className="liquid-glass-row group flex items-center justify-between p-2.5 rounded-2xl transition-all duration-200 cursor-pointer shadow-sm"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[(idx + 2) % ROW_GRADIENTS.length]} border border-im-line shadow-xs`}>
+                  <div className={`relative w-[46px] h-[46px] rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br ${ROW_GRADIENTS[(idx + 2) % ROW_GRADIENTS.length]} border border-white/10 shadow-xs`}>
                     <img
                       loading="lazy"
                       decoding="async"
@@ -950,7 +951,7 @@ function HomeView({
                   <button
                     type="button"
                     onClick={(e) => e.stopPropagation()}
-                    className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/5 cursor-pointer flex-shrink-0"
+                    className="p-1.5 text-im-inkFaint hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer flex-shrink-0"
                     title="More options"
                   >
                     <MoreVertical size={16} />
@@ -1072,7 +1073,7 @@ function HomeView({
                 className="group flex flex-col flex-shrink-0 w-[150px] sm:w-[170px] cursor-pointer"
               >
                 {/* 2x2 Collage rounded card */}
-                <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-2 bg-im-card border border-im-line shadow-sm hover:shadow-im-float transition-all duration-300">
+                <div className="liquid-glass-card liquid-glass-interactive relative aspect-square w-full rounded-2xl overflow-hidden mb-2 border border-white/10 hover:border-white/30 shadow-md group-hover:shadow-[0_12px_36px_rgba(0,0,0,0.5)] transition-all duration-300">
                   <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-0.5 bg-black/40">
                     {playlist.thumbnails.map((thumb, tIdx) => (
                       <div key={tIdx} className="relative w-full h-full overflow-hidden bg-white/5">
@@ -1089,7 +1090,7 @@ function HomeView({
 
                   {/* Play button hover overlay */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110">
+                    <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-xl border border-white/30 transition-transform duration-200 group-hover:scale-110 active:scale-95">
                       <Play size={16} className="fill-current ml-0.5 text-black" />
                     </div>
                   </div>
@@ -1134,7 +1135,7 @@ function HomeView({
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
             {[...Array(3)].map((_, i) => (
               <div key={`mood-skeleton-${i}`} className="flex flex-col flex-shrink-0 w-[240px] sm:w-[280px] animate-pulse">
-                <div className="aspect-[16/10] sm:aspect-[1.8/1] w-full rounded-2xl bg-white/5 mb-2 border border-im-line" />
+                <div className="aspect-[16/10] sm:aspect-[1.8/1] w-full rounded-2xl bg-white/5 mb-2 border border-white/10" />
                 <div className="h-3 w-32 bg-white/10 rounded-full mb-1" />
                 <div className="h-2 w-20 bg-white/5 rounded-full" />
               </div>
@@ -1157,7 +1158,7 @@ function HomeView({
                 className="group flex flex-col flex-shrink-0 w-[240px] sm:w-[280px] cursor-pointer"
               >
                 {/* Full background image card with im-mood-* gradient overlay */}
-                <div className={`relative aspect-[16/10] sm:aspect-[1.8/1] w-full rounded-2xl overflow-hidden p-4 sm:p-5 flex flex-col justify-between shadow-im-float transition-all duration-300 group-hover:scale-[1.02] border border-im-line ${card.bgClass}`}>
+                <div className={`liquid-glass-card liquid-glass-interactive relative aspect-[16/10] sm:aspect-[1.8/1] w-full rounded-2xl overflow-hidden p-4 sm:p-5 flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover:scale-[1.02] border border-white/15 hover:border-white/35 ${card.bgClass}`}>
                   {card.topTrack?.thumbnail && (
                     <img
                       loading="lazy"
@@ -1171,7 +1172,7 @@ function HomeView({
 
                   {/* Card's display name in bold overlaid on the image */}
                   <div className="relative z-10">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10 mb-1.5 inline-block">
+                    <span className="liquid-glass-badge px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white mb-1.5 inline-block">
                       Mood Station
                     </span>
                     <h3 className="text-base sm:text-lg font-black text-white tracking-tight [text-shadow:_0_2px_8px_rgba(0,0,0,0.8)]">
@@ -1181,7 +1182,7 @@ function HomeView({
 
                   {/* Play button inside image */}
                   <div className="relative z-10 flex items-center justify-end">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110 active:scale-95">
                       <Play size={15} className="fill-current ml-0.5 text-black" />
                     </div>
                   </div>

@@ -345,22 +345,70 @@ class YouTubeSearchService {
       } catch {}
     }
 
-    // 2. Google Suggest Client (Fastest, zero-cors JSONP/direct client)
+    // 2. Google Suggest Client via JSONP (bypasses browser CORS without any proxy)
     try {
-      const res = await fetch(`https://suggestqueries-clients6.youtube.com/complete/search?client=youtube&hl=en&gl=us&ds=yt&q=${encodeURIComponent(query)}`);
-      const text = await res.text();
-      const match = text.match(/^[^(]*\((.*)\);?$/);
-      if (match && match[1]) {
-        const parsed = JSON.parse(match[1]);
-        if (Array.isArray(parsed[1])) {
-          const list = parsed[1].map(item => item[0]).filter(Boolean);
-          this.suggestionsCache.set(normalized, { suggestions: list, timestamp: Date.now() });
-          return list;
-        }
+      const suggs = await this.fetchJsonpSuggestions(query);
+      if (Array.isArray(suggs) && suggs.length > 0) {
+        this.suggestionsCache.set(normalized, { suggestions: suggs, timestamp: Date.now() });
+        return suggs;
       }
     } catch {}
 
     return [];
+  }
+
+  /**
+   * Fetch suggestions using script tag JSONP to avoid CORS restrictions in browsers
+   */
+  fetchJsonpSuggestions(query) {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return Promise.resolve([]);
+
+    return new Promise((resolve) => {
+      const callbackName = `__yt_sugg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const script = document.createElement('script');
+      let isSettled = false;
+
+      const cleanup = () => {
+        try {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        } catch {}
+      };
+
+      const timer = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true;
+          cleanup();
+          resolve([]);
+        }
+      }, 2500);
+
+      window[callbackName] = (data) => {
+        if (!isSettled) {
+          isSettled = true;
+          clearTimeout(timer);
+          cleanup();
+          if (Array.isArray(data?.[1])) {
+            const list = data[1].map(item => Array.isArray(item) ? item[0] : item).filter(Boolean);
+            resolve(list);
+          } else {
+            resolve([]);
+          }
+        }
+      };
+
+      script.src = `https://suggestqueries-clients6.youtube.com/complete/search?client=youtube&jsonp=${callbackName}&hl=en&gl=us&ds=yt&q=${encodeURIComponent(query)}`;
+      script.onerror = () => {
+        if (!isSettled) {
+          isSettled = true;
+          clearTimeout(timer);
+          cleanup();
+          resolve([]);
+        }
+      };
+
+      document.head.appendChild(script);
+    });
   }
 
   /**

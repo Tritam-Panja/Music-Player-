@@ -18,6 +18,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { formatDuration } from '../../utils/formatters';
+import { lyricsService } from '../../services/lyricsService';
 
 export default function MobileNowPlayingModal({
   isOpen,
@@ -49,29 +50,44 @@ export default function MobileNowPlayingModal({
   theme = 'dark'
 }) {
   const [activeTab, setActiveTab] = useState('player'); // 'player' | 'lyrics' | 'queue'
-  const [isSeeking, setIsSeeking] = useState(false);
-  const [seekValue, setSeekValue] = useState(0);
   const [lyrics, setLyrics] = useState([]);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
+  const [activeLyricIndex, setActiveLyricIndex] = useState(-1);
   const lyricsContainerRef = useRef(null);
 
-  // Sync seek slider
-  const displayTime = isSeeking ? seekValue : currentTime;
-  const progressPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
+  // Close with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Lock body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleSeekChange = (e) => {
-    setIsSeeking(true);
-    setSeekValue(parseFloat(e.target.value));
+    const newTime = parseFloat(e.target.value);
+    onSeek(newTime);
   };
 
-  const handleSeekCommit = (e) => {
-    setIsSeeking(false);
-    onSeek(parseFloat(e.target.value));
-  };
-
-  // Fetch Synced Lyrics when lyrics tab is open
+  // Fetch Synced Lyrics only when modal is open and track exists
   useEffect(() => {
-    if (!track?.title) {
+    if (!isOpen || !track?.title) {
       setLyrics([]);
       return;
     }
@@ -79,55 +95,33 @@ export default function MobileNowPlayingModal({
     let isMounted = true;
     setIsLoadingLyrics(true);
 
-    const fetchLyrics = async () => {
-      try {
-        const cleanTitle = track.title.replace(/\([^)]*\)|\[[^\]]*\]/g, '').trim();
-        const artist = track.artist || '';
-        const url = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(artist)}&duration=${track.duration || 0}`;
-
-        let res = await fetch(url);
-        if (!res.ok) {
-          res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(`${cleanTitle} ${artist}`)}`);
+    lyricsService.getLyrics(track.title, track.artist, track.duration || duration || 0)
+      .then((data) => {
+        if (!isMounted) return;
+        if (data?.synced && Array.isArray(data.synced)) {
+          setLyrics(data.synced);
+        } else if (data?.plain) {
+          const lines = data.plain.split('\n').filter(Boolean).map((text, idx) => ({
+            time: idx * 5,
+            text
+          }));
+          setLyrics(lines);
+        } else {
+          setLyrics([]);
         }
-
-        if (res.ok) {
-          const data = await res.json();
-          const target = Array.isArray(data) ? data[0] : data;
-          if (target && target.syncedLyrics && isMounted) {
-            const parsed = target.syncedLyrics
-              .split('\n')
-              .map((line) => {
-                const match = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
-                if (match) {
-                  const minutes = parseInt(match[1], 10);
-                  const seconds = parseFloat(match[2]);
-                  return {
-                    time: minutes * 60 + seconds,
-                    text: match[3].trim()
-                  };
-                }
-                return null;
-              })
-              .filter(Boolean);
-
-            setLyrics(parsed);
-            setIsLoadingLyrics(false);
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Lyrics error:', err);
-      }
-
-      if (isMounted) {
-        setLyrics([]);
         setIsLoadingLyrics(false);
-      }
-    };
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLyrics([]);
+          setIsLoadingLyrics(false);
+        }
+      });
 
-    fetchLyrics();
-    return () => { isMounted = false; };
-  }, [track?.id]);
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, track?.title, track?.artist, track?.duration, duration]);
 
   if (!isOpen || !track) return null;
 

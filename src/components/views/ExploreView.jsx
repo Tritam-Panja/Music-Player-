@@ -182,8 +182,8 @@ export default function ExploreView({
               <div
                 key={mood.id}
                 onClick={() => handleMoodClick(mood)}
-                className={`group relative aspect-[16/10] sm:aspect-[2/1] min-h-[110px] sm:min-h-[130px] rounded-2xl overflow-hidden shadow-im-float cursor-pointer transition-all duration-300 hover:scale-[1.02] border ${
-                  isSelected ? 'border-white ring-2 ring-white/50 scale-[1.02]' : 'border-im-line hover:border-white/20'
+                className={`liquid-glass-card liquid-glass-interactive group relative aspect-[16/10] sm:aspect-[2/1] min-h-[110px] sm:min-h-[130px] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.4)] cursor-pointer transition-all duration-300 hover:scale-[1.02] border ${
+                  isSelected ? 'border-white ring-2 ring-white/60 scale-[1.02] shadow-[0_0_25px_rgba(255,255,255,0.25)]' : 'border-white/15 hover:border-white/35'
                 }`}
               >
                 {/* Background image if fetched */}
@@ -206,8 +206,8 @@ export default function ExploreView({
                 <div className="relative z-10 p-4 sm:p-5 h-full flex flex-col justify-between">
                   {/* Play button top-right */}
                   <div className="flex items-center justify-end">
-                    <div className={`w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all duration-200 ${
-                      isSelected ? 'opacity-100 scale-105 bg-white text-black' : 'opacity-0 group-hover:opacity-100'
+                    <div className={`w-8 h-8 rounded-full liquid-glass-circle flex items-center justify-center transition-all duration-200 ${
+                      isSelected ? 'opacity-100 scale-105 bg-white text-black' : 'opacity-0 group-hover:opacity-100 text-white bg-white/20'
                     }`}>
                       <Play size={13} className={`ml-0.5 ${isSelected ? 'fill-black text-black' : 'fill-white text-white'}`} />
                     </div>

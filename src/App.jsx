@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Disc3, Search, Music, Library, AlertCircle, X, Compass } from 'lucide-react';
+import { Disc3, Search, Music, Library, AlertCircle, X, Compass, Play, Pause, SkipForward } from 'lucide-react';
 import BitChordNavbar from './components/layout/BitChordNavbar';
 import HomeView from './components/views/HomeView';
 import ExploreView from './components/views/ExploreView';
@@ -27,7 +27,15 @@ export default function App() {
 
   // Navigation: 'home' (default Spotify-like feed) | 'search' | 'explore' | 'player' | 'library' | 'playlist'
   const [currentView, setCurrentView] = useState('home');
+  const [previousView, setPreviousView] = useState('home');
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
+
+  const navigateToView = (view) => {
+    if (currentView !== 'player') {
+      setPreviousView(currentView);
+    }
+    setCurrentView(view);
+  };
 
   // Modals
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -228,15 +236,45 @@ export default function App() {
   const activePlaylist = playlists.find((p) => p.id === selectedPlaylistId);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden flex flex-col font-['Plus_Jakarta_Sans',sans-serif] bg-im-bg text-white">
-      {/* 1. Top Floating Navbar & Window Controls */}
-      <BitChordNavbar
-        currentView={currentView}
-        onViewChange={(view) => setCurrentView(view)}
-        onOpenSearch={() => setCurrentView('search')}
-        onOpenLogin={() => setIsLoginModalOpen(true)}
-        ytUser={ytUser}
-      />
+    <div className="relative w-full max-w-full h-screen overflow-hidden flex flex-col font-['Plus_Jakarta_Sans',sans-serif] bg-im-bg text-white">
+      {/* =========================================================================
+          AMBIENT LIQUID GLASS GLOWING MESH
+          Refractive liquid aura that morphs, pulses, and reflects playing music
+         ========================================================================= */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {/* Primary liquid fluid orb */}
+        <div 
+          className="absolute -top-[15%] -left-[10%] w-[500px] sm:w-[700px] h-[500px] sm:h-[700px] rounded-full bg-gradient-to-tr from-purple-700/20 via-pink-600/15 to-blue-600/20 blur-[130px] animate-fluid-slow opacity-60"
+        />
+        {/* Secondary liquid reactive orb */}
+        <div 
+          className="absolute top-[35%] -right-[15%] w-[450px] sm:w-[650px] h-[450px] sm:h-[650px] rounded-full bg-gradient-to-br from-cyan-500/15 via-indigo-600/20 to-rose-600/15 blur-[140px] animate-fluid-slow opacity-50"
+          style={{ animationDelay: '-6s' }}
+        />
+        {/* Bottom subtle ambient floor orb */}
+        <div 
+          className="absolute -bottom-[20%] left-[15%] w-[500px] sm:w-[750px] h-[400px] sm:h-[550px] rounded-full bg-gradient-to-t from-emerald-500/10 via-teal-600/15 to-transparent blur-[120px] opacity-40"
+          style={{ animationDelay: '-12s' }}
+        />
+        {/* Dynamic Track-Themed Ambient Reflection if track is playing */}
+        {currentTrack?.thumbnail && (
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-10 blur-[110px] scale-125 transition-opacity duration-1000"
+            style={{ backgroundImage: `url(${currentTrack.thumbnail})` }}
+          />
+        )}
+      </div>
+
+      {/* 1. Top Floating Navbar & Window Controls (Hidden when in full-screen player) */}
+      {currentView !== 'player' && (
+        <BitChordNavbar
+          currentView={currentView}
+          onViewChange={(view) => setCurrentView(view)}
+          onOpenSearch={() => setCurrentView('search')}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
+          ytUser={ytUser}
+        />
+      )}
 
       {/* Playback Alert Toast */}
       {playerError && (
@@ -250,61 +288,71 @@ export default function App() {
       )}
 
       {/* 2. Main Stage: Neuphorism Home vs Search vs Explore vs Player Studio vs Library vs Playlist */}
-      <main className="flex-1 overflow-y-auto pb-36 sm:pb-24 relative z-10 scrollbar-none flex flex-col">
+      <main className={`flex-1 relative z-10 scrollbar-none flex flex-col w-full max-w-full ${
+        currentView === 'player' 
+          ? 'fixed inset-0 z-50 overflow-hidden p-0 m-0' 
+          : 'overflow-y-auto overflow-x-hidden pb-36 sm:pb-24'
+      }`}>
         {currentView === 'home' && (
-          <HomeView
-            playlists={playlists}
-            history={history}
-            onPlayTrack={handlePlayTrack}
-            onPlayPlaylist={handlePlayPlaylist}
-            onSelectPlaylist={(id) => {
-              setSelectedPlaylistId(id);
-              setCurrentView('playlist');
-            }}
-            onOpenImportModal={() => setIsImportModalOpen(true)}
-            onOpenSearch={() => setCurrentView('search')}
-            onViewChange={(view) => setCurrentView(view)}
-          />
+          <div className="w-full flex-1 flex flex-col animate-view-enter">
+            <HomeView
+              playlists={playlists}
+              history={history}
+              onPlayTrack={handlePlayTrack}
+              onPlayPlaylist={handlePlayPlaylist}
+              onSelectPlaylist={(id) => {
+                setSelectedPlaylistId(id);
+                navigateToView('playlist');
+              }}
+              onOpenImportModal={() => setIsImportModalOpen(true)}
+              onOpenSearch={() => navigateToView('search')}
+              onViewChange={(view) => navigateToView(view)}
+            />
+          </div>
         )}
 
         {currentView === 'search' && (
-          <SearchView
-            playlists={playlists}
-            history={history}
-            onPlayTrack={handlePlayTrack}
-            onPlayPlaylist={handlePlayPlaylist}
-            onAddToQueue={handleAddToQueue}
-            onSelectPlaylist={(id) => {
-              setSelectedPlaylistId(id);
-              setCurrentView('playlist');
-            }}
-            onOpenImportModal={() => setIsImportModalOpen(true)}
-            onOpenSearch={() => setCurrentView('search')}
-            onViewChange={(view) => setCurrentView(view)}
-            onNavigate={(view) => setCurrentView(view)}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-          />
+          <div className="w-full flex-1 flex flex-col animate-view-enter">
+            <SearchView
+              playlists={playlists}
+              history={history}
+              onPlayTrack={handlePlayTrack}
+              onPlayPlaylist={handlePlayPlaylist}
+              onAddToQueue={handleAddToQueue}
+              onSelectPlaylist={(id) => {
+                setSelectedPlaylistId(id);
+                navigateToView('playlist');
+              }}
+              onOpenImportModal={() => setIsImportModalOpen(true)}
+              onOpenSearch={() => navigateToView('search')}
+              onViewChange={(view) => navigateToView(view)}
+              onNavigate={(view) => navigateToView(view)}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+            />
+          </div>
         )}
 
         {currentView === 'explore' && (
-          <ExploreView
-            playlists={playlists}
-            history={history}
-            onPlayTrack={handlePlayTrack}
-            onPlayPlaylist={handlePlayPlaylist}
-            onAddToQueue={handleAddToQueue}
-            onSelectPlaylist={(id) => {
-              setSelectedPlaylistId(id);
-              setCurrentView('playlist');
-            }}
-            onOpenImportModal={() => setIsImportModalOpen(true)}
-            onOpenSearch={() => setCurrentView('search')}
-            onViewChange={(view) => setCurrentView(view)}
-            onNavigate={(view) => setCurrentView(view)}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-          />
+          <div className="w-full flex-1 flex flex-col animate-view-enter">
+            <ExploreView
+              playlists={playlists}
+              history={history}
+              onPlayTrack={handlePlayTrack}
+              onPlayPlaylist={handlePlayPlaylist}
+              onAddToQueue={handleAddToQueue}
+              onSelectPlaylist={(id) => {
+                setSelectedPlaylistId(id);
+                navigateToView('playlist');
+              }}
+              onOpenImportModal={() => setIsImportModalOpen(true)}
+              onOpenSearch={() => navigateToView('search')}
+              onViewChange={(view) => navigateToView(view)}
+              onNavigate={(view) => navigateToView(view)}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+            />
+          </div>
         )}
 
         {currentView === 'player' && (
@@ -327,76 +375,84 @@ export default function App() {
               playerService.play(queue[idx]);
             }}
             onRemoveFromQueue={handleRemoveFromQueue}
-            onOpenSearch={() => setCurrentView('search')}
-            onOpenLibrary={() => setCurrentView('library')}
+            onOpenSearch={() => navigateToView('search')}
+            onOpenLibrary={() => setCurrentView(previousView || 'home')}
           />
         )}
 
         {(currentView === 'library' || currentView === 'favorites' || currentView === 'liked' || currentView === 'liked-songs') && (
-          <BitChordLibraryView
-            playlists={playlists}
-            favorites={favorites}
-            likedSongs={favorites}
-            history={history}
-            initialSubTab={(currentView === 'favorites' || currentView === 'liked' || currentView === 'liked-songs') ? 'favorites' : 'playlists'}
-            onPlayPlaylist={handlePlayPlaylist}
-            onPlayTrack={handlePlayTrack}
-            onSelectPlaylist={(id) => {
-              setSelectedPlaylistId(id);
-              setCurrentView('playlist');
-            }}
-            onOpenImportModal={() => setIsImportModalOpen(true)}
-            onOpenLoginModal={() => setIsLoginModalOpen(true)}
-            onNavigate={(view) => setCurrentView(view)}
-            onViewChange={(view) => setCurrentView(view)}
-            ytUser={ytUser}
-          />
+          <div className="w-full flex-1 flex flex-col animate-view-enter">
+            <BitChordLibraryView
+              playlists={playlists}
+              favorites={favorites}
+              likedSongs={favorites}
+              history={history}
+              initialSubTab={(currentView === 'favorites' || currentView === 'liked' || currentView === 'liked-songs') ? 'favorites' : 'playlists'}
+              onPlayPlaylist={handlePlayPlaylist}
+              onPlayTrack={handlePlayTrack}
+              onSelectPlaylist={(id) => {
+                setSelectedPlaylistId(id);
+                navigateToView('playlist');
+              }}
+              onOpenImportModal={() => setIsImportModalOpen(true)}
+              onOpenLoginModal={() => setIsLoginModalOpen(true)}
+              onNavigate={(view) => navigateToView(view)}
+              onViewChange={(view) => navigateToView(view)}
+              ytUser={ytUser}
+            />
+          </div>
         )}
 
         {currentView === 'downloads' && (
-          <DownloadsView
-            onPlayTrack={handlePlayTrack}
-            onPlayPlaylist={handlePlayPlaylist}
-            onAddToQueue={handleAddToQueue}
-            onNavigate={(view) => setCurrentView(view)}
-            onViewChange={(view) => setCurrentView(view)}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-          />
+          <div className="w-full flex-1 flex flex-col animate-view-enter">
+            <DownloadsView
+              onPlayTrack={handlePlayTrack}
+              onPlayPlaylist={handlePlayPlaylist}
+              onAddToQueue={handleAddToQueue}
+              onNavigate={(view) => navigateToView(view)}
+              onViewChange={(view) => navigateToView(view)}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+            />
+          </div>
         )}
 
         {currentView === 'local-music' && (
-          <LocalMusicView
-            onPlayTrack={handlePlayTrack}
-            onPlayPlaylist={handlePlayPlaylist}
-            onAddToQueue={handleAddToQueue}
-            onNavigate={(view) => setCurrentView(view)}
-            onViewChange={(view) => setCurrentView(view)}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-          />
+          <div className="w-full flex-1 flex flex-col animate-view-enter">
+            <LocalMusicView
+              onPlayTrack={handlePlayTrack}
+              onPlayPlaylist={handlePlayPlaylist}
+              onAddToQueue={handleAddToQueue}
+              onNavigate={(view) => navigateToView(view)}
+              onViewChange={(view) => navigateToView(view)}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+            />
+          </div>
         )}
 
         {currentView === 'playlist' && activePlaylist && (
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <button
-              onClick={() => setCurrentView('library')}
-              className="mb-4 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer text-[#828694] hover:text-[#f3efe8]"
-            >
-              ← Back to Library
-            </button>
-            <PlaylistView
-              playlist={activePlaylist}
-              currentTrack={currentTrack}
-              isPlaying={isPlaying}
-              isFavorite={isFavorite}
-              onPlayTrack={handlePlayTrack}
-              onPlayPlaylist={handlePlayPlaylist}
-              onTogglePlay={() => playerService.togglePlay()}
-              onToggleFavorite={handleToggleFavorite}
-              onAddToQueue={handleAddToQueue}
-              onDeletePlaylist={handleDeletePlaylist}
-            />
+          <div className="w-full flex-1 flex flex-col animate-view-enter">
+            <div className="max-w-7xl mx-auto px-6 py-6 w-full">
+              <button
+                onClick={() => navigateToView('library')}
+                className="mb-4 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer text-[#828694] hover:text-[#f3efe8] tap-press"
+              >
+                ← Back to Library
+              </button>
+              <PlaylistView
+                playlist={activePlaylist}
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                isFavorite={isFavorite}
+                onPlayTrack={handlePlayTrack}
+                onPlayPlaylist={handlePlayPlaylist}
+                onTogglePlay={() => playerService.togglePlay()}
+                onToggleFavorite={handleToggleFavorite}
+                onAddToQueue={handleAddToQueue}
+                onDeletePlaylist={handleDeletePlaylist}
+              />
+            </div>
           </div>
         )}
       </main>
@@ -451,74 +507,124 @@ export default function App() {
         onSyncComplete={handleSyncComplete}
       />
 
-      {/* 6. Mobile Bottom Navigation Bar (only when no track is playing) */}
-      {!currentTrack && (
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t px-4 pt-2 pb-safe flex items-center justify-around select-none backdrop-blur-xl transition-colors duration-300 bg-[#131417]/95 border-[#23262f] text-[#828694]">
-          <button
-            onClick={() => setCurrentView('home')}
-            aria-label="Home"
-            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-              currentView === 'home'
-                ? 'text-[#f3efe8] scale-105'
-                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
+      {/* 6. Mobile Floating Multi-Pill Bottom Dock with Liquid Glass */}
+      {currentView !== 'player' && (
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-40 flex items-center gap-2 select-none pointer-events-none">
+          {/* 1. Mini-player pill: only rendered when a track is loaded/playing */}
+          {currentTrack && (
+            <div
+              onClick={() => setCurrentView('player')}
+              className="flex-1 min-w-0 h-[48px] px-3 rounded-full liquid-glass-pill flex items-center justify-between gap-2.5 cursor-pointer pointer-events-auto transition-all group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={currentTrack.thumbnail || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'}
+                    alt={currentTrack.title}
+                    className="w-8 h-8 rounded-full object-cover border border-white/20 shadow-sm"
+                  />
+                  {isPlaying && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-black animate-pulse" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-xs font-bold text-white truncate block leading-tight">
+                    {currentTrack.title}
+                  </span>
+                  <span className="text-[10px] font-medium text-white/60 truncate block leading-tight mt-0.5">
+                    {currentTrack.artist || 'Unknown Artist'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0 pr-0.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playerService.togglePlay();
+                  }}
+                  className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center cursor-pointer shadow-sm active:scale-95 transition-transform"
+                  title={isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? (
+                    <Pause size={13} className="fill-current text-black" />
+                  ) : (
+                    <Play size={13} className="fill-current text-black ml-0.5" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playNext();
+                  }}
+                  className="p-1.5 text-white/80 hover:text-white active:scale-90 transition-transform cursor-pointer"
+                  title="Next"
+                >
+                  <SkipForward size={16} className="fill-current text-white" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 2. Nav pill: containing 3 icon-only buttons for Play(Home)/Explore/Library */}
+          <div
+            className={`h-[48px] rounded-full liquid-glass-pill flex items-center pointer-events-auto transition-all ${
+              currentTrack ? 'flex-shrink-0 px-3.5 gap-2.5' : 'flex-1 justify-around px-5'
             }`}
           >
-            <Disc3 size={20} className={currentView === 'home' ? 'stroke-[2.5]' : ''} />
-            <span className="text-[10px] font-bold">Home</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setCurrentView('home')}
+              aria-label="Home"
+              className={`p-2 rounded-full transition-all cursor-pointer ${
+                currentView === 'home'
+                  ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.18)] scale-105'
+                  : 'text-im-inkFaint hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Play size={18} className={currentView === 'home' ? 'fill-current text-white' : 'fill-current text-im-inkFaint'} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentView('explore')}
+              aria-label="Explore"
+              className={`p-2 rounded-full transition-all cursor-pointer ${
+                currentView === 'explore'
+                  ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.18)] scale-105'
+                  : 'text-im-inkFaint hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Compass size={20} className={currentView === 'explore' ? 'stroke-[2.5]' : ''} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentView('library')}
+              aria-label="Library"
+              className={`p-2 rounded-full transition-all cursor-pointer ${
+                currentView === 'library' || currentView === 'playlist' || currentView === 'downloads' || currentView === 'local-music'
+                  ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.18)] scale-105'
+                  : 'text-im-inkFaint hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Library size={20} className={currentView === 'library' || currentView === 'playlist' || currentView === 'downloads' || currentView === 'local-music' ? 'stroke-[2.5]' : ''} />
+            </button>
+          </div>
 
+          {/* 3. Circular floating search button (~48px) */}
           <button
+            type="button"
             onClick={() => setCurrentView('search')}
             aria-label="Search"
-            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
+            className={`w-[48px] h-[48px] rounded-full liquid-glass-circle flex items-center justify-center flex-shrink-0 pointer-events-auto cursor-pointer transition-all ${
               currentView === 'search'
-                ? 'text-[#f3efe8] scale-105'
-                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
+                ? 'text-white border-white/40 bg-white/15 shadow-[0_0_18px_rgba(255,255,255,0.25)] scale-105'
+                : 'text-im-inkFaint hover:text-white'
             }`}
           >
             <Search size={20} className={currentView === 'search' ? 'stroke-[2.5]' : ''} />
-            <span className="text-[10px] font-bold">Search</span>
           </button>
-
-          <button
-            onClick={() => setCurrentView('explore')}
-            aria-label="Explore"
-            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-              currentView === 'explore'
-                ? 'text-[#f3efe8] scale-105'
-                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
-            }`}
-          >
-            <Compass size={20} className={currentView === 'explore' ? 'stroke-[2.5]' : ''} />
-            <span className="text-[10px] font-bold">Explore</span>
-          </button>
-
-          <button
-            onClick={() => setCurrentView('player')}
-            aria-label="Player"
-            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-              currentView === 'player'
-                ? 'text-[#f3efe8] scale-105'
-                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
-            }`}
-          >
-            <Music size={20} className={currentView === 'player' ? 'stroke-[2.5]' : ''} />
-            <span className="text-[10px] font-bold">Player</span>
-          </button>
-
-          <button
-            onClick={() => setCurrentView('library')}
-            aria-label="Your Library"
-            className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] gap-1 transition-all cursor-pointer ${
-              currentView === 'library' || currentView === 'playlist' || currentView === 'downloads' || currentView === 'local-music'
-                ? 'text-[#f3efe8] scale-105'
-                : 'hover:text-[#2e221b] dark:hover:text-[#f3efe8]'
-            }`}
-          >
-            <Library size={20} className={currentView === 'library' || currentView === 'playlist' || currentView === 'downloads' || currentView === 'local-music' ? 'stroke-[2.5]' : ''} />
-            <span className="text-[10px] font-bold">Library</span>
-          </button>
-        </nav>
+        </div>
       )}
     </div>
   );
